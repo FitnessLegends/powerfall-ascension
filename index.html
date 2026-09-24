@@ -39,6 +39,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
 /* Power cards share one click target; overlays above them remain intentional. */
 .power-choice>*{pointer-events:none}.power-choice:disabled{pointer-events:none;opacity:.55}.power-choice.selected{opacity:1;border-color:var(--good);background:#173728}.power-preview{display:block;color:#8de4bb;font-size:9px;line-height:1.3;margin-top:4px}.power-choice .top{flex-wrap:wrap}.power-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}.power-modal{z-index:110}.story-modal{z-index:130}#profileModal,#upgradeSheet{z-index:120}#infoModal{z-index:140}.info-card{max-height:85dvh;overflow:auto}.power-card{max-height:75dvh;overflow:auto}.power-choice{touch-action:manipulation}.stat-help{font-size:9px;color:var(--muted);margin-top:5px}.power-actions{display:flex;gap:6px}.power-actions button{flex:1}
 @media(max-width:420px){.power-choice{padding:7px}.power-choice p{margin-top:3px}.power-grid{gap:5px}.power-card{max-height:75dvh}.power-preview{font-size:8px}}
+.reset-section{flex:0 0 auto}.reset-section h2{margin:0 0 8px;font-size:15px}.reset-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.reset-options p{font-size:10px;line-height:1.4;color:var(--muted);margin:5px 0 0}.reset-options button{width:100%;border:1px solid var(--line);background:#182130;border-radius:10px;padding:9px;font-size:11px}.reset-options .danger{border-color:#874353;color:#ff9aaa}.reset-options button:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -149,6 +150,13 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
       </section>
       <button id="ascendNowBtn" class="ascend-button" type="button">ASCEND FOR <span id="ascendButtonSouls">0</span> SOULS</button>
       <p class="ascend-note">Ascension is voluntary. Death does not award souls.</p>
+      <section class="card reset-section" aria-labelledby="resetTitle">
+        <h2 id="resetTitle">Reset / New Game</h2>
+        <div class="reset-options">
+          <div><button id="resetRunBtn" type="button">Reset Current Run</button><p>Start at Stage 1 with no run coins, powers or upgrades. Keep Souls, Soul Tree upgrades, discoveries, story progress and lifetime statistics. No Souls awarded.</p></div>
+          <div><button id="fullResetBtn" class="danger" type="button">Full Reset / New Game</button><p>Permanently erase all local Powerfall progress, including Souls and permanent upgrades. Requires confirmation and typing RESET.</p></div>
+        </div>
+      </section>
     </section>
 
     <div id="upgradeSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Run upgrades">
@@ -438,13 +446,16 @@ const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Mat
 const fmt=n=>{n=Math.max(0,Number(n)||0);if(n<1000)return Math.floor(n).toString();const u=['K','M','B','T','Qa','Qi'];let i=-1;while(n>=1000&&i<u.length-1){n/=1000;i++}return n.toFixed(n>=100?0:n>=10?1:2)+u[i]};
 const byId=id=>PF_POWERS.find(p=>p.id===id);
 
-const meta={
+function defaultMeta(){return {
   souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,
-  soulTree:{might:0,fortune:0,survival:0,instinct:0,choice:0,reroll:0,autobuy:0,bossbane:0},
+  soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
   discoveries:[],storyFlags:[],seenStories:[]
-};
+}}
+const meta=defaultMeta();
 let s={};
-let timers={attack:null,enemy:null,tick:null,save:null};
+let timers={attack:null,enemy:null,tick:null,save:null,autosave:null};
+const pendingEchoes=new Set();
+let resetBusy=false;
 let powerQueue=[];
 let activePowerChoices=[];
 let powerModalVisible=false;
@@ -580,7 +591,7 @@ function playerAttack(manual=false,echo=false){
   if(mirrored('suppression'))damage*=1.2;
   const fight=s.fight,runId=s.runId;
   dealDamageToEnemy(clamp(damage,0,1e150),crit,manual,echo);
-  if(!manual&&!echo&&Math.random()<clamp(s.doubleHit,0,.85)&&s.fight===fight){setTimeout(()=>{if(s.runId===runId&&s.fight===fight)playerAttack(false,true)},75)}
+  if(!manual&&!echo&&Math.random()<clamp(s.doubleHit,0,.85)&&s.fight===fight){const echoTimer=setTimeout(()=>{pendingEchoes.delete(echoTimer);if(s.runId===runId&&s.fight===fight)playerAttack(false,true)},75);pendingEchoes.add(echoTimer)}
 }
 function dealDamageToEnemy(amount,crit,manual,echo=false){
   const dealt=Math.min(s.enemyHp,amount);s.enemyHp=Math.max(0,s.enemyHp-amount);
@@ -687,9 +698,9 @@ function currentResonance(){
 
 function maybeStory(stage,force){
   const scene=PF_STORY[stage]; if(!scene)return; if(meta.seenStories.includes(scene.id)&&!force)return;
-  meta.seenStories.push(scene.id); storyPaused=true; clearCombatTimers();
+  const storyRunId=s.runId;storyPaused=true; clearCombatTimers();
   $('storySpeaker').textContent=scene.speaker;$('storyPortrait').textContent=scene.portrait;$('storyText').textContent=reactiveStoryText(scene.text);
-  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused)return;meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
+  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused||s.runId!==storyRunId)return;if(!meta.seenStories.includes(scene.id))meta.seenStories.push(scene.id);meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
   $('storyModal').classList.remove('hidden');
 }
 function reactiveStoryText(base){
@@ -730,6 +741,44 @@ function doAscend(){
   spawnEnemy();startCombatTimers();showScreen('gameScreen');renderAll();ascensionLocked=false;toast('ASCENDED +'+gain+' SOULS');
 }
 
+
+function requestReset(full){
+  if(resetBusy||ascensionLocked)return;
+  resetBusy=true;['resetRunBtn','fullResetBtn'].forEach(id=>$(id).disabled=true);
+  try{
+    const message=full?'Permanently delete ALL local Powerfall progress? Souls, permanent upgrades, discoveries, story progress and every statistic will be lost. This cannot be undone.':'Reset the current run to Stage 1? Run coins, powers, upgrades and queued choices will be lost. All permanent progression is kept. No Souls will be awarded.';
+    if(!window.confirm(message))return;
+    if(full&&window.prompt('Type RESET exactly to permanently erase all progress and start a new game.','')!=='RESET')return;
+    resetGame(full);
+  }finally{
+    // Swallow the trailing click from a double tap, including native dialog dismissal.
+    setTimeout(()=>{resetBusy=false;['resetRunBtn','fullResetBtn'].forEach(id=>$(id).disabled=false)},400);
+  }
+}
+function resetGame(full){
+  const previous=snapshot(),previousRun=s,previousQueue=powerQueue;
+  if(full){for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,defaultMeta())}
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);
+  powerQueue=[];s.enemy=enemyProfile(PF_ENEMIES.get(1),1);s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
+  // Replace the entire old save in one atomic write. Never delete first: a storage
+  // failure must leave the player's original save and live session intact.
+  if(!PF_SAVE.write(snapshot())){
+    for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,previous.meta);s=previousRun;powerQueue=previousQueue;
+    toast('RESET NOT SAVED — original progress kept. Free browser storage and retry.');return;
+  }
+  clearCombatTimers();clearInterval(timers.tick);clearInterval(timers.autosave);clearTimeout(timers.save);clearTimeout(choiceTimer);
+  pendingEchoes.forEach(clearTimeout);pendingEchoes.clear();clearTimeout($('toast')._to);$('toast').classList.add('hidden');
+  choiceTimer=null;choiceLocked=false;ascensionLocked=false;powerModalVisible=false;activePowerChoices=[];storyPaused=false;
+  lastAttackMs=0;lastEnemyMs=0;autoBuyElapsed=0;buyMode='1';
+  document.querySelectorAll('.buy-mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.buy==='1'));
+  ['powerModal','storyModal','profileModal','upgradeSheet','infoModal'].forEach(id=>$(id).classList.add('hidden'));
+  ['powerChoices','storyChoices','fxLayer','damageLayer'].forEach(id=>$(id).replaceChildren());
+  $('enemyFighter').classList.remove('hit');$('hidePowerModalBtn').disabled=false;$('rerollPowerBtn').disabled=false;
+  showScreen('gameScreen');renderAll();renderProfile();
+  if(full)maybeStory(1,true);
+  startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000);
+  toast(full?'NEW GAME — all previous progress erased':'RUN RESET — permanent progression kept');
+}
 
 function worldFor(stage){return [...PF_CONFIG.worlds].reverse().find(w=>stage>=w.min)||PF_CONFIG.worlds[0]}
 function nextMilestone(stage){
@@ -881,6 +930,7 @@ function restore(){
 
 
 function bind(){
+  $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
   $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
@@ -898,7 +948,7 @@ function bind(){
   document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
 }
 
-function init(){bind();const restored=restore();if(!restored)freshRun();else{renderAll();if(powerQueue.length)updatePowerAlert();if(!meta.seenStories.includes('awakening'))maybeStory(1,true)}startCombatTimers();startTick();setInterval(scheduleSave,10000)}
+function init(){bind();const restored=restore();if(!restored)freshRun();else{renderAll();if(powerQueue.length)updatePowerAlert();if(!meta.seenStories.includes('awakening'))maybeStory(1,true)}startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000)}
 init();
 })();
 
