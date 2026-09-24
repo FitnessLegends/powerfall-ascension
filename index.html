@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>Powerfall: Ascension Prototype v0.1.1</title>
+  <style>
+:root{
+  --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
+  --accent:#65d1ff;--accent2:#9f7aea;--good:#44d17a;--bad:#ff6174;--gold:#ffcf5c;--soul:#c78cff;
+}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden;height:100%}
+button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}.app-shell{touch-action:manipulation}.hidden{display:none!important}.app-shell{height:100dvh;max-height:100dvh;overflow:hidden;background:radial-gradient(circle at 50% -10%,#18283f 0,#090d13 45%)}
+.screen{display:none;height:100%;padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));overflow:hidden}.screen.active{display:grid;grid-template-rows:auto auto minmax(220px,1fr) auto auto;gap:8px}
+.topbar,.page-header{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand-title{font-weight:900;letter-spacing:.08em;font-size:17px}.brand-sub{font-size:9px;letter-spacing:.18em;color:var(--muted)}
+.resource-strip{display:flex;gap:6px}.pill{background:#121a26;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:13px;font-weight:700;white-space:nowrap}.pill.soul{color:#e5c9ff}
+.milestone-strip{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(17,24,36,.9);border:1px solid var(--line);border-radius:12px;padding:8px 10px}.milestone-strip strong{display:block;font-size:13px}.milestone-strip>div>span:not(.milestone-next span){font-size:10px;color:var(--muted)}.milestone-next{display:flex;align-items:center;gap:6px;font-size:11px;color:#dbe8f8}
+.battlefield{position:relative;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:linear-gradient(#121e30 0%,#152035 55%,#10151e 56%);isolation:isolate}.background-layer{position:absolute;inset:0;pointer-events:none}.bg-stars{opacity:.5;background-image:radial-gradient(circle,#fff 0 1px,transparent 1.5px);background-size:34px 34px}.bg-city{top:auto;height:44%;bottom:14px;opacity:.8;background:linear-gradient(90deg,transparent 0 3%,#182130 3% 11%,transparent 11% 14%,#1c2737 14% 25%,transparent 25% 28%,#111923 28% 39%,transparent 39% 45%,#1a2533 45% 55%,transparent 55% 58%,#151e2a 58% 69%,transparent 69% 74%,#1a2533 74% 84%,transparent 84% 88%,#131b26 88% 100%)}.ground{position:absolute;left:0;right:0;bottom:0;height:17%;background:linear-gradient(#202938,#121821)}
+.fighter{position:absolute;bottom:13%;width:110px;height:160px;z-index:4;transition:transform .12s ease}.fighter.hero{left:8%}.fighter.enemy{right:8%}.fighter-name{position:absolute;width:130px;left:50%;transform:translateX(-50%);bottom:-2px;text-align:center;font-size:10px;font-weight:900;letter-spacing:.08em;text-shadow:0 2px 2px #000}
+.body{position:absolute;left:50%;bottom:22px;width:64px;height:116px;transform:translateX(-50%)}.head{position:absolute;top:0;left:19px;width:28px;height:30px;border-radius:46% 46% 42% 42%;background:#e8ba92;border:2px solid #0b1119;z-index:4}.eye{position:absolute;top:12px;width:5px;height:3px;border-radius:8px;background:#75d9ff;box-shadow:0 0 7px #75d9ff}.eye.left{left:5px}.eye.right{right:5px}.torso{position:absolute;top:27px;left:14px;width:38px;height:54px;border-radius:9px 9px 13px 13px;background:linear-gradient(180deg,#1e89c2,#15517e);border:2px solid #0b1119;z-index:3}.arm,.leg{position:absolute;background:#1a6795;border:2px solid #0b1119;border-radius:999px;transform-origin:50% 10%;z-index:2}.arm{width:14px;height:51px;top:31px}.arm-left{left:7px;transform:rotate(14deg)}.arm-right{right:7px;transform:rotate(-14deg)}.leg{width:16px;height:47px;top:75px}.leg-left{left:17px;transform:rotate(5deg)}.leg-right{right:15px;transform:rotate(-5deg)}.cape{display:none;position:absolute;left:42px;bottom:48px;width:46px;height:74px;background:#8d263f;clip-path:polygon(10% 0,100% 15%,70% 100%,0 82%);z-index:1}.aura,.enemy-aura{position:absolute;inset:10px;border-radius:50%;opacity:0;filter:blur(8px);z-index:-1}.enemy-head{background:#778198}.enemy-torso,.enemy-limb{background:#77374a}.enemy-eye{position:absolute;top:11px;width:5px;height:4px;background:#ff5b74;box-shadow:0 0 7px #ff5b74}.enemy-eye.left{left:5px}.enemy-eye.right{right:5px}
+.hero.attack{animation:heroLunge .25s ease}.enemy.hit{animation:enemyHit .18s ease}.hero.hit{animation:heroHit .18s ease}.hero.speedy .body{filter:drop-shadow(-12px 0 0 rgba(101,209,255,.2)) drop-shadow(-23px 0 0 rgba(101,209,255,.12))}.hero.flying{transform:translateY(-18px)}.hero.flying .cape{display:block}.hero.iron .torso,.hero.iron .arm,.hero.iron .leg{background:linear-gradient(#858d97,#4b535d)}.hero.fire .aura{opacity:.5;background:#ff7647;box-shadow:0 0 30px #ff6033}.hero.lightning .aura{opacity:.55;background:#68dbff;box-shadow:0 0 32px #68dbff}.hero.cosmic .aura{opacity:.65;background:#a66fff;box-shadow:0 0 40px #8c5cff}.hero.regen .head,.hero.regen .torso{box-shadow:0 0 10px rgba(75,239,151,.4)}.hero.psychic .head{box-shadow:0 0 13px #d493ff}.hero.dark .body{filter:brightness(.75) drop-shadow(0 0 8px #8125b5)}
+@keyframes heroLunge{50%{transform:translateX(45px)}}@keyframes enemyHit{50%{transform:translateX(12px) rotate(3deg)}}@keyframes heroHit{50%{transform:translateX(-10px) rotate(-3deg)}}
+.fx-layer,.damage-layer{position:absolute;inset:0;pointer-events:none;z-index:10}.beam{position:absolute;height:4px;border-radius:6px;background:#ff4f62;box-shadow:0 0 8px #ff4f62;transform-origin:left center;animation:beam .22s ease forwards}.lightning-bolt{position:absolute;height:5px;background:#7ee8ff;box-shadow:0 0 10px #7ee8ff;transform:rotate(-8deg);animation:beam .2s ease forwards}.psychic-wave{position:absolute;width:50px;height:50px;border:3px solid #c989ff;border-radius:50%;animation:wave .4s ease forwards}.damage-number{position:absolute;font-weight:900;font-size:18px;text-shadow:0 2px 4px #000;animation:floatUp .65s ease forwards}.damage-number.crit{color:var(--gold);font-size:23px}.damage-number.enemy-dmg{color:#ff8090}@keyframes beam{0%{width:0;opacity:1}100%{width:44%;opacity:0}}@keyframes wave{0%{transform:scale(.2);opacity:1}100%{transform:scale(3);opacity:0}}@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-55px);opacity:0}}
+.boss-banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;background:#4a1320;border:1px solid #ff6276;border-radius:999px;padding:5px 12px;font-size:10px;font-weight:900;letter-spacing:.16em}.combat-hud{display:grid;gap:5px}.bar-row{display:grid;gap:3px}.bar-label{display:flex;justify-content:space-between;font-size:9px;color:#c6d0df}.bar{height:8px;background:#111720;border:1px solid #263140;border-radius:999px;overflow:hidden}.bar-fill{height:100%;transition:width .18s linear}.bar-fill.hp{background:linear-gradient(90deg,#39bb70,#5ce28f)}.bar-fill.enemy{background:linear-gradient(90deg,#db4057,#ff6c7c)}.mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:9px;color:var(--muted)}.mini-stats span{text-align:center;background:#111824;border:1px solid #253143;border-radius:8px;padding:4px 2px}.mini-stats b{color:var(--text)}
+.power-alert{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #6ecfff;background:linear-gradient(90deg,#11283a,#182239);border-radius:13px;padding:8px 10px;text-align:left;box-shadow:0 0 18px rgba(101,209,255,.12)}.power-alert-icon{font-size:22px}.power-alert strong{display:block;font-size:10px;letter-spacing:.1em}.power-alert small{display:block;color:#aebed1;font-size:9px}.queue-badge{margin-left:auto;display:grid;place-items:center;min-width:24px;height:24px;border-radius:999px;background:#6ecfff;color:#071018;font-size:11px;font-weight:900}.queue-badge.big{min-width:34px;height:34px;font-size:14px}
+.bottom-dock{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.dock-button{border:1px solid var(--line);background:#121923;border-radius:12px;padding:7px 4px;display:grid;place-items:center;gap:2px}.dock-button span{font-size:18px}.dock-button small{font-size:8px;letter-spacing:.05em}.dock-button.primary{background:linear-gradient(#1c86b7,#165c83);border-color:#54cfff}.dock-button.locked-soft{opacity:.65}
+.sheet,.overlay{position:fixed;inset:0;z-index:100;background:rgba(4,8,13,.62);backdrop-filter:blur(5px)}.sheet{display:flex;align-items:flex-end}.sheet-card{width:100%;max-height:74dvh;overflow:auto;background:#0e151f;border:1px solid #293548;border-radius:22px 22px 0 0;padding:10px 14px calc(14px + env(safe-area-inset-bottom))}.sheet-handle{width:44px;height:4px;border-radius:20px;background:#45536a;margin:0 auto 10px}.sheet-header,.power-head,.profile-head,.section-title{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.sheet-header h2,.power-head h2,.profile-head h2,.section-title h2,.section-title h3,.page-header h1{margin:0;font-size:18px}.sheet-header p,.power-head p,.section-title p,.page-header p{margin:2px 0 0;color:var(--muted);font-size:10px}.buy-mode{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}.buy-mode-btn{border:1px solid var(--line);background:#151d29;border-radius:10px;padding:7px}.buy-mode-btn.active{border-color:#62ccff;background:#17324a}.upgrade-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.upgrade-card{border:1px solid var(--line);background:#151d29;border-radius:12px;padding:10px;text-align:left}.upgrade-card strong{display:block;font-size:12px}.upgrade-card small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.upgrade-card .cost{margin-top:7px;font-weight:800;font-size:10px;color:#ffda72}.upgrade-card:disabled{opacity:.42}.close-btn{width:100%;border:1px solid var(--line);background:#182130;border-radius:11px;padding:9px;margin-top:10px}.close-btn.subtle{background:transparent;color:var(--muted)}
+.power-modal{display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top) + 78px) 10px 0;background:rgba(3,7,12,.2);backdrop-filter:none;pointer-events:none}.power-card{pointer-events:auto;width:min(720px,100%);background:rgba(12,19,29,.97);border:2px solid #56cfff;border-radius:17px;padding:12px;box-shadow:0 12px 30px rgba(0,0,0,.45)}.power-head small,.profile-head small,.story-content small{font-size:9px;color:#8cdfff;letter-spacing:.12em}.power-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.power-choice{min-width:0;border:1px solid var(--line);background:#151f2d;border-radius:12px;padding:9px;text-align:left}.power-choice .top{display:flex;align-items:center;justify-content:space-between;gap:5px}.power-choice strong{font-size:11px}.power-choice p{font-size:9px;color:#b1bdcd;margin:5px 0 0;line-height:1.25}.rarity{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}.rarity.common{color:#b9c2ce}.rarity.rare{color:#65baff}.rarity.epic{color:#bf82ff}.rarity.legendary{color:#ffc85b}.rarity.cosmic{color:#ff7bea}.tradeoff{margin-top:5px;font-size:8px;color:#ff9aaa}.power-choice:active{transform:scale(.98)}
+.story-modal{display:flex;align-items:center;justify-content:center;padding:16px}.story-card{width:min(650px,100%);background:#0f1722;border:1px solid #35445c;border-radius:20px;padding:16px;display:grid;grid-template-columns:72px 1fr;gap:13px;box-shadow:0 20px 60px rgba(0,0,0,.55)}.story-portrait{width:72px;height:82px;border-radius:16px;background:linear-gradient(145deg,#193451,#2d183f);display:grid;place-items:center;font-size:30px;font-weight:900;border:1px solid #3a4e68}.story-content p{font-size:14px;line-height:1.45;margin:6px 0 12px}.story-choices{display:grid;gap:7px}.story-choice{border:1px solid var(--line);background:#161f2c;border-radius:11px;padding:10px;text-align:left;font-size:11px}.story-choice small{display:block;color:var(--muted);margin-top:3px;letter-spacing:0}
+.profile-card{position:absolute;inset:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);max-width:650px;margin:auto;background:#0f1722;border:1px solid #314056;border-radius:20px;padding:14px;overflow:auto}.icon-btn{border:1px solid var(--line);background:#151e2a;border-radius:10px;min-width:38px;height:38px}.profile-desc{color:#aeb9c8;font-size:11px}.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.profile-stat{border:1px solid var(--line);background:#151d29;border-radius:10px;padding:8px;text-align:center}.profile-stat small{display:block;color:var(--muted);font-size:8px}.profile-stat strong{font-size:12px}.section-title.compact{margin:12px 0 7px}.section-title.compact h3{font-size:13px}.power-list,.discovery-list{display:grid;gap:5px}.power-row,.discovery-row{border:1px solid var(--line);background:#141d29;border-radius:9px;padding:8px;font-size:10px}.power-row{display:flex;justify-content:space-between;gap:8px}.power-row em{font-style:normal;color:var(--muted)}
+#ascensionScreen.active{display:flex;flex-direction:column;gap:10px;overflow:auto}.page-header{flex:0 0 auto}.page-header h1{font-size:20px}.ascension-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.card{background:#101823;border:1px solid var(--line);border-radius:16px;padding:12px}.ascension-summary>div{text-align:center}.ascension-summary small{display:block;color:var(--muted);font-size:8px}.ascension-summary strong{font-size:17px}.tree{flex:1;min-height:0;overflow:auto}.tree-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.tree-node{border:1px solid var(--line);background:#151e2b;border-radius:12px;padding:10px;text-align:left}.tree-node strong{font-size:11px}.tree-node small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.tree-node .node-cost{color:#e2b5ff;margin-top:6px;font-weight:800}.tree-node:disabled{opacity:.45}.ascend-button{border:1px solid #c27bff;background:linear-gradient(90deg,#54236f,#76389b);border-radius:13px;padding:12px;font-weight:900;font-size:12px}.ascend-button:disabled{opacity:.45}.ascend-note{text-align:center;color:var(--muted);font-size:9px;margin:0}.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 85px);transform:translateX(-50%);z-index:200;background:#172130;border:1px solid #40516a;border-radius:999px;padding:8px 12px;font-size:10px;box-shadow:0 7px 25px rgba(0,0,0,.4)}
+
+.info-tap{cursor:pointer}.mini-stat-btn{border:1px solid #253143;background:#111824;color:var(--muted);border-radius:8px;padding:4px 2px;text-align:center;font-size:9px;min-width:0}.mini-stat-btn b{color:var(--text)}
+.info-card{position:absolute;left:12px;right:12px;top:50%;transform:translateY(-50%);max-width:560px;margin:auto;background:#0f1722;border:1px solid #3b4c65;border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.6)}.info-card h2{font-size:18px;margin:0}.info-card p{font-size:12px;line-height:1.5;color:#b8c4d4;margin:8px 0}.info-facts{display:grid;gap:6px;margin-top:10px}.info-fact{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);background:#151e2a;border-radius:10px;padding:8px;font-size:10px}.info-fact span{color:var(--muted)}.info-close{width:100%;margin-top:12px;border:1px solid var(--line);background:#182130;border-radius:11px;padding:10px}.power-row-btn{width:100%;display:flex;justify-content:space-between;gap:8px;border:1px solid var(--line);background:#141d29;border-radius:9px;padding:9px;font-size:10px;text-align:left}.power-row-btn em{font-style:normal;color:var(--muted)}
+@media(max-width:420px){.screen{padding-left:8px;padding-right:8px}.fighter.hero{left:3%}.fighter.enemy{right:3%}.power-grid{grid-template-columns:1fr}.power-modal{padding-top:calc(env(safe-area-inset-top) + 55px)}.power-card{max-height:55dvh;overflow:auto}.story-card{grid-template-columns:52px 1fr;padding:12px}.story-portrait{width:52px;height:62px;font-size:24px}.upgrade-grid{grid-template-columns:1fr 1fr}.profile-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-height:700px){.brand-sub{display:none}.battlefield{min-height:180px}.fighter{transform:scale(.9);transform-origin:bottom center}.combat-hud{gap:3px}.dock-button{padding:5px 3px}.screen.active{gap:5px}.milestone-strip{padding:6px 8px}.mini-stats span{padding:3px 2px}}
+
+</style>
+</head>
+<body>
+  <main id="app" class="app-shell" aria-live="polite">
+    <section id="gameScreen" class="screen active">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-title">POWERFALL</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.1.1</div>
+        </div>
+        <div class="resource-strip">
+          <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
+          <button class="pill soul info-tap" id="soulsInfoBtn" type="button">S <span id="souls">0</span></button>
+        </div>
+      </header>
+
+      <section class="milestone-strip info-tap" id="milestoneInfo" role="button" tabindex="0">
+        <div>
+          <strong id="stageLabel">Stage 1</strong>
+          <span id="worldLabel">City</span>
+        </div>
+        <div class="milestone-next">
+          <span id="nextMilestoneIcon">PWR</span>
+          <span id="nextMilestoneText">Power at 10</span>
+        </div>
+      </section>
+
+      <section class="battlefield" id="battlefield">
+        <div class="background-layer bg-stars"></div>
+        <div class="background-layer bg-city"></div>
+        <div class="ground"></div>
+
+        <div class="fighter hero info-tap" id="heroFighter" aria-label="Your hero" role="button" tabindex="0">
+          <div class="aura" id="heroAura"></div>
+          <div class="cape"></div>
+          <div class="body">
+            <div class="head"><span class="eye left"></span><span class="eye right"></span></div>
+            <div class="torso"></div>
+            <div class="arm arm-left"></div><div class="arm arm-right"></div>
+            <div class="leg leg-left"></div><div class="leg leg-right"></div>
+          </div>
+          <div class="fighter-name">YOU</div>
+        </div>
+
+        <div class="fighter enemy info-tap" id="enemyFighter" aria-label="Enemy" role="button" tabindex="0">
+          <div class="enemy-aura"></div>
+          <div class="body enemy-body">
+            <div class="head enemy-head"><span class="enemy-eye left"></span><span class="enemy-eye right"></span></div>
+            <div class="torso enemy-torso"></div>
+            <div class="arm arm-left enemy-limb"></div><div class="arm arm-right enemy-limb"></div>
+            <div class="leg leg-left enemy-limb"></div><div class="leg leg-right enemy-limb"></div>
+          </div>
+          <div class="fighter-name" id="enemyName">Street Enforcer</div>
+        </div>
+
+        <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
+        <div id="damageLayer" class="damage-layer" aria-hidden="true"></div>
+
+        <div class="boss-banner hidden" id="bossBanner">WALL BOSS</div>
+      </section>
+
+      <section class="combat-hud">
+        <div class="bar-row">
+          <div class="bar-label"><span>YOU</span><span id="hpText">100 / 100</span></div>
+          <div class="bar"><div id="hpBar" class="bar-fill hp"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span id="enemyHpLabel">ENEMY</span><span id="enemyHpText">50 / 50</span></div>
+          <div class="bar"><div id="enemyHpBar" class="bar-fill enemy"></div></div>
+        </div>
+        <div class="mini-stats">
+          <button class="mini-stat-btn info-tap" id="damageInfoBtn" type="button">DMG <b id="damageStat">8</b></button>
+          <button class="mini-stat-btn info-tap" id="speedInfoBtn" type="button">SPD <b id="apsStat">1.0</b>/s</button>
+          <button class="mini-stat-btn info-tap" id="regenInfoBtn" type="button">REG <b id="regenStat">0%</b></button>
+          <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
+        </div>
+      </section>
+
+      <button id="powerAlert" class="power-alert hidden" type="button">
+        <span class="power-alert-icon">PWR</span>
+        <span><strong>POWER AWAKENING</strong><small id="powerAlertText">Choose a new ability</small></span>
+        <span class="queue-badge" id="powerQueueBadge">1</span>
+      </button>
+
+      <section class="bottom-dock">
+        <button id="burstBtn" class="dock-button secondary" type="button"><span>BR</span><small>BURST</small></button>
+        <button id="upgradeBtn" class="dock-button primary" type="button"><span>UP</span><small>UPGRADES</small></button>
+        <button id="profileBtn" class="dock-button secondary" type="button"><span>H</span><small>HERO</small></button>
+        <button id="ascensionNavBtn" class="dock-button secondary locked-soft" type="button"><span>AS</span><small>ASCEND</small></button>
+      </section>
+    </section>
+
+    <section id="ascensionScreen" class="screen">
+      <header class="page-header">
+        <button id="backToGameBtn" class="icon-btn" type="button" aria-label="Back to game">←</button>
+        <div><h1>Ascension</h1><p>Cash in progress. Keep what matters.</p></div>
+        <div class="pill soul">S <span id="ascensionSouls">0</span></div>
+      </header>
+      <section class="ascension-summary card">
+        <div><small>Highest Stage</small><strong id="highestStage">1</strong></div>
+        <div><small>Bosses Beaten</small><strong id="bossesBeaten">0</strong></div>
+        <div><small>Powers Found</small><strong id="powersFound">0</strong></div>
+        <div><small>Souls Now</small><strong id="soulsGain">0</strong></div>
+      </section>
+      <section class="tree card">
+        <div class="section-title"><div><h2>Soul Tree</h2><p>Permanent upgrades</p></div></div>
+        <div id="soulTree" class="tree-grid"></div>
+      </section>
+      <button id="ascendNowBtn" class="ascend-button" type="button">ASCEND FOR <span id="ascendButtonSouls">0</span> SOULS</button>
+      <p class="ascend-note">Ascension is voluntary. Death does not award souls.</p>
+    </section>
+
+    <div id="upgradeSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Run upgrades">
+      <div class="sheet-card">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div><h2>Run Upgrades</h2><p>Reset when you ascend</p></div>
+          <div class="pill">C <span id="sheetCoins">0</span></div>
+        </div>
+        <div class="buy-mode" role="group" aria-label="Buy amount">
+          <button class="buy-mode-btn active" data-buy="1" type="button">×1</button>
+          <button class="buy-mode-btn" data-buy="10" type="button">×10</button>
+          <button class="buy-mode-btn" data-buy="max" type="button">MAX</button>
+        </div>
+        <div id="upgradeGrid" class="upgrade-grid"></div>
+        <button id="closeUpgradeBtn" class="close-btn" type="button">Close</button>
+      </div>
+    </div>
+
+    <div id="powerModal" class="overlay power-modal hidden" role="dialog" aria-modal="false" aria-label="Choose a power">
+      <div class="power-card">
+        <div class="power-head">
+          <div><small>POWER AWAKENING</small><h2>Choose one</h2><p>Combat continues behind this panel.</p></div>
+          <div class="queue-badge big" id="powerModalQueue">1</div>
+        </div>
+        <div id="powerChoices" class="power-grid"></div>
+        <button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button>
+      </div>
+    </div>
+
+    <div id="storyModal" class="overlay story-modal hidden" role="dialog" aria-modal="true" aria-label="Story choice">
+      <div class="story-card">
+        <div class="story-portrait" id="storyPortrait">?</div>
+        <div class="story-content">
+          <small id="storySpeaker">UNKNOWN</small>
+          <p id="storyText">...</p>
+          <div id="storyChoices" class="story-choices"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="profileModal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Hero profile">
+      <div class="profile-card">
+        <div class="profile-head"><div><small>POWER PROFILE</small><h2 id="resonanceName">Emerging Hero</h2></div><button id="closeProfileBtn" class="icon-btn" type="button">X</button></div>
+        <p id="resonanceText" class="profile-desc">Your build has not settled into an archetype yet.</p>
+        <div id="profileStats" class="profile-stats"></div>
+        <div class="section-title compact"><div><h3>Current Powers</h3><p id="powerCountLabel">0 powers</p></div></div>
+        <div id="profilePowers" class="power-list"></div>
+        <div class="section-title compact"><div><h3>Discoveries</h3><p>Hidden evolutions you have found</p></div></div>
+        <div id="discoveryList" class="discovery-list"></div>
+      </div>
+    </div>
+
+
+    <div id="infoModal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Information">
+      <div class="info-card">
+        <div class="profile-head"><div><small>DETAILS</small><h2 id="infoTitle">Information</h2></div><button id="closeInfoBtn" class="icon-btn" type="button">X</button></div>
+        <p id="infoBody"></p>
+        <div id="infoFacts" class="info-facts"></div>
+        <button id="infoCloseBottom" class="info-close" type="button">Close</button>
+      </div>
+    </div>
+    <div id="toast" class="toast hidden" aria-live="assertive"></div>
+  </main>
+
+  <script>
+window.PF_CONFIG = {
+  saveVersion: 1,
+  startingStats: {
+    maxHp: 100,
+    damage: 8,
+    attackMs: 1000,
+    crit: 0.05,
+    regen: 0,
+    armor: 0,
+    dodge: 0
+  },
+  powerMilestones: [10,30,50,125,175,225,275,350,450,600],
+  wallBosses: [75,100,150,200,300,500,750,1000],
+  worlds: [
+    {min:1,name:'City',className:'world-city'},
+    {min:101,name:'Global Crisis',className:'world-global'},
+    {min:251,name:'Planetary',className:'world-planetary'},
+    {min:501,name:'Cosmic',className:'world-cosmic'}
+  ],
+  storyStages: [1,30,75,100,200],
+  soulTree: [
+    {id:'might',name:'Eternal Might',icon:'STR',desc:'+15% permanent damage per rank',baseCost:3,max:10},
+    {id:'fortune',name:'Soul Fortune',icon:'C',desc:'+20% coin gain per rank',baseCost:4,max:10},
+    {id:'survival',name:'Enduring Spark',icon:'HP',desc:'+12% starting HP per rank',baseCost:4,max:10},
+    {id:'instinct',name:'Killer Instinct',icon:'CRT',desc:'+2% starting crit per rank',baseCost:6,max:8},
+    {id:'choice',name:'Expanded Awakening',icon:'DNA',desc:'Adds a 4th power choice',baseCost:14,max:1},
+    {id:'reroll',name:'Mutation Reroll',icon:'RNG',desc:'Unlocks one reroll per awakening',baseCost:18,max:1},
+    {id:'autobuy',name:'Combat Automation',icon:'TEC',desc:'Unlocks run-upgrade auto-buy later',baseCost:25,max:1},
+    {id:'bossbane',name:'Bossbane',icon:'BOS',desc:'+20% damage to bosses per rank',baseCost:8,max:8}
+  ]
+};
+
+</script>
+  <script>
+(function(){
+  const p=(id,name,icon,rarity,desc,effect,tags,tradeoff='',weight=1)=>({id,name,icon,rarity,desc,effect,tags,tradeoff,weight});
+  window.PF_POWERS=[
+    p('super_strength','Super Strength','STR','common','Damage ×1.45',s=>{s.damageMult*=1.45},['strength']),
+    p('iron_skin','Iron Skin','ARM','common','Max HP ×1.75 and armour +18%',s=>{s.maxHp*=1.75;s.hp*=1.75;s.armor+=.18;s.attackMs*=1.20},['durability','metal'],'Attack speed ×0.8'),
+    p('hyper_speed','Hyper Speed','SPD','rare','Attack speed ×1.45 and dodge +8%',s=>{s.attackMs*=.69;s.dodge+=.08},['speed']),
+    p('regeneration','Regeneration','DNA','common','Regenerate 2.2% max HP each second',s=>{s.regen+=.022},['regen']),
+    p('laser_vision','Laser Vision','EYE','rare','Adds a ranged energy strike and +20 flat damage',s=>{s.flatDamage+=20;s.visual.add('vision')},['vision','energy']),
+    p('flight','Flight','FLY','rare','Damage +12%, dodge +12%',s=>{s.damageMult*=1.12;s.dodge+=.12;s.visual.add('flight')},['flight']),
+    p('chain_lightning','Chain Lightning','ELC','rare','30% chance to strike twice',s=>{s.doubleHit+=.30;s.visual.add('lightning')},['lightning','energy']),
+    p('pyrokinesis','Pyrokinesis','FIR','rare','Damage ×1.30 and ignite visual attacks',s=>{s.damageMult*=1.30;s.visual.add('fire')},['fire','energy']),
+    p('cryokinesis','Cryokinesis','ICE','rare','Enemy attack speed −18%',s=>{s.enemySlow*=1.18},['ice']),
+    p('telekinesis','Telekinesis','PSI','rare','Damage ×1.25 and crit +8%',s=>{s.damageMult*=1.25;s.crit+=.08;s.visual.add('psychic')},['psychic']),
+    p('phase_shift','Phase Shift','PHS','rare','Dodge +22%',s=>{s.dodge+=.22;s.visual.add('phase')},['phase']),
+    p('vampirism','Vampirism','VMP','epic','Heal for 14% of damage dealt',s=>{s.lifesteal+=.14;s.visual.add('dark')},['dark','regen']),
+    p('berserker','Berserker','RGE','rare','Below 40% HP, deal ×3 damage',s=>{s.berserk=true},['rage','strength']),
+    p('glass_cannon','Glass Cannon','BST','rare','Damage ×2.1',s=>{s.damageMult*=2.1;s.maxHp*=.55;s.hp=Math.min(s.hp,s.maxHp)},['energy','combat'],'Max HP ×0.55'),
+    p('titan_body','Titan Body','TIT','epic','Damage ×1.8, max HP ×1.6',s=>{s.damageMult*=1.8;s.maxHp*=1.6;s.hp*=1.6;s.attackMs*=1.28},['strength','durability'],'Attack speed ×0.78'),
+    p('immortal_cells','Immortal Cells','REV','epic','Revive once at 45% HP',s=>{s.revives+=1;s.visual.add('regen')},['regen','durability']),
+    p('solar_absorption','Solar Absorption','SOL','epic','Damage ×1.35 and regen +1%/s',s=>{s.damageMult*=1.35;s.regen+=.01;s.visual.add('solar')},['solar','energy']),
+    p('thunder_body','Thunder Body','THN','epic','HP ×1.35, damage ×1.18',s=>{s.maxHp*=1.35;s.hp*=1.35;s.damageMult*=1.18;s.visual.add('lightning')},['lightning','durability']),
+    p('spider_reflexes','Spider Reflexes','REF','rare','Dodge +18%, crit +10%',s=>{s.dodge+=.18;s.crit+=.10},['agility','reflex']),
+    p('precognition','Precognition','PRE','epic','Dodge +15%, crit +18%',s=>{s.dodge+=.15;s.crit+=.18;s.visual.add('psychic')},['reflex','psychic']),
+    p('sonic_boom','Sonic Boom','SON','rare','Attack speed +18%, damage +15%',s=>{s.attackMs*=.82;s.damageMult*=1.15},['sound','speed']),
+    p('magnetism','Magnetism','MAG','rare','Crit +12%, damage +20%',s=>{s.crit+=.12;s.damageMult*=1.20},['metal','psychic']),
+    p('technopathy','Technopathy','TEC','rare','Attack speed +12%, crit +10%',s=>{s.attackMs*=.88;s.crit+=.10},['tech']),
+    p('nanite_swarm','Nanite Swarm','NAN','epic','Regen +2.8%/s',s=>{s.regen+=.028;s.visual.add('regen')},['tech','regen']),
+    p('cosmic_force','Cosmic Force','COS','legendary','Damage ×1.65',s=>{s.damageMult*=1.65;s.visual.add('cosmic')},['cosmic','energy']),
+    p('cosmic_awareness','Cosmic Awareness','COS','legendary','Crit +25%, dodge +10%',s=>{s.crit+=.25;s.dodge+=.10;s.visual.add('cosmic')},['cosmic','psychic']),
+    p('reality_flicker','Reality Flicker','VAR','legendary','Dodge +30%',s=>{s.dodge+=.30;s.visual.add('cosmic')},['reality']),
+    p('probability_manip','Probability Manipulation','RNG','legendary','Crit +22%, dodge +14%',s=>{s.crit+=.22;s.dodge+=.14},['reality','psychic']),
+    p('gravity_crush','Gravity Crush','GRV','epic','Burst damage ×6',s=>{s.burstMult=Math.max(s.burstMult,6);s.visual.add('psychic')},['gravity','strength']),
+    p('time_dilation','Time Dilation','TIM','legendary','Attack speed +30%, dodge +12%',s=>{s.attackMs*=.70;s.dodge+=.12},['time','speed']),
+    p('adaptive_evolution','Adaptive Evolution','MUT','epic','Each kill adds +1% run damage',s=>{s.adaptive=true},['mutation']),
+    p('clone_strike','Clone Strike','CLN','epic','25% chance for an extra strike',s=>{s.doubleHit+=.25},['clone']),
+    p('power_mimicry','Power Mimicry','DNA','legendary','Damage +20%, crit +12%, dodge +8%',s=>{s.damageMult*=1.2;s.crit+=.12;s.dodge+=.08},['mutation','cosmic']),
+    p('black_hole_core','Black Hole Core','BLK','cosmic','Damage ×3.0',s=>{s.damageMult*=3;s.regen*=.5;s.attackMs*=1.25;s.visual.add('cosmic')},['cosmic','gravity'],'Regen ×0.5, attack speed ×0.8'),
+    p('unstable_mutation','Unstable Mutation','MUT','epic','Damage ×2.0 and crit +15%',s=>{s.damageMult*=2;s.crit+=.15;s.maxHp*=.70;s.hp=Math.min(s.hp,s.maxHp)},['mutation'],'Max HP ×0.70'),
+    p('kinetic_adaptation','Kinetic Adaptation','VAR','epic','Removes 20% of attack-speed penalties and damage +12%',s=>{s.attackMs*=.80;s.damageMult*=1.12},['speed','mutation']),
+    p('energy_absorption','Energy Absorption','ABS','epic','Regen +1.5%/s, damage +22%',s=>{s.regen+=.015;s.damageMult*=1.22},['energy','regen']),
+    p('shadow_form','Shadow Form','SHD','epic','Dodge +17%, damage +18%',s=>{s.dodge+=.17;s.damageMult*=1.18;s.visual.add('dark')},['dark','phase']),
+    p('battle_trance','Battle Trance','CBT','rare','Damage +25%, attack speed +10%',s=>{s.damageMult*=1.25;s.attackMs*=.90},['combat','rage']),
+    p('absolute_zero','Absolute Zero','ZER','legendary','Enemy attack speed −28%, damage +22%',s=>{s.enemySlow*=1.28;s.damageMult*=1.22},['ice','cosmic']),
+    p('plasma_blast','Plasma Blast','PLS','epic','+45 flat damage and crit +8%',s=>{s.flatDamage+=45;s.crit+=.08;s.visual.add('fire')},['energy','fire']),
+    p('invisibility','Invisibility','INV','rare','Dodge +25%',s=>{s.dodge+=.25;s.visual.add('phase')},['stealth','phase']),
+    p('elastic_body','Elastic Body','VAR','rare','HP ×1.30, dodge +10%',s=>{s.maxHp*=1.3;s.hp*=1.3;s.dodge+=.10},['mutation','durability']),
+    p('toxic_blood','Toxic Blood','MUT','rare','Damage +25% and lifesteal +6%',s=>{s.damageMult*=1.25;s.lifesteal+=.06;s.maxHp*=.88;s.hp=Math.min(s.hp,s.maxHp)},['toxin','regen'],'Max HP ×0.88'),
+    p('worldbreaker','Worldbreaker Strength','WRL','cosmic','Damage ×2.4',s=>{s.damageMult*=2.4;s.attackMs*=1.18},['strength','cosmic'],'Attack speed ×0.85'),
+    p('cellular_rebirth','Cellular Rebirth','REB','legendary','Regen +5%/s, gain one revive',s=>{s.regen+=.05;s.revives+=1;s.visual.add('regen')},['regen','cosmic']),
+    p('temporal_speed','Temporal Speed','TMP','cosmic','Attack speed ×1.7, dodge +15%',s=>{s.attackMs*=.59;s.dodge+=.15},['speed','time','cosmic'])
+  ];
+
+  window.PF_COMBOS=[
+    {id:'solar_paragon',name:'Solar Paragon',needs:['strength','flight','vision','durability'],bonus:'Damage ×1.25',apply:s=>{s.damageMult*=1.25;s.visual.add('solar');s.visual.add('flight')},nod:'Your build has unmistakable classic flying-brick energy — very Superman-coded.'},
+    {id:'scarlet_speedster',name:'Scarlet Speedster',needs:['speed','time'],bonus:'Attack speed ×1.20',apply:s=>{s.attackMs*=.83},nod:'Time and impossible speed. You are deep in Flash-like territory.'},
+    {id:'storm_sovereign',name:'Storm Sovereign',needs:['lightning','strength','durability'],bonus:'Damage ×1.20, HP ×1.15',apply:s=>{s.damageMult*=1.2;s.maxHp*=1.15;s.hp*=1.15},nod:'Thunder, toughness and raw force — strong Thor-like energy.'},
+    {id:'wall_crawler',name:'Wall-Crawler',needs:['agility','reflex'],bonus:'Dodge +12%',apply:s=>{s.dodge+=.12},nod:'Your reactions are getting ridiculous. Very Spider-Man-coded.'},
+    {id:'feral_immortal',name:'Feral Immortal',needs:['regen','rage','combat'],bonus:'Lifesteal +10%',apply:s=>{s.lifesteal+=.10},nod:'You heal, rage and keep coming. Wolverine/Deadpool-style vibes.'},
+    {id:'gamma_juggernaut',name:'Gamma Juggernaut',needs:['strength','rage','mutation'],bonus:'Damage ×1.30 below 50% HP',apply:s=>{s.gammaRage=true},nod:'The angrier you get, the worse everyone else’s day becomes. Hulk-ish.'},
+    {id:'arc_knight',name:'Arc Knight',needs:['tech','energy','flight'],bonus:'Crit +12%',apply:s=>{s.crit+=.12},nod:'Armoured, airborne and energy-heavy — very Iron Man-ish.'},
+    {id:'psionic_apex',name:'Psionic Apex',needs:['psychic','phase'],bonus:'Dodge +10%, damage ×1.12',apply:s=>{s.dodge+=.10;s.damageMult*=1.12},nod:'Mental power plus intangibility gives serious high-tier psychic hero vibes.'},
+    {id:'cosmic_herald',name:'Cosmic Herald',needs:['cosmic','energy','flight'],bonus:'Damage ×1.35',apply:s=>{s.damageMult*=1.35;s.visual.add('cosmic')},nod:'You are no longer operating on normal superhero rules. Cosmic herald territory.'},
+    {id:'thermal_shock',name:'Thermal Shock',needs:['fire','ice'],bonus:'Damage ×1.18',apply:s=>{s.damageMult*=1.18},nod:'Fire and ice stopped fighting each other and became a weapon.'},
+    {id:'unbreakable_motion',name:'Unbreakable Motion',needs:['metal','speed'],bonus:'Negates some heavy-body speed loss',apply:s=>{s.attackMs*=.82},nod:'A heavy body moving far faster than it has any right to.'},
+    {id:'void_revenant',name:'Void Revenant',needs:['dark','phase','regen'],bonus:'Dodge +10%, regen +1%/s',apply:s=>{s.dodge+=.10;s.regen+=.01},nod:'You are becoming less “hero” and more “thing that refuses to die.”'}
+  ];
+})();
+
+</script>
+  <script>
+(function(){
+  const normal=[
+    ['Street Enforcer','brawler'],['Mutant Runner','speed'],['Rogue Android','tech'],['Gamma Brute','tank'],
+    ['Psionic Hunter','psychic'],['Void Stalker','phase'],['Armoured Vanguard','tank'],['Plasma Raider','energy']
+  ];
+  const bosses={
+    75:{name:'The Null Warden',icon:'Ø',hp:10.5,damage:2.1,speed:.9,trait:'Power suppression field'},
+    100:{name:'Atlas Breaker',icon:'A',hp:16,damage:2.6,speed:.85,trait:'Planet-class strength'},
+    150:{name:'Chronarch',icon:'C',hp:24,damage:3.1,speed:.72,trait:'Temporal assault'},
+    200:{name:'The Living Engine',icon:'E',hp:36,damage:3.7,speed:.82,trait:'Adaptive armour'},
+    300:{name:'World-Eater Spawn',icon:'W',hp:55,damage:4.4,speed:.76,trait:'Cosmic hunger'},
+    500:{name:'The Pale Star',icon:'STAR',hp:90,damage:5.3,speed:.70,trait:'Reality pressure'},
+    750:{name:'Crown of Nothing',icon:'◉',hp:145,damage:6.2,speed:.64,trait:'Void sovereignty'},
+    1000:{name:'THE FIRST POWER',icon:'∞',hp:240,damage:7.5,speed:.58,trait:'Origin-class entity'}
+  };
+  window.PF_ENEMIES={
+    get(stage){
+      const wall=bosses[stage];
+      if(wall){
+        const scale=Math.pow(1.092,stage-1);
+        return {name:wall.name,icon:wall.icon,boss:true,wall:true,trait:wall.trait,maxHp:Math.round((52+stage*4.2)*scale*wall.hp),damage:(4.5+stage*.52)*Math.pow(1.035,stage-1)*wall.damage,attackMs:1300*wall.speed};
+      }
+      const mini=stage%25===0;
+      const idx=Math.min(normal.length-1,Math.floor((stage-1)/35)%normal.length);
+      const [name,type]=normal[idx];
+      const scale=Math.pow(1.082,stage-1);
+      return {name:(mini?'ELITE • ':'')+name,icon:'',boss:mini,wall:false,trait:type,maxHp:Math.round((48+stage*3.4)*scale*(mini?3.2:1)),damage:(4+stage*.42)*Math.pow(1.028,stage-1)*(mini?1.55:1),attackMs:Math.max(520,1380-stage*2.4)*(mini?.9:1)};
+    },
+    isWallBoss(stage){return !!bosses[stage]},
+    nextWallBoss(stage){const all=Object.keys(bosses).map(Number).sort((a,b)=>a-b);return all.find(x=>x>=stage)||null}
+  };
+})();
+
+</script>
+  <script>
+(function(){
+  window.PF_STORY={
+    1:{id:'awakening',speaker:'UNKNOWN VOICE',portrait:'?',text:'You wake in a city that is already falling apart. Something inside you feels wrong — or powerful. A voice breaks through your phone.',choices:[
+      {text:'“Tell me what happened to me.”',sub:'Scientific route',flag:'curious',effect:s=>{s.storyDamageBonus*=1.02}},
+      {text:'“Who do I need to fight?”',sub:'Aggressive route • +5% run damage',flag:'aggressive',effect:s=>{s.storyDamageBonus*=1.05}},
+      {text:'“Can this be reversed?”',sub:'Control route • +5% max HP',flag:'control',effect:s=>{s.maxHp*=1.05;s.hp*=1.05}}
+    ]},
+    30:{id:'contact',speaker:'DR. MIRA VALE',portrait:'M',text:'“Your cells are rewriting themselves around stress. Every fight is teaching your body new rules. That should be impossible.”',choices:[
+      {text:'“Then help me control it.”',sub:'+8% regen effectiveness this run',flag:'mira_trust',effect:s=>{s.regen*=1.08}},
+      {text:'“I don’t need control.”',sub:'+8% damage this run',flag:'independent',effect:s=>{s.damageMult*=1.08}},
+      {text:'“Who else knows?”',sub:'Unlocks extra lore later',flag:'conspiracy',effect:s=>{s.storyCoinBonus*=1.05}}
+    ]},
+    75:{id:'warden',speaker:'THE NULL WARDEN',portrait:'Ø',text:'“You are not a person with powers. You are an uncontrolled event. I was built to end events.”',choices:[
+      {text:'“Come and try.”',sub:'+10% boss damage for this fight',flag:'defiant',effect:s=>{s.tempBossBonus*=1.10}},
+      {text:'“Who built you?”',sub:'Gain +8% crit for this fight',flag:'investigate',effect:s=>{s.crit+=.08}},
+      {text:'Say nothing.',sub:'+10% dodge for this fight',flag:'silent',effect:s=>{s.dodge+=.10}}
+    ]},
+    100:{id:'atlas',speaker:'DR. MIRA VALE',portrait:'M',text:'“Whatever you were at the start of this, you aren’t that anymore. The question is whether you’re becoming a protector… or the next disaster.”',choices:[
+      {text:'“I decide what I become.”',sub:'+5% all-round combat efficiency',flag:'self_defined',effect:s=>{s.damageMult*=1.05;s.maxHp*=1.05;s.hp*=1.05}},
+      {text:'“Then point me at the disaster.”',sub:'+12% boss damage this run',flag:'protector',effect:s=>{s.tempBossBonus*=1.12}},
+      {text:'“Maybe they should be afraid.”',sub:'+15% damage, −8% max HP',flag:'menace',effect:s=>{s.damageMult*=1.15;s.maxHp*=.92;s.hp=Math.min(s.hp,s.maxHp)}}
+    ]},
+    200:{id:'engine',speaker:'THE LIVING ENGINE',portrait:'E',text:'“Pattern recognised. You accumulate contradictions and call them powers. I call them instability.”',choices:[
+      {text:'“Instability works.”',sub:'Random-looking, reliable +12% damage',flag:'chaos',effect:s=>{s.damageMult*=1.12}},
+      {text:'“Then adapt faster.”',sub:'+12% attack speed',flag:'challenge',effect:s=>{s.attackMs*=.88}},
+      {text:'“I’m still human.”',sub:'+12% max HP and regen',flag:'human',effect:s=>{s.maxHp*=1.12;s.hp*=1.12;s.regen+=.005}}
+    ]}
+  };
+})();
+
+</script>
+  <script>
+(function(){
+  const KEY='powerfall_ascension_save_v1';
+  window.PF_SAVE={
+    load(){
+      try{
+        const raw=localStorage.getItem(KEY); if(!raw)return null;
+        const data=JSON.parse(raw); if(!data||data.saveVersion!==PF_CONFIG.saveVersion)return null;
+        return data;
+      }catch(e){return null}
+    },
+    write(data){
+      try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){return false}
+    },
+    clear(){try{localStorage.removeItem(KEY)}catch(e){}}
+  };
+})();
+
+</script>
+  <script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const fmt=n=>{n=Math.max(0,Number(n)||0);if(n<1000)return Math.floor(n).toString();const u=['K','M','B','T','Qa','Qi'];let i=-1;while(n>=1000&&i<u.length-1){n/=1000;i++}return n.toFixed(n>=100?0:n>=10?1:2)+u[i]};
+const byId=id=>PF_POWERS.find(p=>p.id===id);
+
+const meta={
+  souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,
+  soulTree:{might:0,fortune:0,survival:0,instinct:0,choice:0,reroll:0,autobuy:0,bossbane:0},
+  discoveries:[],storyFlags:[],seenStories:[]
+};
+let s={};
+let timers={attack:null,enemy:null,tick:null,save:null};
+let powerQueue=[];
+let activePowerChoices=[];
+let powerModalVisible=false;
+let storyPaused=false;
+let buyMode='1';
+let lastAttackMs=0;
+let lastEnemyMs=0;
+let lastTick=performance.now();
+
+function defaultRun(){
+  const t=meta.soulTree;
+  const hp=PF_CONFIG.startingStats.maxHp*(1+t.survival*.12);
+  return {
+    stage:1,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
+    attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,armor:0,dodge:0,
+    lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
+    gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
+    powers:[],combos:[],visual:[],kills:0,runBosses:0,
+    upgrades:{damage:0,speed:0,health:0,regen:0},
+    enemy:null,enemyHp:0,enemyMaxHp:0,
+    triggeredMilestones:[],bossRewards:[]
+  };
+}
+function visualSet(){return new Set(s.visual||[])}
+function setVisual(set){s.visual=[...set]}
+
+function freshRun(){
+  s=defaultRun(); powerQueue=[]; activePowerChoices=[]; powerModalVisible=false; storyPaused=false;
+  spawnEnemy(); maybeStory(1,true); renderAll(); scheduleSave();
+}
+
+function totalDamage(){
+  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);
+  if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
+  if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
+  if(s.enemy&&s.enemy.boss)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
+  return d;
+}
+function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow)}
+
+function spawnEnemy(){
+  s.enemy=PF_ENEMIES.get(s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+  updateEnemyTimer();
+  if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
+  renderAll();
+}
+
+function playerAttack(manual=false){
+  if(storyPaused||!s.enemy||s.enemyHp<=0)return;
+  const now=performance.now(); if(!manual&&now-lastAttackMs<Math.max(100,s.attackMs*.65))return; lastAttackMs=now;
+  let damage=totalDamage()*(manual?s.burstMult:1);
+  const crit=Math.random()<clamp(s.crit,0,.9); if(crit)damage*=2;
+  dealDamageToEnemy(damage,crit,manual);
+  if(!manual&&Math.random()<clamp(s.doubleHit,0,.85)&&s.enemyHp>0){setTimeout(()=>{if(!storyPaused&&s.enemyHp>0)dealDamageToEnemy(totalDamage()*.72,false,false,true)},75)}
+}
+function dealDamageToEnemy(amount,crit,manual,echo=false){
+  s.enemyHp=Math.max(0,s.enemyHp-amount);
+  if(s.lifesteal>0)s.hp=Math.min(s.maxHp,s.hp+amount*s.lifesteal);
+  animatePlayerAttack(crit,manual,echo); floatDamage(amount,crit,false);
+  if(s.enemyHp<=0) enemyDefeated();
+  renderHUD();
+}
+function enemyAttack(){
+  if(storyPaused||!s.enemy||s.enemyHp<=0)return;
+  const now=performance.now(); if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return; lastEnemyMs=now;
+  if(Math.random()<clamp(s.dodge,0,.75)){toast('DODGED');return}
+  let dmg=s.enemy.damage*(.88+Math.random()*.24); dmg*=Math.max(.15,1-clamp(s.armor,0,.72));
+  s.hp-=dmg; animateEnemyAttack(); floatDamage(dmg,false,true);
+  if(s.hp<=0){
+    if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('REV IMMORTAL CELLS REBUILT YOU')}
+    else{
+      s.hp=s.maxHp; const old=s.stage; s.stage=Math.max(1,s.stage-(s.enemy?.wall?5:2)); s.coins=Math.floor(s.coins*.90);
+      toast(`KNOCKED BACK ${old-s.stage} STAGES`); spawnEnemy();
+    }
+  }
+  renderHUD();
+}
+
+function enemyDefeated(){
+  const defeatedStage=s.stage; const wasWall=!!s.enemy.wall; const wasBoss=!!s.enemy.boss;
+  s.kills++; if(s.adaptive)s.adaptiveBonus*=1.01;
+  let reward=(7+defeatedStage*2.8)*Math.pow(1.045,defeatedStage)*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus;
+  if(wasBoss)reward*=wasWall?6:3;
+  s.coins+=Math.floor(reward);
+  if(wasWall){
+    s.runBosses++; meta.bossesBeaten++; if(!s.bossRewards.includes(defeatedStage)){s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('BOS WALL BOSS DEFEATED — MUTATION EARNED')}
+  }
+  s.stage++; meta.bestStage=Math.max(meta.bestStage,s.stage);
+  checkPowerMilestone(s.stage); checkCombos(); spawnEnemy(); scheduleSave();
+}
+
+function checkPowerMilestone(stage){
+  if(PF_CONFIG.powerMilestones.includes(stage)&&!s.triggeredMilestones.includes(stage)){
+    s.triggeredMilestones.push(stage); queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
+  }
+}
+function queuePower(item){powerQueue.push(item);updatePowerAlert();if(!powerModalVisible)showPowerModal()}
+
+function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
+function rollPowerChoices(item){
+  const min=rarityValue(item.minRarity||'common');
+  const owned=new Set(s.powers);
+  let pool=PF_POWERS.filter(p=>!owned.has(p.id)); if(pool.length<3)pool=PF_POWERS.slice();
+  const stage=item.stage||s.stage;
+  const weights={common:stage<80?48:25,rare:35,epic:stage<50?8:25,legendary:stage<100?1:12,cosmic:stage<250?0:5};
+  function pickOne(exclude){
+    let available=pool.filter(p=>!exclude.has(p.id)&&rarityValue(p.rarity)>=min);
+    if(available.length===0)available=pool.filter(p=>!exclude.has(p.id));
+    const weighted=[]; for(const x of available){let w=weights[x.rarity]??1;if(rarityValue(x.rarity)<min)w=.1;for(let i=0;i<Math.ceil(w*x.weight);i++)weighted.push(x)}
+    return weighted[Math.floor(Math.random()*weighted.length)]||available[Math.floor(Math.random()*available.length)];
+  }
+  const count=3+(meta.soulTree.choice>0?1:0),picked=[],used=new Set();
+  for(let i=0;i<count;i++){const x=pickOne(used);if(x){picked.push(x);used.add(x.id)}}
+  return picked;
+}
+function showPowerModal(){
+  if(powerQueue.length===0)return; powerModalVisible=true; $('powerModal').classList.remove('hidden');
+  const item=powerQueue[0]; activePowerChoices=rollPowerChoices(item); renderPowerChoices(item);
+}
+function hidePowerModal(){$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
+function choosePower(id){
+  const power=byId(id); if(!power)return;
+  if(!s.powers.includes(power.id))s.powers.push(power.id); meta.totalPowersFound++;
+  const vis=visualSet(); s.visual=[...vis]; power.effect(s); setVisual(new Set(s.visual||[]));
+  const item=powerQueue.shift(); activePowerChoices=[]; toast(`${power.icon} ${power.name} ACQUIRED`); checkCombos(); updateAttackTimer();
+  if(powerQueue.length)showPowerModal(); else hidePowerModal(); renderAll(); scheduleSave();
+}
+function checkCombos(){
+  const tags=new Set(); for(const id of s.powers){const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))}
+  for(const combo of PF_COMBOS){
+    if(s.combos.includes(combo.id))continue;
+    if(combo.needs.every(n=>tags.has(n))){s.combos.push(combo.id);meta.discoveries=Array.from(new Set([...meta.discoveries,combo.id]));combo.apply(s);toast(`COS HIDDEN EVOLUTION: ${combo.name}`)}
+  }
+}
+function currentResonance(){
+  const found=PF_COMBOS.filter(c=>s.combos.includes(c.id));
+  if(found.length)return found[found.length-1];
+  const tags=new Set();s.powers.forEach(id=>{const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))});
+  let best=null,bestScore=0; for(const c of PF_COMBOS){const score=c.needs.filter(n=>tags.has(n)).length/c.needs.length;if(score>bestScore){bestScore=score;best=c}}
+  if(best&&bestScore>=.5)return {name:'Emerging '+best.name,nod:`Your powers are ${Math.round(bestScore*100)}% aligned with ${best.name}.`,bonus:'Not fully awakened yet.'};
+  return {name:'Emerging Hero',nod:'Your power set has not settled into a clear archetype yet.',bonus:'Keep combining powers.'};
+}
+
+function maybeStory(stage,force){
+  const scene=PF_STORY[stage]; if(!scene)return; if(meta.seenStories.includes(scene.id)&&!force)return;
+  meta.seenStories.push(scene.id); storyPaused=true; clearCombatTimers();
+  $('storySpeaker').textContent=scene.speaker;$('storyPortrait').textContent=scene.portrait;$('storyText').textContent=reactiveStoryText(scene.text);
+  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{meta.storyFlags.push(ch.flag);ch.effect(s);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
+  $('storyModal').classList.remove('hidden');
+}
+function reactiveStoryText(base){
+  const r=currentResonance(); if(s.powers.length>=3&&!r.name.startsWith('Emerging'))return base+` “And that ${r.name} pattern you’re developing? It’s getting harder to ignore.”`;
+  return base;
+}
+
+function upgradeDefs(){return [
+  {id:'damage',icon:'STR',name:'Strength',desc:'+18% base damage',base:22,growth:1.48,apply:()=>{s.baseDamage*=1.18}},
+  {id:'speed',icon:'SPD',name:'Combat Speed',desc:'6% faster attacks',base:55,growth:1.55,apply:()=>{s.attackMs=Math.max(120,s.attackMs*.94)}},
+  {id:'health',icon:'HP',name:'Endurance',desc:'+22% max HP',base:42,growth:1.50,apply:()=>{s.maxHp*=1.22;s.hp*=1.22}},
+  {id:'regen',icon:'REG',name:'Recovery',desc:'+0.35% HP/sec',base:85,growth:1.58,apply:()=>{s.regen+=.0035}}
+]}
+function upgradeCost(def,level){return Math.floor(def.base*Math.pow(def.growth,level))}
+function buyUpgrade(id){
+  const def=upgradeDefs().find(x=>x.id===id);if(!def)return;
+  let count=buyMode==='max'?999:+buyMode,bought=0;
+  while(count-->0&&bought<100){const lvl=s.upgrades[id];const cost=upgradeCost(def,lvl);if(s.coins<cost)break;s.coins-=cost;s.upgrades[id]++;def.apply();bought++}
+  if(bought){toast(`UP ${def.name} +${bought}`);updateAttackTimer();renderAll();scheduleSave()}
+}
+
+function soulNodeCost(node){const rank=meta.soulTree[node.id]||0;return Math.floor(node.baseCost*Math.pow(1.65,rank))}
+function buySoulNode(id){const node=PF_CONFIG.soulTree.find(n=>n.id===id);if(!node)return;const rank=meta.soulTree[id]||0;if(rank>=node.max)return;const cost=soulNodeCost(node);if(meta.souls<cost)return;meta.souls-=cost;meta.soulTree[id]++;toast(`${node.icon} ${node.name} upgraded`);renderAscension();scheduleSave()}
+function ascensionGain(){return Math.max(0,Math.floor(Math.pow(Math.max(0,meta.bestStage-55),1.15)/5 + s.runBosses*2))}
+function doAscend(){const gain=ascensionGain();if(gain<1)return;meta.souls+=gain;meta.ascensions++;meta.runNumber++;freshRun();showScreen('gameScreen');toast(`PHS ASCENDED +${gain} SOULS`)}
+
+function worldFor(stage){return [...PF_CONFIG.worlds].reverse().find(w=>stage>=w.min)||PF_CONFIG.worlds[0]}
+function nextMilestone(stage){
+  const events=[];PF_CONFIG.powerMilestones.forEach(x=>{if(x>=stage)events.push({stage:x,type:'power',icon:'DNA'})});PF_CONFIG.wallBosses.forEach(x=>{if(x>=stage)events.push({stage:x,type:'boss',icon:'BOS'})});events.sort((a,b)=>a.stage-b.stage||(a.type==='boss'?-1:1));return events[0]||{stage:stage+100,type:'unknown',icon:'?'};
+}
+function updatePowerAlert(){
+  if(powerQueue.length){$('powerAlert').classList.remove('hidden');$('powerQueueBadge').textContent=powerQueue.length;$('powerAlertText').textContent=powerQueue.length>1?`${powerQueue.length} awakenings waiting`:'Choose a new ability'}else $('powerAlert').classList.add('hidden');
+}
+
+function renderHUD(){
+  $('coins').textContent=fmt(s.coins);$('souls').textContent=fmt(meta.souls);$('stageLabel').textContent=`Stage ${s.stage}`;$('worldLabel').textContent=worldFor(s.stage).name;
+  const next=nextMilestone(s.stage+1);$('nextMilestoneIcon').textContent=next.icon;$('nextMilestoneText').textContent=`${next.type==='boss'?'Wall Boss':'Power'} at ${next.stage} • ${Math.max(0,next.stage-s.stage)} to go`;
+  $('enemyName').textContent=s.enemy?.name||'Enemy';$('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.boss?'ELITE':'ENEMY';$('bossBanner').classList.toggle('hidden',!s.enemy?.wall);
+  $('hpText').textContent=`${fmt(s.hp)} / ${fmt(s.maxHp)}`;$('enemyHpText').textContent=`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`;
+  $('hpBar').style.width=`${clamp(s.hp/s.maxHp*100,0,100)}%`;$('enemyHpBar').style.width=`${clamp(s.enemyHp/s.enemyMaxHp*100,0,100)}%`;
+  $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(s.regen*100).toFixed(1)+'%';$('critStat').textContent=Math.round(clamp(s.crit,0,.9)*100)+'%';
+  updatePowerAlert(); applyHeroVisuals();
+}
+function applyHeroVisuals(){
+  const el=$('heroFighter');el.className='fighter hero';const v=new Set(s.visual||[]);if(v.has('flight'))el.classList.add('flying');if(v.has('lightning'))el.classList.add('lightning');if(v.has('fire')||v.has('solar'))el.classList.add('fire');if(v.has('cosmic'))el.classList.add('cosmic');if(v.has('regen'))el.classList.add('regen');if(v.has('psychic'))el.classList.add('psychic');if(v.has('dark')||v.has('phase'))el.classList.add('dark');if(s.attackMs<700)el.classList.add('speedy');if(s.armor>=.15)el.classList.add('iron');
+}
+function renderUpgrades(){
+  $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
+}
+function renderPowerChoices(item){
+  $('powerModalQueue').textContent=powerQueue.length;const grid=$('powerChoices');grid.innerHTML='';activePowerChoices.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='power-choice';b.innerHTML=`<div class="top"><strong>${p.icon} ${escapeHtml(p.name)}</strong><span class="rarity ${p.rarity}">${p.rarity}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff?`<div class="tradeoff">DRAWBACK: ${escapeHtml(p.tradeoff)}</div>`:''}`;b.addEventListener('click',()=>choosePower(p.id));grid.appendChild(b)});
+}
+function renderProfile(){
+  const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
+  $('profileStats').innerHTML=[['Damage',fmt(totalDamage())],['Max HP',fmt(s.maxHp)],['Attack',(1000/Math.max(120,s.attackMs)).toFixed(1)+'/s'],['Armour',Math.round(clamp(s.armor,0,.72)*100)+'%'],['Dodge',Math.round(clamp(s.dodge,0,.75)*100)+'%'],['Regen',(s.regen*100).toFixed(1)+'%/s']].map(([a,b])=>`<div class="profile-stat"><small>${a}</small><strong>${b}</strong></div>`).join('');
+  $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
+  $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
+  $('profilePowers').querySelectorAll('[data-power-id]').forEach(btn=>btn.addEventListener('click',()=>showPowerInfo(btn.dataset.powerId)));
+  $('discoveryList').innerHTML=meta.discoveries.length?meta.discoveries.map(id=>{const c=PF_COMBOS.find(x=>x.id===id);return c?`<button type="button" class="power-row-btn" data-combo-id="${c.id}"><span><b>COMBO</b> ${escapeHtml(c.name)}</span><em>${escapeHtml(c.bonus)}</em></button>`:''}).join(''):'<div class="discovery-row">Hidden combinations will appear here once discovered.</div>';
+  $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
+}
+function renderAscension(){
+  $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=gain<1;
+  const grid=$('soulTree');grid.innerHTML='';PF_CONFIG.soulTree.forEach(node=>{const rank=meta.soulTree[node.id]||0,cost=soulNodeCost(node),maxed=rank>=node.max;const b=document.createElement('button');b.type='button';b.className='tree-node';b.disabled=maxed||meta.souls<cost;b.innerHTML=`<strong>${node.icon} ${escapeHtml(node.name)} ${rank}/${node.max}</strong><small>${escapeHtml(node.desc)}</small><div class="node-cost">${maxed?'MAXED':'PHS '+cost}</div>`;b.addEventListener('click',()=>buySoulNode(node.id));grid.appendChild(b)})
+}
+function renderAll(){renderHUD();renderUpgrades();renderAscension()}
+
+function animatePlayerAttack(crit,manual,echo){
+  const hero=$('heroFighter');hero.classList.remove('attack');void hero.offsetWidth;hero.classList.add('attack');
+  const v=new Set(s.visual||[]);const fx=$('fxLayer');const rect=$('battlefield').getBoundingClientRect();
+  if(v.has('vision')||v.has('fire')){const beam=document.createElement('div');beam.className='beam';beam.style.left='31%';beam.style.top='40%';fx.appendChild(beam);setTimeout(()=>beam.remove(),260)}
+  else if(v.has('lightning')){const bolt=document.createElement('div');bolt.className='lightning-bolt';bolt.style.left='30%';bolt.style.top='46%';bolt.style.width='42%';fx.appendChild(bolt);setTimeout(()=>bolt.remove(),240)}
+  else if(v.has('psychic')&&Math.random()<.35){const wave=document.createElement('div');wave.className='psychic-wave';wave.style.left='45%';wave.style.top='37%';fx.appendChild(wave);setTimeout(()=>wave.remove(),450)}
+  const enemy=$('enemyFighter');enemy.classList.remove('hit');void enemy.offsetWidth;enemy.classList.add('hit');
+}
+function animateEnemyAttack(){const h=$('heroFighter');h.classList.remove('hit');void h.offsetWidth;h.classList.add('hit')}
+function floatDamage(amount,crit,enemyDmg){const d=document.createElement('div');d.className='damage-number'+(crit?' crit':'')+(enemyDmg?' enemy-dmg':'');d.textContent=(crit?'CRIT ':'')+fmt(amount);d.style.left=enemyDmg?'24%':'70%';d.style.top=enemyDmg?'45%':'38%';$('damageLayer').appendChild(d);setTimeout(()=>d.remove(),700)}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.add('hidden'),1500)}
+function escapeHtml(str){return String(str).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+
+function openInfo(title,body,facts=[]){
+  $('infoTitle').textContent=title;$('infoBody').textContent=body||'';
+  $('infoFacts').innerHTML=facts.map(([a,b])=>`<div class="info-fact"><span>${escapeHtml(a)}</span><strong>${escapeHtml(String(b))}</strong></div>`).join('');
+  $('infoModal').classList.remove('hidden');
+}
+function closeInfo(){$('infoModal').classList.add('hidden')}
+function showPowerInfo(id){
+  const p=byId(id);if(!p)return;
+  const facts=[['Rarity',p.rarity.toUpperCase()],['Effect',p.desc]];
+  if(p.tradeoff)facts.push(['Drawback',p.tradeoff]);
+  if(p.tags?.length)facts.push(['Power families',p.tags.join(', ')]);
+  openInfo(p.name,'This power is active for your current run. Its effects are already included in your displayed stats.',facts);
+}
+function showComboInfo(id){
+  const c=PF_COMBOS.find(x=>x.id===id);if(!c)return;
+  openInfo(c.name,c.nod||'A hidden power combination you discovered.',[['Combo bonus',c.bonus],['Required traits',c.needs.join(', ')]]);
+}
+function showEnemyInfo(){
+  const e=s.enemy;if(!e)return;
+  openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.boss?'Elite / Boss':'Standard enemy']]);
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension()}
+function openUpgrades(){$('upgradeSheet').classList.remove('hidden');renderUpgrades()}
+function closeUpgrades(){$('upgradeSheet').classList.add('hidden')}
+function openProfile(){renderProfile();$('profileModal').classList.remove('hidden')}
+function closeProfile(){$('profileModal').classList.add('hidden')}
+
+function updateAttackTimer(){clearInterval(timers.attack);timers.attack=setInterval(()=>playerAttack(false),Math.max(120,s.attackMs))}
+function updateEnemyTimer(){clearInterval(timers.enemy);timers.enemy=setInterval(enemyAttack,Math.max(380,effectiveEnemyAttackMs()))}
+function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy)}
+function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
+function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{const now=performance.now(),dt=Math.min(.5,(now-lastTick)/1000);lastTick=now;if(!storyPaused&&s.regen>0){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*s.regen*dt);renderHUD()}},200)}
+
+function snapshot(){return {saveVersion:PF_CONFIG.saveVersion,meta:{...meta,soulTree:{...meta.soulTree}},run:{...s,visual:[...(s.visual||[])],powers:[...s.powers],combos:[...s.combos],enemy:s.enemy?{...s.enemy}:null},powerQueue:[...powerQueue],timestamp:Date.now()}}
+function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(()=>PF_SAVE.write(snapshot()),250)}
+function restore(){
+  const data=PF_SAVE.load(); if(!data)return false;
+  Object.assign(meta,data.meta||{});meta.soulTree=Object.assign({might:0,fortune:0,survival:0,instinct:0,choice:0,reroll:0,autobuy:0,bossbane:0},data.meta?.soulTree||{});
+  s=Object.assign(defaultRun(),data.run||{});s.visual=Array.isArray(s.visual)?s.visual:[];s.powers=Array.isArray(s.powers)?s.powers:[];s.combos=Array.isArray(s.combos)?s.combos:[];s.upgrades=Object.assign({damage:0,speed:0,health:0,regen:0},s.upgrades||{});powerQueue=Array.isArray(data.powerQueue)?data.powerQueue:[];
+  if(!s.enemy||!s.enemyMaxHp){spawnEnemy()}else updateEnemyTimer();
+  // lightweight offline reward, no offline combat/death.
+  const elapsed=Math.min(8*3600,Math.max(0,(Date.now()-(data.timestamp||Date.now()))/1000)); if(elapsed>60){const offline=Math.floor(elapsed/60*(2+s.stage*.25)*(1+meta.soulTree.fortune*.2));s.coins+=offline;toast(`WELCOME BACK • +${fmt(offline)} COINS`)}
+  return true;
+}
+
+function bind(){
+  $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
+  $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
+  $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
+  $('soulsInfoBtn').addEventListener('click',()=>openInfo('Souls','Permanent ascension currency. Souls are only earned when you choose to ascend; dying does not award them.',[['Current souls',fmt(meta.souls)]]));
+  $('damageInfoBtn').addEventListener('click',()=>openInfo('Damage','Approximate damage dealt by a normal attack before critical hits and special extra strikes.',[['Current damage',fmt(totalDamage())],['Critical chance',Math.round(clamp(s.crit,0,.9)*100)+'%']]));
+  $('speedInfoBtn').addEventListener('click',()=>openInfo('Attack Speed','How often your hero attacks automatically. Lower attack interval means more attacks per second.',[['Attacks per second',(1000/Math.max(120,s.attackMs)).toFixed(2)],['Attack interval',(Math.max(120,s.attackMs)/1000).toFixed(2)+' s']]));
+  $('regenInfoBtn').addEventListener('click',()=>openInfo('Regeneration','Passive healing as a percentage of your maximum health each second.',[['Regeneration',(s.regen*100).toFixed(2)+'% / s'],['Healing per second',fmt(s.maxHp*s.regen)]]));
+  $('critInfoBtn').addEventListener('click',()=>openInfo('Critical Chance','Chance for an attack to deal critical damage.',[['Critical chance',Math.round(clamp(s.crit,0,.9)*100)+'%']]));
+  $('heroFighter').addEventListener('click',openProfile);$('enemyFighter').addEventListener('click',showEnemyInfo);
+  $('milestoneInfo').addEventListener('click',()=>{const m=nextMilestone(s.stage+1);const label=(m.type==='boss'?'Wall Boss':'Power')+' at stage '+m.stage;openInfo('Next Milestone','Major powers and wall bosses are spaced out so each one feels significant.',[['Current stage',s.stage],['Next milestone',label],['Stages remaining',Math.max(0,m.stage-s.stage)],['World',worldFor(s.stage).name]])});
+  $('powerAlert').addEventListener('click',showPowerModal);$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
+  $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
+  $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
+}
+
+function init(){bind();const restored=restore();if(!restored)freshRun();else{renderAll();if(powerQueue.length)updatePowerAlert();if(!meta.seenStories.includes('awakening'))maybeStory(1,true)}startCombatTimers();startTick();setInterval(scheduleSave,10000)}
+init();
+})();
+
+</script>
+</body>
+</html>
