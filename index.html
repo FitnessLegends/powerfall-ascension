@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.1.1</title>
+  <title>Powerfall: Ascension Prototype v0.2</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -36,6 +36,9 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
 @media(max-width:420px){.screen{padding-left:8px;padding-right:8px}.fighter.hero{left:3%}.fighter.enemy{right:3%}.power-grid{grid-template-columns:1fr}.power-modal{padding-top:calc(env(safe-area-inset-top) + 55px)}.power-card{max-height:55dvh;overflow:auto}.story-card{grid-template-columns:52px 1fr;padding:12px}.story-portrait{width:52px;height:62px;font-size:24px}.upgrade-grid{grid-template-columns:1fr 1fr}.profile-stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-height:700px){.brand-sub{display:none}.battlefield{min-height:180px}.fighter{transform:scale(.9);transform-origin:bottom center}.combat-hud{gap:3px}.dock-button{padding:5px 3px}.screen.active{gap:5px}.milestone-strip{padding:6px 8px}.mini-stats span{padding:3px 2px}}
 
+/* Power cards share one click target; overlays above them remain intentional. */
+.power-choice>*{pointer-events:none}.power-choice:disabled{pointer-events:none;opacity:.55}.power-choice.selected{opacity:1;border-color:var(--good);background:#173728}.power-preview{display:block;color:#8de4bb;font-size:9px;line-height:1.3;margin-top:4px}.power-choice .top{flex-wrap:wrap}.power-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}.power-modal{z-index:110}.story-modal{z-index:130}#profileModal,#upgradeSheet{z-index:120}#infoModal{z-index:140}.info-card{max-height:85dvh;overflow:auto}.power-card{max-height:75dvh;overflow:auto}.power-choice{touch-action:manipulation}.stat-help{font-size:9px;color:var(--muted);margin-top:5px}.power-actions{display:flex;gap:6px}.power-actions button{flex:1}
+@media(max-width:420px){.power-choice{padding:7px}.power-choice p{margin-top:3px}.power-grid{gap:5px}.power-card{max-height:75dvh}.power-preview{font-size:8px}}
 </style>
 </head>
 <body>
@@ -44,7 +47,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.1.1</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.2</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -172,7 +175,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
           <div class="queue-badge big" id="powerModalQueue">1</div>
         </div>
         <div id="powerChoices" class="power-grid"></div>
-        <button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button>
+        <div class="power-actions"><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button></div>
       </div>
     </div>
 
@@ -214,7 +217,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
 
   <script>
 window.PF_CONFIG = {
-  saveVersion: 1,
+  saveVersion: 2,
   startingStats: {
     maxHp: 100,
     damage: 8,
@@ -240,7 +243,8 @@ window.PF_CONFIG = {
     {id:'instinct',name:'Killer Instinct',icon:'CRT',desc:'+2% starting crit per rank',baseCost:6,max:8},
     {id:'choice',name:'Expanded Awakening',icon:'DNA',desc:'Adds a 4th power choice',baseCost:14,max:1},
     {id:'reroll',name:'Mutation Reroll',icon:'RNG',desc:'Unlocks one reroll per awakening',baseCost:18,max:1},
-    {id:'autobuy',name:'Combat Automation',icon:'TEC',desc:'Unlocks run-upgrade auto-buy later',baseCost:25,max:1},
+    {id:'autobuy',name:'Combat Automation',icon:'TEC',desc:'Automatically buys the cheapest affordable attribute each second',baseCost:25,max:1},
+    {id:'foundation',name:'Hero Foundation',icon:'ATR',desc:'+3 to all starting attributes per rank',baseCost:10,max:5},
     {id:'bossbane',name:'Bossbane',icon:'BOS',desc:'+20% damage to bosses per rank',baseCost:8,max:8}
   ]
 };
@@ -248,56 +252,77 @@ window.PF_CONFIG = {
 </script>
   <script>
 (function(){
+  const attribute=(s,key,factor)=>window.PF_ATTRIBUTE(s,key,factor);
   const p=(id,name,icon,rarity,desc,effect,tags,tradeoff='',weight=1)=>({id,name,icon,rarity,desc,effect,tags,tradeoff,weight});
   window.PF_POWERS=[
-    p('super_strength','Super Strength','STR','common','Damage ×1.45',s=>{s.damageMult*=1.45},['strength']),
-    p('iron_skin','Iron Skin','ARM','common','Max HP ×1.75 and armour +18%',s=>{s.maxHp*=1.75;s.hp*=1.75;s.armor+=.18;s.attackMs*=1.20},['durability','metal'],'Attack speed ×0.8'),
-    p('hyper_speed','Hyper Speed','SPD','rare','Attack speed ×1.45 and dodge +8%',s=>{s.attackMs*=.69;s.dodge+=.08},['speed']),
-    p('regeneration','Regeneration','DNA','common','Regenerate 2.2% max HP each second',s=>{s.regen+=.022},['regen']),
-    p('laser_vision','Laser Vision','EYE','rare','Adds a ranged energy strike and +20 flat damage',s=>{s.flatDamage+=20;s.visual.add('vision')},['vision','energy']),
-    p('flight','Flight','FLY','rare','Damage +12%, dodge +12%',s=>{s.damageMult*=1.12;s.dodge+=.12;s.visual.add('flight')},['flight']),
-    p('chain_lightning','Chain Lightning','ELC','rare','30% chance to strike twice',s=>{s.doubleHit+=.30;s.visual.add('lightning')},['lightning','energy']),
-    p('pyrokinesis','Pyrokinesis','FIR','rare','Damage ×1.30 and ignite visual attacks',s=>{s.damageMult*=1.30;s.visual.add('fire')},['fire','energy']),
-    p('cryokinesis','Cryokinesis','ICE','rare','Enemy attack speed −18%',s=>{s.enemySlow*=1.18},['ice']),
-    p('telekinesis','Telekinesis','PSI','rare','Damage ×1.25 and crit +8%',s=>{s.damageMult*=1.25;s.crit+=.08;s.visual.add('psychic')},['psychic']),
-    p('phase_shift','Phase Shift','PHS','rare','Dodge +22%',s=>{s.dodge+=.22;s.visual.add('phase')},['phase']),
+    p('super_strength','Super Strength','STR','common','Damage ×2; Strength ×2 adds defence',s=>{attribute(s,'strength',2)},['strength'],''),
+    p('iron_skin','Iron Skin','ARM','common','Health ×2.2; +35% damage resistance',s=>{s.maxHp*=2.2;s.hp*=2.2;s.armor+=.35;attribute(s,'agility',.75);s.attackMs*=1.25},['durability','metal'],'Agility ×0.75; slower attacks'),
+    p('hyper_speed','Hyper Speed','SPD','rare','Attack rate ×1.7; Agility ×1.8; dodge +12%',s=>{s.attackMs/=1.7;attribute(s,'agility',1.8);s.dodge+=.12},['speed'],''),
+    p('regeneration','Regeneration','DNA','common','Regenerate 6% max HP each second',s=>{s.regen+=.06;s.visual.add('regen')},['regen'],''),
+    p('laser_vision','Laser Vision','EYE','rare','Damage ×1.8; Perception ×1.5',s=>{s.damageMult*=1.8;attribute(s,'perception',1.5);s.visual.add('vision')},['vision','energy'],''),
+    p('flight','Flight','FLY','rare','Damage ×1.5; dodge +20%',s=>{s.damageMult*=1.5;s.dodge+=.2;s.visual.add('flight')},['flight'],''),
+    p('chain_lightning','Chain Lightning','ELC','rare','65% chance for a second 72% strike',s=>{s.doubleHit+=.65;s.visual.add('lightning')},['lightning','energy'],''),
+    p('pyrokinesis','Pyrokinesis','FIR','rare','Damage ×2.1; fiery attacks',s=>{s.damageMult*=2.1;s.visual.add('fire')},['fire','energy'],''),
+    p('cryokinesis','Cryokinesis','ICE','rare','Enemy attack interval ×1.65',s=>{s.enemySlow*=1.65},['ice'],''),
+    p('telekinesis','Telekinesis','PSI','rare','Damage ×1.8; Perception ×1.8',s=>{s.damageMult*=1.8;attribute(s,'perception',1.8);s.visual.add('psychic')},['psychic'],''),
+    p('phase_shift','Phase Shift','PHS','rare','Dodge +40%',s=>{s.dodge+=.4;s.visual.add('phase')},['phase'],''),
     p('vampirism','Vampirism','VMP','epic','Heal for 14% of damage dealt',s=>{s.lifesteal+=.14;s.visual.add('dark')},['dark','regen']),
     p('berserker','Berserker','RGE','rare','Below 40% HP, deal ×3 damage',s=>{s.berserk=true},['rage','strength']),
-    p('glass_cannon','Glass Cannon','BST','rare','Damage ×2.1',s=>{s.damageMult*=2.1;s.maxHp*=.55;s.hp=Math.min(s.hp,s.maxHp)},['energy','combat'],'Max HP ×0.55'),
+    p('glass_cannon','Glass Cannon','BST','rare','Damage ×3',s=>{s.damageMult*=3;s.maxHp*=.5;s.hp=Math.min(s.hp,s.maxHp)},['energy','combat'],'Max HP ×0.5'),
     p('titan_body','Titan Body','TIT','epic','Damage ×1.8, max HP ×1.6',s=>{s.damageMult*=1.8;s.maxHp*=1.6;s.hp*=1.6;s.attackMs*=1.28},['strength','durability'],'Attack speed ×0.78'),
     p('immortal_cells','Immortal Cells','REV','epic','Revive once at 45% HP',s=>{s.revives+=1;s.visual.add('regen')},['regen','durability']),
-    p('solar_absorption','Solar Absorption','SOL','epic','Damage ×1.35 and regen +1%/s',s=>{s.damageMult*=1.35;s.regen+=.01;s.visual.add('solar')},['solar','energy']),
-    p('thunder_body','Thunder Body','THN','epic','HP ×1.35, damage ×1.18',s=>{s.maxHp*=1.35;s.hp*=1.35;s.damageMult*=1.18;s.visual.add('lightning')},['lightning','durability']),
+    p('solar_absorption','Solar Absorption','SOL','epic','Damage ×2; regeneration +5%/s',s=>{s.damageMult*=2;s.regen+=.05;s.visual.add('solar')},['solar','energy'],''),
+    p('thunder_body','Thunder Body','THN','epic','Health ×1.8; damage ×1.7',s=>{s.maxHp*=1.8;s.hp*=1.8;s.damageMult*=1.7;s.visual.add('lightning')},['lightning','durability'],''),
     p('spider_reflexes','Spider Reflexes','REF','rare','Dodge +18%, crit +10%',s=>{s.dodge+=.18;s.crit+=.10},['agility','reflex']),
     p('precognition','Precognition','PRE','epic','Dodge +15%, crit +18%',s=>{s.dodge+=.15;s.crit+=.18;s.visual.add('psychic')},['reflex','psychic']),
-    p('sonic_boom','Sonic Boom','SON','rare','Attack speed +18%, damage +15%',s=>{s.attackMs*=.82;s.damageMult*=1.15},['sound','speed']),
-    p('magnetism','Magnetism','MAG','rare','Crit +12%, damage +20%',s=>{s.crit+=.12;s.damageMult*=1.20},['metal','psychic']),
-    p('technopathy','Technopathy','TEC','rare','Attack speed +12%, crit +10%',s=>{s.attackMs*=.88;s.crit+=.10},['tech']),
-    p('nanite_swarm','Nanite Swarm','NAN','epic','Regen +2.8%/s',s=>{s.regen+=.028;s.visual.add('regen')},['tech','regen']),
-    p('cosmic_force','Cosmic Force','COS','legendary','Damage ×1.65',s=>{s.damageMult*=1.65;s.visual.add('cosmic')},['cosmic','energy']),
+    p('sonic_boom','Sonic Boom','SON','rare','Attack rate ×1.5; damage ×1.6',s=>{s.attackMs/=1.5;s.damageMult*=1.6},['sound','speed'],''),
+    p('magnetism','Magnetism','MAG','rare','Damage ×1.7; crit +20%',s=>{s.damageMult*=1.7;s.crit+=.2},['metal','psychic'],''),
+    p('technopathy','Technopathy','TEC','rare','Attack rate ×1.5; Perception ×2',s=>{s.attackMs/=1.5;attribute(s,'perception',2)},['tech'],''),
+    p('nanite_swarm','Nanite Swarm','NAN','epic','Regenerate 8% max HP/sec',s=>{s.regen+=.08;s.visual.add('regen')},['tech','regen'],''),
+    p('cosmic_force','Cosmic Force','COS','legendary','Damage ×3.2',s=>{s.damageMult*=3.2;s.visual.add('cosmic')},['cosmic','energy'],''),
     p('cosmic_awareness','Cosmic Awareness','COS','legendary','Crit +25%, dodge +10%',s=>{s.crit+=.25;s.dodge+=.10;s.visual.add('cosmic')},['cosmic','psychic']),
     p('reality_flicker','Reality Flicker','VAR','legendary','Dodge +30%',s=>{s.dodge+=.30;s.visual.add('cosmic')},['reality']),
     p('probability_manip','Probability Manipulation','RNG','legendary','Crit +22%, dodge +14%',s=>{s.crit+=.22;s.dodge+=.14},['reality','psychic']),
     p('gravity_crush','Gravity Crush','GRV','epic','Burst damage ×6',s=>{s.burstMult=Math.max(s.burstMult,6);s.visual.add('psychic')},['gravity','strength']),
-    p('time_dilation','Time Dilation','TIM','legendary','Attack speed +30%, dodge +12%',s=>{s.attackMs*=.70;s.dodge+=.12},['time','speed']),
+    p('time_dilation','Time Dilation','TIM','legendary','Attack rate ×1.8; dodge +20%',s=>{s.attackMs/=1.8;s.dodge+=.2},['time','speed'],''),
     p('adaptive_evolution','Adaptive Evolution','MUT','epic','Each kill adds +1% run damage',s=>{s.adaptive=true},['mutation']),
-    p('clone_strike','Clone Strike','CLN','epic','25% chance for an extra strike',s=>{s.doubleHit+=.25},['clone']),
-    p('power_mimicry','Power Mimicry','DNA','legendary','Damage +20%, crit +12%, dodge +8%',s=>{s.damageMult*=1.2;s.crit+=.12;s.dodge+=.08},['mutation','cosmic']),
-    p('black_hole_core','Black Hole Core','BLK','cosmic','Damage ×3.0',s=>{s.damageMult*=3;s.regen*=.5;s.attackMs*=1.25;s.visual.add('cosmic')},['cosmic','gravity'],'Regen ×0.5, attack speed ×0.8'),
+    p('clone_strike','Clone Strike','CLN','epic','75% chance for a second 72% strike',s=>{s.doubleHit+=.75},['clone'],''),
+    p('power_mimicry','Power Mimicry','DNA','legendary','Damage ×2; crit +20%; dodge +15%',s=>{s.damageMult*=2;s.crit+=.2;s.dodge+=.15},['mutation','cosmic'],''),
+    p('black_hole_core','Black Hole Core','BLK','cosmic','Damage ×5',s=>{s.damageMult*=5;s.regen*=.5;s.attackMs*=1.25;s.visual.add('cosmic')},['cosmic','gravity'],'Regen ×0.5; attack rate ×0.8'),
     p('unstable_mutation','Unstable Mutation','MUT','epic','Damage ×2.0 and crit +15%',s=>{s.damageMult*=2;s.crit+=.15;s.maxHp*=.70;s.hp=Math.min(s.hp,s.maxHp)},['mutation'],'Max HP ×0.70'),
-    p('kinetic_adaptation','Kinetic Adaptation','VAR','epic','Removes 20% of attack-speed penalties and damage +12%',s=>{s.attackMs*=.80;s.damageMult*=1.12},['speed','mutation']),
-    p('energy_absorption','Energy Absorption','ABS','epic','Regen +1.5%/s, damage +22%',s=>{s.regen+=.015;s.damageMult*=1.22},['energy','regen']),
-    p('shadow_form','Shadow Form','SHD','epic','Dodge +17%, damage +18%',s=>{s.dodge+=.17;s.damageMult*=1.18;s.visual.add('dark')},['dark','phase']),
-    p('battle_trance','Battle Trance','CBT','rare','Damage +25%, attack speed +10%',s=>{s.damageMult*=1.25;s.attackMs*=.90},['combat','rage']),
-    p('absolute_zero','Absolute Zero','ZER','legendary','Enemy attack speed −28%, damage +22%',s=>{s.enemySlow*=1.28;s.damageMult*=1.22},['ice','cosmic']),
-    p('plasma_blast','Plasma Blast','PLS','epic','+45 flat damage and crit +8%',s=>{s.flatDamage+=45;s.crit+=.08;s.visual.add('fire')},['energy','fire']),
+    p('kinetic_adaptation','Kinetic Adaptation','VAR','epic','Attack rate ×1.6; damage ×1.5',s=>{s.attackMs/=1.6;s.damageMult*=1.5},['speed','mutation'],''),
+    p('energy_absorption','Energy Absorption','ABS','epic','35% of elemental attacks heal for their damage',s=>{s.energyAbsorption=true},['energy','regen'],''),
+    p('shadow_form','Shadow Form','SHD','epic','Dodge +30%; damage ×1.7',s=>{s.dodge+=.3;s.damageMult*=1.7;s.visual.add('dark')},['dark','phase'],''),
+    p('battle_trance','Battle Trance','CBT','rare','Damage ×1.8; attack rate ×1.3',s=>{s.damageMult*=1.8;s.attackMs/=1.3},['combat','rage'],''),
+    p('absolute_zero','Absolute Zero','ZER','legendary','Enemy attack interval ×1.8; damage ×1.8',s=>{s.enemySlow*=1.8;s.damageMult*=1.8},['ice','cosmic'],''),
+    p('plasma_blast','Plasma Blast','PLS','epic','Damage ×2; +45 damage; crit +15%',s=>{s.damageMult*=2;s.flatDamage+=45;s.crit+=.15;s.visual.add('fire')},['energy','fire'],''),
     p('invisibility','Invisibility','INV','rare','Dodge +25%',s=>{s.dodge+=.25;s.visual.add('phase')},['stealth','phase']),
-    p('elastic_body','Elastic Body','VAR','rare','HP ×1.30, dodge +10%',s=>{s.maxHp*=1.3;s.hp*=1.3;s.dodge+=.10},['mutation','durability']),
-    p('toxic_blood','Toxic Blood','MUT','rare','Damage +25% and lifesteal +6%',s=>{s.damageMult*=1.25;s.lifesteal+=.06;s.maxHp*=.88;s.hp=Math.min(s.hp,s.maxHp)},['toxin','regen'],'Max HP ×0.88'),
-    p('worldbreaker','Worldbreaker Strength','WRL','cosmic','Damage ×2.4',s=>{s.damageMult*=2.4;s.attackMs*=1.18},['strength','cosmic'],'Attack speed ×0.85'),
+    p('elastic_body','Elastic Body','VAR','rare','Health ×1.8; dodge +20%',s=>{s.maxHp*=1.8;s.hp*=1.8;s.dodge+=.2},['mutation','durability'],''),
+    p('toxic_blood','Toxic Blood','MUT','rare','Damage ×2; lifesteal +18%',s=>{s.damageMult*=2;s.lifesteal+=.18;s.maxHp*=.75;s.hp=Math.min(s.hp,s.maxHp)},['toxin','regen'],'Max HP ×0.75'),
+    p('worldbreaker','Worldbreaker Strength','WRL','cosmic','Strength ×4',s=>{attribute(s,'strength',4);attribute(s,'agility',.7)},['strength','cosmic'],'Agility ×0.7'),
     p('cellular_rebirth','Cellular Rebirth','REB','legendary','Regen +5%/s, gain one revive',s=>{s.regen+=.05;s.revives+=1;s.visual.add('regen')},['regen','cosmic']),
-    p('temporal_speed','Temporal Speed','TMP','cosmic','Attack speed ×1.7, dodge +15%',s=>{s.attackMs*=.59;s.dodge+=.15},['speed','time','cosmic'])
+    p('temporal_speed','Temporal Speed','TMP','cosmic','Attack rate ×2.2; dodge +25%',s=>{s.attackMs/=2.2;s.dodge+=.25},['speed','time','cosmic'],'')
   ];
+
+  PF_POWERS.push(
+    p("kinetic_storage","Kinetic Storage","KIN","rare","Store 60% of damage taken for the next hit (up to 4\u00d7 damage)",s=>{s.kineticStorage=true},["energy", "durability"],""),
+    p("perfect_reflex","Perfect Reflex","REF","epic","Every fourth incoming attack automatically misses",s=>{s.perfectReflex=true},["reflex", "agility"],""),
+    p("executioner","Executioner","EXE","epic","Deal \u00d74 damage below 30% enemy health",s=>{s.executioner=true},["combat", "dark"],""),
+    p("last_stand","Last Stand","LST","rare","Below 30% HP: +30% resistance and +8% HP/sec",s=>{s.lastStand=true},["rage", "regen"],""),
+    p("overclocked","Overclocked Nervous System","OVR","epic","Attack rate \u00d72.2",s=>{s.attackMs/=2.2;s.incomingMult*=1.6},["tech", "speed"],"Incoming damage \u00d71.6"),
+    p("adaptive_armour","Adaptive Armour","ADP","epic","Each landed enemy hit adds 6% resistance, up to 36% this fight",s=>{s.adaptiveArmour=true},["metal", "mutation"],""),
+    p("momentum","Momentum","MOM","rare","Consecutive hits add 12% damage up to +120%; miss or enemy hit resets",s=>{s.momentum=true},["speed", "combat"],""),
+    p("predator_vision","Predator Vision","PRE","rare","Below 50% enemy HP: +8% accuracy and +25% crit",s=>{s.predatorVision=true;s.visual.add('vision')},["vision", "reflex"],""),
+    p("untouchable","Untouchable","UNT","legendary","Dodge +55%; Agility \u00d72",s=>{s.dodge+=.55;attribute(s,'agility',2);s.maxHp*=.4;s.hp=Math.min(s.hp,s.maxHp)},["phase", "agility"],"Max HP \u00d70.4"),
+    p("juggernaut","Juggernaut","JUG","epic","Strength \u00d72.5; Vitality \u00d72.5",s=>{attribute(s,'strength',2.5);attribute(s,'vitality',2.5);attribute(s,'agility',.45);s.attackMs*=1.3},["strength", "durability", "rage"],"Agility \u00d70.45; attack interval \u00d71.3"),
+    p("second_heart","Second Heart","HRT","epic","Survive one lethal hit per boss fight; recover 60% HP",s=>{s.secondHeart=true},["regen", "durability"],""),
+    p("mirror_mutation","Mirror Mutation","MIR","legendary","Copy the current boss passive until that fight ends",s=>{s.mirrorMutation=true},["mutation", "cosmic"],""),
+    p("time_fracture","Time Fracture","TIM","legendary","Every 8 seconds of combat, freeze enemy actions for 2 seconds",s=>{s.timeFracture=true},["time", "psychic"],""),
+    p("probability_warp","Probability Warp","PRB","epic","Each miss adds 12% crit until a critical hit lands",s=>{s.probabilityWarp=true},["reality", "psychic"],""),
+    p("reactive_evolution","Reactive Evolution","EVO","epic","Each unique boss defeated raises a random attribute by 30%",s=>{s.reactiveEvolution=true},["mutation", "strength"],""),
+    p("power_nullification","Power Nullification","NUL","legendary","Disable the enemy passive in every fight",s=>{s.powerNullification=true},["phase", "cosmic"],""),
+    p("unstable_core","Unstable Core","RNG","epic","One random attribute \u00d73; a different attribute \u00d70.5",s=>{const keys=['strength','agility','vitality','perception'];const buff=keys.splice(Math.floor(Math.random()*4),1)[0];const penalty=keys[Math.floor(Math.random()*3)];attribute(s,buff,3);attribute(s,penalty,.5);s.unstableResult=buff+' ×3 / '+penalty+' ×0.5'},["mutation", "energy"],"One different random attribute halved")
+  );
 
   window.PF_COMBOS=[
     {id:'solar_paragon',name:'Solar Paragon',needs:['strength','flight','vision','durability'],bonus:'Damage ×1.25',apply:s=>{s.damageMult*=1.25;s.visual.add('solar');s.visual.add('flight')},nod:'Your build has unmistakable classic flying-brick energy — very Superman-coded.'},
@@ -320,7 +345,7 @@ window.PF_CONFIG = {
 (function(){
   const normal=[
     ['Street Enforcer','brawler'],['Mutant Runner','speed'],['Rogue Android','tech'],['Gamma Brute','tank'],
-    ['Psionic Hunter','psychic'],['Void Stalker','phase'],['Armoured Vanguard','tank'],['Plasma Raider','energy']
+    ['Psionic Hunter','psychic'],['Void Stalker','phase'],['Armoured Vanguard','tank'],['Plasma Raider','energy'],['Cellular Revenant','regen']
   ];
   const bosses={
     75:{name:'The Null Warden',icon:'Ø',hp:10.5,damage:2.1,speed:.9,trait:'Power suppression field'},
@@ -334,16 +359,17 @@ window.PF_CONFIG = {
   };
   window.PF_ENEMIES={
     get(stage){
+      stage=Math.max(1,Math.min(10000,Number(stage)||1));
       const wall=bosses[stage];
       if(wall){
-        const scale=Math.pow(1.092,stage-1);
-        return {name:wall.name,icon:wall.icon,boss:true,wall:true,trait:wall.trait,maxHp:Math.round((52+stage*4.2)*scale*wall.hp),damage:(4.5+stage*.52)*Math.pow(1.035,stage-1)*wall.damage,attackMs:1300*wall.speed};
+        const scale=Math.pow(1.035,Math.min(stage-1,4000));
+        return {name:wall.name,icon:wall.icon,boss:true,wall:true,trait:wall.trait,maxHp:Math.round((52+stage*4.2)*scale*wall.hp),damage:(4.5+stage*.52)*Math.pow(1.018,Math.min(stage-1,4000))*wall.damage,attackMs:1300*wall.speed};
       }
       const mini=stage%25===0;
-      const idx=Math.min(normal.length-1,Math.floor((stage-1)/35)%normal.length);
+      const idx=Math.floor((stage-1)/5)%normal.length;
       const [name,type]=normal[idx];
-      const scale=Math.pow(1.082,stage-1);
-      return {name:(mini?'ELITE • ':'')+name,icon:'',boss:mini,wall:false,trait:type,maxHp:Math.round((48+stage*3.4)*scale*(mini?3.2:1)),damage:(4+stage*.42)*Math.pow(1.028,stage-1)*(mini?1.55:1),attackMs:Math.max(520,1380-stage*2.4)*(mini?.9:1)};
+      const scale=Math.pow(1.035,Math.min(stage-1,4000));
+      return {name:(mini?'ELITE • ':'')+name,icon:'',boss:mini,wall:false,trait:type,maxHp:Math.round((48+stage*3.4)*scale*(mini?3.2:1)),damage:(4+stage*.42)*Math.pow(1.018,Math.min(stage-1,4000))*(mini?1.55:1),attackMs:Math.max(520,1380-stage*2.4)*(mini?.9:1)};
     },
     isWallBoss(stage){return !!bosses[stage]},
     nextWallBoss(stage){const all=Object.keys(bosses).map(Number).sort((a,b)=>a-b);return all.find(x=>x>=stage)||null}
@@ -390,7 +416,7 @@ window.PF_CONFIG = {
     load(){
       try{
         const raw=localStorage.getItem(KEY); if(!raw)return null;
-        const data=JSON.parse(raw); if(!data||data.saveVersion!==PF_CONFIG.saveVersion)return null;
+        const data=JSON.parse(raw); if(!data||![1,PF_CONFIG.saveVersion].includes(data.saveVersion))return null;
         return data;
       }catch(e){return null}
     },
@@ -406,7 +432,9 @@ window.PF_CONFIG = {
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const finite=(n,fallback=0)=>Number.isFinite(Number(n))?Math.max(-1e150,Math.min(1e150,Number(n))):fallback;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,Number.isNaN(Number(n))?a:Number(n)));
+const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 const fmt=n=>{n=Math.max(0,Number(n)||0);if(n<1000)return Math.floor(n).toString();const u=['K','M','B','T','Qa','Qi'];let i=-1;while(n>=1000&&i<u.length-1){n/=1000;i++}return n.toFixed(n>=100?0:n>=10?1:2)+u[i]};
 const byId=id=>PF_POWERS.find(p=>p.id===id);
 
@@ -425,26 +453,96 @@ let buyMode='1';
 let lastAttackMs=0;
 let lastEnemyMs=0;
 let lastTick=performance.now();
+let ascensionLocked=false, choiceLocked=false, choiceTimer=null;
+let autoBuyElapsed=0;
 
 function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*(1+t.survival*.12);
   return {
+    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],evolvedBosses:[],
+    attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
+    fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0},
     stage:1,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],kills:0,runBosses:0,
-    upgrades:{damage:0,speed:0,health:0,regen:0},
+    upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
   };
 }
+// Attribute changes preserve legacy derived stats rather than recalculating old saves.
+window.PF_ATTRIBUTE=(target,key,factor)=>{
+  const old=clamp(target.attributes[key],.1,1e100),next=clamp(old*factor,.1,1e100),ratio=next/old;
+  target.attributes[key]=next;
+  if(key==='strength')target.baseDamage=clamp(target.baseDamage*ratio,1,1e150);
+  if(key==='agility')target.attackMs=clamp(target.attackMs/Math.pow(ratio,.32),120,10000);
+  if(key==='vitality'){target.maxHp=clamp(target.maxHp*ratio,1,1e150);target.hp=clamp(target.hp*ratio,0,target.maxHp)}
+};
+function sanitizeRun(target){
+  const defaults=defaultRun();
+  for(const [key,value] of Object.entries(defaults)){
+    if(typeof value==='number')target[key]=clamp(finite(target[key],value),0,1e150);
+    if(Array.isArray(value))target[key]=Array.isArray(target[key])?target[key]:[];
+  }
+  target.attributes=target.attributes&&typeof target.attributes==='object'?target.attributes:{};
+  for(const key of ['strength','agility','vitality','perception'])target.attributes[key]=clamp(finite(target.attributes[key],10),.1,1e100);
+  target.upgrades=target.upgrades&&typeof target.upgrades==='object'?target.upgrades:{};
+  for(const key of ['strength','agility','vitality','perception'])target.upgrades[key]=Math.floor(clamp(target.upgrades[key]||0,0,800));
+  target.fight={...defaults.fight,...(target.fight||{})};for(const key of Object.keys(defaults.fight))target.fight[key]=clamp(target.fight[key],0,1e150);
+  target.stage=Math.floor(clamp(target.stage,1,10000));target.bestStage=clamp(target.bestStage,1,10000);
+  target.maxHp=clamp(target.maxHp,1,1e150);target.hp=clamp(target.hp,0,target.maxHp);target.attackMs=clamp(target.attackMs,120,10000);
+  for(const key of ['damageMult','adaptiveBonus','storyDamageBonus','storyCoinBonus','tempBossBonus','incomingMult','enemySlow'])target[key]=clamp(target[key],.01,1e50);
+  target.critMultiplier=clamp(target.critMultiplier,1,10);target.regen=clamp(target.regen,0,.5);
+  target.visual=target.visual.filter(x=>typeof x==='string');target.powers=target.powers.filter(x=>byId(x));
+}
+function hitChance(perception,agility,dodge=0){
+  // Equal attributes: 93%. Even extreme mismatches retain a 45% floor.
+  const p=clamp(perception,.1,1e100),a=clamp(agility,.1,1e100);
+  return clamp((.93+.12*Math.log2(p/a))*(1-clamp(dodge,0,.65)),.45,.98);
+}
+function dodgeChance(target=s){return clamp(target.dodge+.18*(1-10/Math.max(10,target.attributes.agility)),0,.65)}
+function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target.attributes.strength))+(target.lastStand&&target.hp/target.maxHp<.3?.3:0)+(target.adaptiveArmour||mirrored('adaptive',target)?Math.min(.36,target.fight.adapt):0)+(mirrored('armour',target)?.15:0),0,.8)}
+function regenRate(target=s){return clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5)}
+function critChance(target=s){return clamp(target.crit+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
+function critEffect(target=s){return clamp(target.critMultiplier+.6*(1-10/Math.max(10,target.attributes.perception)),1,10)}
+function playerAccuracy(target=s){return clamp(hitChance(target.attributes.perception,target.enemy?.attributes?.agility||10,!target.powerNullification&&target.enemy?.passive==='evasion'?.12:0)+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.08:0),.45,.98)}
+function mirrored(passive,target=s){return target.mirrorMutation&&target.enemy?.boss&&target.enemy.passive===passive}
+function enemyPassive(passive){return !s.powerNullification&&s.enemy?.passive===passive}
+function enemyProfile(enemy,stage){
+  const base=10*Math.pow(1.018,Math.min(stage-1,4000));
+  const profiles={brawler:[1.3,.8,1.1,.9,'rage'],speed:[.8,3,.7,1,'haste'],tech:[1,1,1.2,1.3,'armour'],tank:[1.5,.55,1.7,.8,'armour'],psychic:[.9,1,1,2.8,'precision'],phase:[.9,2, .8,1.5,'evasion'],energy:[1.1,1,1,1.5,'precision'],regen:[.9,.8,1.3,1,'regen']};
+  const bossTypes={75:'tech',100:'tank',150:'speed',200:'tank',300:'regen',500:'psychic',750:'phase',1000:'energy'};
+  const type=bossTypes[stage]||enemy.trait,profile=profiles[type]||profiles.brawler;
+  enemy.attributes={strength:base*profile[0],agility:base*profile[1],vitality:base*profile[2],perception:base*profile[3]};
+  enemy.maxHp=clamp(enemy.maxHp*profile[2],1,1e150);enemy.damage=clamp(enemy.damage*profile[0],1,1e150);
+  enemy.attackMs=clamp(enemy.attackMs/(type==='speed'?1.35:1),380,5000);
+  enemy.passive=stage===75?'suppression':stage===100?'rage':stage===200?'adaptive':profile[4];
+  enemy.damageType=['energy','psychic','regen'].includes(type)?'elemental':'physical';
+  return enemy;
+}
+function statValues(target){
+  const damage=clamp((target.baseDamage+target.flatDamage)*target.damageMult*target.adaptiveBonus*target.storyDamageBonus*(1+meta.soulTree.might*.15)*(target.berserk&&target.hp/target.maxHp<.4?3:1)*(target.gammaRage&&target.hp/target.maxHp<.5?1.3:1)*(target.enemy?.boss?target.tempBossBonus*(1+meta.soulTree.bossbane*.2):1),0,1e150);
+  return {Strength:fmt(target.attributes.strength),Agility:fmt(target.attributes.agility),Vitality:fmt(target.attributes.vitality),Perception:fmt(target.attributes.perception),Damage:fmt(damage),'Max HP':fmt(target.maxHp),Attack:(1000/target.attackMs).toFixed(2)+'/s',Accuracy:Math.round(playerAccuracy(target)*100)+'%',Defence:Math.round(defence(target)*100)+'%',Dodge:Math.round(dodgeChance(target)*100)+'%',Crit:Math.round(critChance(target)*100)+'%','Crit power':critEffect(target).toFixed(2)+'×',Regen:(regenRate(target)*100).toFixed(2)+'%/s'};
+}
+function showStatInfo(key){
+  const descriptions={Strength:'Raises base physical damage in direct proportion. Also adds up to 20 percentage points of damage resistance.',Agility:'Faster attacks and up to 18 percentage points of dodge. Enemy Perception compares against this attribute.',Vitality:'Raises maximum health in direct proportion and adds up to 2.5% max HP regeneration per second.',Perception:'Counters enemy Agility. Adds up to 22 percentage points of critical chance and 0.6× critical damage.',Accuracy:'Chance to hit this opponent. Equal Perception and Agility give 93%; final chance is clamped to 45–98%. Predator Vision helps against weakened enemies.',Dodge:'Reduces enemy accuracy after the Perception/Agility comparison. Final enemy hit chance never falls below 45%. Perfect Reflex can additionally force every fourth attack to miss.',Defence:'Reduces incoming damage, capped at 80%. Strength, armour, adaptive stacks and Last Stand contribute.',Crit:'Chance for a landed attack to critically hit, capped at 90%. Perception, powers and Probability Warp contribute.','Crit power':'Damage multiplier on critical hits. Perception improves the base 2× multiplier.',Regen:'Maximum health restored each second. Vitality, powers and low-health Last Stand contribute.',Damage:'Current normal attack damage before enemy resistance, critical hits, Momentum, Executioner and Kinetic Storage.',Attack:'Automatic attacks per second. Agility and powers modify the interval, with a 120 ms minimum.','Max HP':'Maximum health. Normal death respawns at full health without awarding Souls.'};
+  const facts=[['Current value',statValues(s)[key]],['Attribute ranks',Object.entries(s.upgrades).filter(([k])=>k in s.attributes).map(([k,v])=>k+' '+v).join(' / ')]];
+  if(key==='Accuracy')facts.push(['Enemy Agility',fmt(s.enemy?.attributes?.agility||10)]);
+  if(key==='Defence')facts.push(['Adaptive resistance',Math.round(s.fight.adapt*100)+'%'],['Incoming multiplier',s.incomingMult.toFixed(2)+'×']);
+  facts.push(['Active powers',s.powers.map(id=>byId(id)?.name).filter(Boolean).join(', ')||'None']);
+  openInfo(key,descriptions[key]||'',facts);
+}
+function floatText(text,enemyDmg){const d=document.createElement('div');d.className='damage-number';d.textContent=text;d.style.left=enemyDmg?'20%':'65%';d.style.top='35%';$('damageLayer').appendChild(d);setTimeout(()=>d.remove(),700)}
+
 function visualSet(){return new Set(s.visual||[])}
 function setVisual(set){s.visual=[...set]}
 
 function freshRun(){
-  s=defaultRun(); powerQueue=[]; activePowerChoices=[]; powerModalVisible=false; storyPaused=false;
+  clearTimeout(choiceTimer);choiceLocked=false;hidePowerModal();
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3); powerQueue=[]; activePowerChoices=[]; powerModalVisible=false; storyPaused=false;
   spawnEnemy(); maybeStory(1,true); renderAll(); scheduleSave();
 }
 
@@ -453,58 +551,75 @@ function totalDamage(){
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
   if(s.enemy&&s.enemy.boss)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
-  return d;
+  return clamp(d,0,1e150);
 }
-function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow)}
+function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
 function spawnEnemy(){
-  s.enemy=PF_ENEMIES.get(s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0};
+  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
   if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
   renderAll();
 }
 
-function playerAttack(manual=false){
-  if(storyPaused||!s.enemy||s.enemyHp<=0)return;
-  const now=performance.now(); if(!manual&&now-lastAttackMs<Math.max(100,s.attackMs*.65))return; lastAttackMs=now;
-  let damage=totalDamage()*(manual?s.burstMult:1);
-  const crit=Math.random()<clamp(s.crit,0,.9); if(crit)damage*=2;
-  dealDamageToEnemy(damage,crit,manual);
-  if(!manual&&Math.random()<clamp(s.doubleHit,0,.85)&&s.enemyHp>0){setTimeout(()=>{if(!storyPaused&&s.enemyHp>0)dealDamageToEnemy(totalDamage()*.72,false,false,true)},75)}
+function playerAttack(manual=false,echo=false){
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0)return;
+  const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,s.attackMs*.65)))return;if(!echo)lastAttackMs=now;
+  if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.misses++;floatText('MISS',false);return}
+  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1);
+  if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
+  if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
+  if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}
+  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0}
+  s.fight.hits++;
+  if(enemyPassive('armour'))damage*=.7;
+  if(enemyPassive('adaptive'))damage*=1-Math.min(.45,s.fight.hits*.03);
+  if(enemyPassive('suppression'))damage*=.8;
+  if(mirrored('rage')&&s.hp/s.maxHp<.5)damage*=1.5;
+  if(mirrored('suppression'))damage*=1.2;
+  const fight=s.fight,runId=s.runId;
+  dealDamageToEnemy(clamp(damage,0,1e150),crit,manual,echo);
+  if(!manual&&!echo&&Math.random()<clamp(s.doubleHit,0,.85)&&s.fight===fight){setTimeout(()=>{if(s.runId===runId&&s.fight===fight)playerAttack(false,true)},75)}
 }
 function dealDamageToEnemy(amount,crit,manual,echo=false){
-  s.enemyHp=Math.max(0,s.enemyHp-amount);
-  if(s.lifesteal>0)s.hp=Math.min(s.maxHp,s.hp+amount*s.lifesteal);
-  animatePlayerAttack(crit,manual,echo); floatDamage(amount,crit,false);
-  if(s.enemyHp<=0) enemyDefeated();
-  renderHUD();
+  const dealt=Math.min(s.enemyHp,amount);s.enemyHp=Math.max(0,s.enemyHp-amount);
+  if(s.lifesteal>0)s.hp=clamp(s.hp+dealt*s.lifesteal,0,s.maxHp);
+  animatePlayerAttack(crit,manual,echo);floatDamage(amount,crit,false);
+  if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function enemyAttack(){
-  if(storyPaused||!s.enemy||s.enemyHp<=0)return;
-  const now=performance.now(); if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return; lastEnemyMs=now;
-  if(Math.random()<clamp(s.dodge,0,.75)){toast('DODGED');return}
-  let dmg=s.enemy.damage*(.88+Math.random()*.24); dmg*=Math.max(.15,1-clamp(s.armor,0,.72));
-  s.hp-=dmg; animateEnemyAttack(); floatDamage(dmg,false,true);
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0)return;
+  const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){floatText('MISS',true);return}
+  let dmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult*(1-defence());
+  const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
+  if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
+  dmg=clamp(dmg,0,1e150);
+  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);floatText('ABSORBED',true);renderHUD();return}
+  s.fight.hits=0;
+  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
+  if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
+  s.hp-=dmg;animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
-    if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('REV IMMORTAL CELLS REBUILT YOU')}
-    else{
-      s.hp=s.maxHp; const old=s.stage; s.stage=Math.max(1,s.stage-(s.enemy?.wall?5:2)); s.coins=Math.floor(s.coins*.90);
-      toast(`KNOCKED BACK ${old-s.stage} STAGES`); spawnEnemy();
-    }
+    if(s.secondHeart&&s.enemy.boss&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
+    else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
+    else{s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('KNOCKED BACK '+(old-s.stage)+' STAGES');spawnEnemy();saveNow()}
   }
   renderHUD();
 }
 
 function enemyDefeated(){
   const defeatedStage=s.stage; const wasWall=!!s.enemy.wall; const wasBoss=!!s.enemy.boss;
-  s.kills++; if(s.adaptive)s.adaptiveBonus*=1.01;
-  let reward=(7+defeatedStage*2.8)*Math.pow(1.045,defeatedStage)*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus;
+  s.kills++; if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.01,1,1e50);
+  if(wasBoss&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,1.3);toast('EVOLUTION: '+key.toUpperCase()+' +30%')}
+  let reward=(7+defeatedStage*2.8)*Math.pow(1.045,Math.min(defeatedStage,4000))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus;
   if(wasBoss)reward*=wasWall?6:3;
-  s.coins+=Math.floor(reward);
+  s.coins=clamp(s.coins+Math.floor(reward),0,1e150);
   if(wasWall){
-    s.runBosses++; meta.bossesBeaten++; if(!s.bossRewards.includes(defeatedStage)){s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('BOS WALL BOSS DEFEATED — MUTATION EARNED')}
+    if(!s.bossRewards.includes(defeatedStage)){s.runBosses++; meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('BOS WALL BOSS DEFEATED — MUTATION EARNED')}
   }
-  s.stage++; meta.bestStage=Math.max(meta.bestStage,s.stage);
+  s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage); meta.bestStage=Math.max(meta.bestStage,s.stage);
   checkPowerMilestone(s.stage); checkCombos(); spawnEnemy(); scheduleSave();
 }
 
@@ -513,7 +628,7 @@ function checkPowerMilestone(stage){
     s.triggeredMilestones.push(stage); queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
   }
 }
-function queuePower(item){powerQueue.push(item);updatePowerAlert();if(!powerModalVisible)showPowerModal()}
+function queuePower(item){const id=s.runId+':'+item.source+':'+item.stage;if(s.consumedChoices.includes(id)||powerQueue.some(x=>x.id===id))return;powerQueue.push({...item,id,consumed:false});updatePowerAlert();if(!powerModalVisible&&!choiceLocked)showPowerModal()}
 
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
 function rollPowerChoices(item){
@@ -533,22 +648,32 @@ function rollPowerChoices(item){
   return picked;
 }
 function showPowerModal(){
-  if(powerQueue.length===0)return; powerModalVisible=true; $('powerModal').classList.remove('hidden');
-  const item=powerQueue[0]; activePowerChoices=rollPowerChoices(item); renderPowerChoices(item);
+  if(!powerQueue.length||choiceLocked)return;
+  const item=powerQueue[0];if(item.consumed)return;
+  powerModalVisible=true;$('powerModal').classList.remove('hidden');
+  if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
+  activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);scheduleSave();
 }
-function hidePowerModal(){$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
-function choosePower(id){
-  const power=byId(id); if(!power)return;
-  if(!s.powers.includes(power.id))s.powers.push(power.id); meta.totalPowersFound++;
-  const vis=visualSet(); s.visual=[...vis]; power.effect(s); setVisual(new Set(s.visual||[]));
-  const item=powerQueue.shift(); activePowerChoices=[]; toast(`${power.icon} ${power.name} ACQUIRED`); checkCombos(); updateAttackTimer();
-  if(powerQueue.length)showPowerModal(); else hidePowerModal(); renderAll(); scheduleSave();
+function hidePowerModal(){if(choiceLocked)return;$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
+function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
+function choosePower(id,choiceId){
+  const item=powerQueue[0],power=byId(id);
+  if(ascensionLocked||choiceLocked||!powerModalVisible||!item||item.id!==choiceId||item.consumed||s.consumedChoices.includes(choiceId)||!item.options.includes(id)||!power)return;
+  choiceLocked=true;item.consumed=true;s.consumedChoices.push(choiceId);
+  $('powerChoices').querySelectorAll('button').forEach(b=>{b.disabled=true;b.classList.toggle('selected',b.dataset.powerId===id)});
+  $('hidePowerModalBtn').disabled=true;$('rerollPowerBtn').disabled=true;
+  // Consume before effects or UI delay, and persist the grant and queue together.
+  s.powers.push(id);meta.totalPowersFound++;applyEffect(s,power.effect);powerQueue.shift();checkCombos();
+  updateAttackTimer();updateEnemyTimer();renderAll();saveNow();
+  const runId=s.runId;choiceTimer=setTimeout(()=>{if(s.runId!==runId)return;choiceLocked=false;activePowerChoices=[];hidePowerModal();toast(power.name+' ACQUIRED');if(powerQueue.length)showPowerModal()},200);
 }
+function rerollPower(){const item=powerQueue[0];if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);showPowerModal();saveNow()}
+
 function checkCombos(){
   const tags=new Set(); for(const id of s.powers){const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))}
   for(const combo of PF_COMBOS){
     if(s.combos.includes(combo.id))continue;
-    if(combo.needs.every(n=>tags.has(n))){s.combos.push(combo.id);meta.discoveries=Array.from(new Set([...meta.discoveries,combo.id]));combo.apply(s);toast(`COS HIDDEN EVOLUTION: ${combo.name}`)}
+    if(combo.needs.every(n=>tags.has(n))){s.combos.push(combo.id);meta.discoveries=Array.from(new Set([...meta.discoveries,combo.id]));applyEffect(s,combo.apply);toast(`COS HIDDEN EVOLUTION: ${combo.name}`)}
   }
 }
 function currentResonance(){
@@ -564,7 +689,7 @@ function maybeStory(stage,force){
   const scene=PF_STORY[stage]; if(!scene)return; if(meta.seenStories.includes(scene.id)&&!force)return;
   meta.seenStories.push(scene.id); storyPaused=true; clearCombatTimers();
   $('storySpeaker').textContent=scene.speaker;$('storyPortrait').textContent=scene.portrait;$('storyText').textContent=reactiveStoryText(scene.text);
-  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{meta.storyFlags.push(ch.flag);ch.effect(s);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
+  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused)return;meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
   $('storyModal').classList.remove('hidden');
 }
 function reactiveStoryText(base){
@@ -573,23 +698,38 @@ function reactiveStoryText(base){
 }
 
 function upgradeDefs(){return [
-  {id:'damage',icon:'STR',name:'Strength',desc:'+18% base damage',base:22,growth:1.48,apply:()=>{s.baseDamage*=1.18}},
-  {id:'speed',icon:'SPD',name:'Combat Speed',desc:'6% faster attacks',base:55,growth:1.55,apply:()=>{s.attackMs=Math.max(120,s.attackMs*.94)}},
-  {id:'health',icon:'HP',name:'Endurance',desc:'+22% max HP',base:42,growth:1.50,apply:()=>{s.maxHp*=1.22;s.hp*=1.22}},
-  {id:'regen',icon:'REG',name:'Recovery',desc:'+0.35% HP/sec',base:85,growth:1.58,apply:()=>{s.regen+=.0035}}
+  {id:'strength',icon:'STR',name:'Strength',desc:'+18% Strength: damage and defence',base:22,growth:1.48,apply:()=>PF_ATTRIBUTE(s,'strength',1.18)},
+  {id:'agility',icon:'AGI',name:'Agility',desc:'+18% Agility: attack speed and dodge',base:55,growth:1.55,apply:()=>PF_ATTRIBUTE(s,'agility',1.18)},
+  {id:'vitality',icon:'VIT',name:'Vitality',desc:'+22% Vitality: health and regeneration',base:42,growth:1.50,apply:()=>PF_ATTRIBUTE(s,'vitality',1.22)},
+  {id:'perception',icon:'PER',name:'Perception',desc:'+22% Perception: accuracy, crit chance and power',base:45,growth:1.50,apply:()=>PF_ATTRIBUTE(s,'perception',1.22)}
 ]}
-function upgradeCost(def,level){return Math.floor(def.base*Math.pow(def.growth,level))}
+
+function upgradeCost(def,level){return clamp(def.base*Math.pow(def.growth,Math.min(level,800)),1,1e150)}
 function buyUpgrade(id){
   const def=upgradeDefs().find(x=>x.id===id);if(!def)return;
   let count=buyMode==='max'?999:+buyMode,bought=0;
-  while(count-->0&&bought<100){const lvl=s.upgrades[id];const cost=upgradeCost(def,lvl);if(s.coins<cost)break;s.coins-=cost;s.upgrades[id]++;def.apply();bought++}
+  while(count-->0&&bought<100){const lvl=s.upgrades[id];const cost=upgradeCost(def,lvl);if(s.coins<cost)break;s.coins-=cost;s.upgrades[id]++;def.apply();sanitizeRun(s);bought++}
   if(bought){toast(`UP ${def.name} +${bought}`);updateAttackTimer();renderAll();scheduleSave()}
 }
 
 function soulNodeCost(node){const rank=meta.soulTree[node.id]||0;return Math.floor(node.baseCost*Math.pow(1.65,rank))}
-function buySoulNode(id){const node=PF_CONFIG.soulTree.find(n=>n.id===id);if(!node)return;const rank=meta.soulTree[id]||0;if(rank>=node.max)return;const cost=soulNodeCost(node);if(meta.souls<cost)return;meta.souls-=cost;meta.soulTree[id]++;toast(`${node.icon} ${node.name} upgraded`);renderAscension();scheduleSave()}
-function ascensionGain(){return Math.max(0,Math.floor(Math.pow(Math.max(0,meta.bestStage-55),1.15)/5 + s.runBosses*2))}
-function doAscend(){const gain=ascensionGain();if(gain<1)return;meta.souls+=gain;meta.ascensions++;meta.runNumber++;freshRun();showScreen('gameScreen');toast(`PHS ASCENDED +${gain} SOULS`)}
+function buySoulNode(id){const node=PF_CONFIG.soulTree.find(n=>n.id===id);if(!node)return;const rank=meta.soulTree[id]||0;if(rank>=node.max)return;const cost=soulNodeCost(node);if(meta.souls<cost)return;meta.souls-=cost;meta.soulTree[id]=rank+1;toast(`${node.icon} ${node.name} upgraded`);renderAscension();scheduleSave()}
+function ascensionGain(){return s.consumed?0:Math.max(0,Math.floor(Math.pow(Math.max(0,s.bestStage-55),1.15)/5+s.runBosses*2))}
+function doAscend(){
+  if(ascensionLocked||s.consumed)return;
+  const gain=ascensionGain();if(gain<1)return;
+  ascensionLocked=true;$('ascendNowBtn').disabled=true;
+  const previous=snapshot();
+  s.consumed=true;meta.souls=clamp(meta.souls+gain,0,1e150);meta.ascensions++;meta.runNumber++;
+  // A single localStorage replacement commits both currency and the new, empty run.
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);powerQueue=[];
+  clearTimeout(timers.save);
+  if(!PF_SAVE.write(snapshot())){Object.assign(meta,previous.meta);s=previous.run;powerQueue=previous.powerQueue;ascensionLocked=false;renderAll();toast('ASCENSION NOT SAVED — please free browser storage and retry');return}
+  clearTimeout(choiceTimer);choiceLocked=false;activePowerChoices=[];hidePowerModal();storyPaused=false;
+  ['storyModal','profileModal','upgradeSheet','infoModal'].forEach(id=>$(id).classList.add('hidden'));
+  spawnEnemy();startCombatTimers();showScreen('gameScreen');renderAll();ascensionLocked=false;toast('ASCENDED +'+gain+' SOULS');
+}
+
 
 function worldFor(stage){return [...PF_CONFIG.worlds].reverse().find(w=>stage>=w.min)||PF_CONFIG.worlds[0]}
 function nextMilestone(stage){
@@ -605,7 +745,7 @@ function renderHUD(){
   $('enemyName').textContent=s.enemy?.name||'Enemy';$('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.boss?'ELITE':'ENEMY';$('bossBanner').classList.toggle('hidden',!s.enemy?.wall);
   $('hpText').textContent=`${fmt(s.hp)} / ${fmt(s.maxHp)}`;$('enemyHpText').textContent=`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`;
   $('hpBar').style.width=`${clamp(s.hp/s.maxHp*100,0,100)}%`;$('enemyHpBar').style.width=`${clamp(s.enemyHp/s.enemyMaxHp*100,0,100)}%`;
-  $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(s.regen*100).toFixed(1)+'%';$('critStat').textContent=Math.round(clamp(s.crit,0,.9)*100)+'%';
+  $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(regenRate()*100).toFixed(1)+'%';$('critStat').textContent=Math.round(critChance()*100)+'%';
   updatePowerAlert(); applyHeroVisuals();
 }
 function applyHeroVisuals(){
@@ -615,11 +755,24 @@ function renderUpgrades(){
   $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
 }
 function renderPowerChoices(item){
-  $('powerModalQueue').textContent=powerQueue.length;const grid=$('powerChoices');grid.innerHTML='';activePowerChoices.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='power-choice';b.innerHTML=`<div class="top"><strong>${p.icon} ${escapeHtml(p.name)}</strong><span class="rarity ${p.rarity}">${p.rarity}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff?`<div class="tradeoff">DRAWBACK: ${escapeHtml(p.tradeoff)}</div>`:''}`;b.addEventListener('click',()=>choosePower(p.id));grid.appendChild(b)});
+  $('powerModalQueue').textContent=powerQueue.length;$('hidePowerModalBtn').disabled=false;
+  $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=!!item.rerolled;
+  const grid=$('powerChoices');grid.innerHTML='';grid.classList.toggle('four',activePowerChoices.length===4);
+  activePowerChoices.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='power-choice';b.dataset.powerId=p.id;
+    b.innerHTML=`<div class="top"><strong>${p.icon} ${escapeHtml(p.name)}</strong><span class="rarity ${p.rarity}">${p.rarity}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff?`<div class="tradeoff">${escapeHtml(p.tradeoff)}</div>`:''}<small class="power-preview">${escapeHtml(powerPreview(p))}</small>`;
+    b.addEventListener('click',()=>choosePower(p.id,item.id));grid.appendChild(b)});
 }
+function powerPreview(power){
+  if(power.id==='unstable_core')return 'Random attributes are rolled once on selection';
+  const copy=JSON.parse(JSON.stringify(s));applyEffect(copy,power.effect);
+  const before=statValues(s),after=statValues(copy);
+  return Object.keys(before).filter(k=>before[k]!==after[k]).slice(0,3).map(k=>k+' '+before[k]+' → '+after[k]).join(' · ');
+}
+
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=[['Damage',fmt(totalDamage())],['Max HP',fmt(s.maxHp)],['Attack',(1000/Math.max(120,s.attackMs)).toFixed(1)+'/s'],['Armour',Math.round(clamp(s.armor,0,.72)*100)+'%'],['Dodge',Math.round(clamp(s.dodge,0,.75)*100)+'%'],['Regen',(s.regen*100).toFixed(1)+'%/s']].map(([a,b])=>`<div class="profile-stat"><small>${a}</small><strong>${b}</strong></div>`).join('');
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('');
+  $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
   $('profilePowers').querySelectorAll('[data-power-id]').forEach(btn=>btn.addEventListener('click',()=>showPowerInfo(btn.dataset.powerId)));
@@ -627,7 +780,7 @@ function renderProfile(){
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
 }
 function renderAscension(){
-  $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=gain<1;
+  $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=ascensionLocked||gain<1;
   const grid=$('soulTree');grid.innerHTML='';PF_CONFIG.soulTree.forEach(node=>{const rank=meta.soulTree[node.id]||0,cost=soulNodeCost(node),maxed=rank>=node.max;const b=document.createElement('button');b.type='button';b.className='tree-node';b.disabled=maxed||meta.souls<cost;b.innerHTML=`<strong>${node.icon} ${escapeHtml(node.name)} ${rank}/${node.max}</strong><small>${escapeHtml(node.desc)}</small><div class="node-cost">${maxed?'MAXED':'PHS '+cost}</div>`;b.addEventListener('click',()=>buySoulNode(node.id));grid.appendChild(b)})
 }
 function renderAll(){renderHUD();renderUpgrades();renderAscension()}
@@ -656,6 +809,8 @@ function showPowerInfo(id){
   const facts=[['Rarity',p.rarity.toUpperCase()],['Effect',p.desc]];
   if(p.tradeoff)facts.push(['Drawback',p.tradeoff]);
   if(p.tags?.length)facts.push(['Power families',p.tags.join(', ')]);
+  PF_COMBOS.filter(c=>meta.discoveries.includes(c.id)&&c.needs.some(tag=>p.tags.includes(tag))).forEach(c=>facts.push(['Discovered evolution',c.name+' — '+c.bonus]));
+  if(p.id==='unstable_core'&&s.unstableResult)facts.push(['Rolled result',s.unstableResult]);
   openInfo(p.name,'This power is active for your current run. Its effects are already included in your displayed stats.',facts);
 }
 function showComboInfo(id){
@@ -664,7 +819,7 @@ function showComboInfo(id){
 }
 function showEnemyInfo(){
   const e=s.enemy;if(!e)return;
-  openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.boss?'Elite / Boss':'Standard enemy']]);
+  openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.boss?'Elite / Boss':'Standard enemy'],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType]]);
 }
 function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension()}
 function openUpgrades(){$('upgradeSheet').classList.remove('hidden');renderUpgrades()}
@@ -676,32 +831,67 @@ function updateAttackTimer(){clearInterval(timers.attack);timers.attack=setInter
 function updateEnemyTimer(){clearInterval(timers.enemy);timers.enemy=setInterval(enemyAttack,Math.max(380,effectiveEnemyAttackMs()))}
 function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy)}
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
-function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{const now=performance.now(),dt=Math.min(.5,(now-lastTick)/1000);lastTick=now;if(!storyPaused&&s.regen>0){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*s.regen*dt);renderHUD()}},200)}
+function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
+  const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
+  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);
+  if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
+  s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
+  if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
+  autoBuyElapsed+=dt;if(meta.soulTree.autobuy&&autoBuyElapsed>=1){autoBuyElapsed=0;const def=upgradeDefs().sort((a,b)=>upgradeCost(a,s.upgrades[a.id])-upgradeCost(b,s.upgrades[b.id]))[0];buyUpgrade(def.id)}
+  renderHUD();
+},200)}
 
-function snapshot(){return {saveVersion:PF_CONFIG.saveVersion,meta:{...meta,soulTree:{...meta.soulTree}},run:{...s,visual:[...(s.visual||[])],powers:[...s.powers],combos:[...s.combos],enemy:s.enemy?{...s.enemy}:null},powerQueue:[...powerQueue],timestamp:Date.now()}}
-function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(()=>PF_SAVE.write(snapshot()),250)}
+function snapshot(){return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue,timestamp:Date.now()}))}
+function saveNow(){clearTimeout(timers.save);const ok=PF_SAVE.write(snapshot());if(!ok)toast('SAVE FAILED — progress is not stored');return ok}
+function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow,250)}
 function restore(){
-  const data=PF_SAVE.load(); if(!data)return false;
-  Object.assign(meta,data.meta||{});meta.soulTree=Object.assign({might:0,fortune:0,survival:0,instinct:0,choice:0,reroll:0,autobuy:0,bossbane:0},data.meta?.soulTree||{});
-  s=Object.assign(defaultRun(),data.run||{});s.visual=Array.isArray(s.visual)?s.visual:[];s.powers=Array.isArray(s.powers)?s.powers:[];s.combos=Array.isArray(s.combos)?s.combos:[];s.upgrades=Object.assign({damage:0,speed:0,health:0,regen:0},s.upgrades||{});powerQueue=Array.isArray(data.powerQueue)?data.powerQueue:[];
-  if(!s.enemy||!s.enemyMaxHp){spawnEnemy()}else updateEnemyTimer();
-  // lightweight offline reward, no offline combat/death.
-  const elapsed=Math.min(8*3600,Math.max(0,(Date.now()-(data.timestamp||Date.now()))/1000)); if(elapsed>60){const offline=Math.floor(elapsed/60*(2+s.stage*.25)*(1+meta.soulTree.fortune*.2));s.coins+=offline;toast(`WELCOME BACK • +${fmt(offline)} COINS`)}
+  const data=PF_SAVE.load();if(!data)return false;
+  const savedMeta=data.meta&&typeof data.meta==='object'?data.meta:{};
+  for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
+  for(const key of ['discoveries','storyFlags','seenStories'])meta[key]=Array.isArray(savedMeta[key])?savedMeta[key].filter(x=>typeof x==='string'):[];
+  for(const node of PF_CONFIG.soulTree)meta.soulTree[node.id]=Math.floor(clamp(savedMeta.soulTree?.[node.id]||0,0,node.max));
+  const old=data.run&&typeof data.run==='object'?data.run:{};
+  s=Object.assign(defaultRun(),old);s.runId=typeof old.runId==='string'?old.runId:uid();
+  s.attributes=Object.assign({strength:10,agility:10,vitality:10,perception:10},old.attributes||{});
+  s.upgrades=Object.assign({strength:0,agility:0,vitality:0,perception:0},old.upgrades||{});
+  if(data.saveVersion===1){
+    // Retain legacy derived damage/HP/speed and powers; map purchased ranks without reapplying effects.
+    s.upgrades={strength:old.upgrades?.damage||0,agility:old.upgrades?.speed||0,vitality:old.upgrades?.health||0,perception:old.upgrades?.regen||0};
+    for(const [key,rank] of Object.entries(s.upgrades))s.attributes[key]=clamp(10*Math.pow(1.18,clamp(rank,0,800)),1,1e100);
+    s.bestStage=Math.max(1,finite(old.stage,1));s.consumed=false;
+    if(s.powers?.includes('energy_absorption'))s.energyAbsorption=true;
+  }
+  sanitizeRun(s);
+  s.bestStage=Math.max(s.stage,s.bestStage);
+  const seen=new Set(s.consumedChoices);powerQueue=[];
+  for(const item of Array.isArray(data.powerQueue)?data.powerQueue:[]){
+    if(!item||typeof item!=='object'||item.consumed)continue;
+    const stage=clamp(item.stage,1,10000),source=item.source==='boss'?'boss':'milestone',id=typeof item.id==='string'?item.id:s.runId+':'+source+':'+stage;
+    if(seen.has(id))continue;seen.add(id);
+    const options=Array.isArray(item.options)?[...new Set(item.options)].filter(x=>byId(x)):[];
+    powerQueue.push({id,source,stage,minRarity:item.minRarity||'common',options,rerolled:!!item.rerolled,consumed:false});
+  }
+  if(s.consumed){s=defaultRun();powerQueue=[]}
+  const enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);
+  s.enemy=enemy;if(!(s.enemyMaxHp>0)||!(s.enemyHp>0)){s.enemyMaxHp=enemy.maxHp;s.enemyHp=enemy.maxHp}
+  const elapsed=clamp((Date.now()-finite(data.timestamp,Date.now()))/1000,0,8*3600);
+  if(elapsed>60){const offline=Math.floor(elapsed/60*(2+s.stage*.25)*(1+meta.soulTree.fortune*.2));s.coins=clamp(s.coins+offline,0,1e150);toast('WELCOME BACK +'+fmt(offline)+' COINS')}
   return true;
 }
+
 
 function bind(){
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
   $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
   $('soulsInfoBtn').addEventListener('click',()=>openInfo('Souls','Permanent ascension currency. Souls are only earned when you choose to ascend; dying does not award them.',[['Current souls',fmt(meta.souls)]]));
-  $('damageInfoBtn').addEventListener('click',()=>openInfo('Damage','Approximate damage dealt by a normal attack before critical hits and special extra strikes.',[['Current damage',fmt(totalDamage())],['Critical chance',Math.round(clamp(s.crit,0,.9)*100)+'%']]));
-  $('speedInfoBtn').addEventListener('click',()=>openInfo('Attack Speed','How often your hero attacks automatically. Lower attack interval means more attacks per second.',[['Attacks per second',(1000/Math.max(120,s.attackMs)).toFixed(2)],['Attack interval',(Math.max(120,s.attackMs)/1000).toFixed(2)+' s']]));
-  $('regenInfoBtn').addEventListener('click',()=>openInfo('Regeneration','Passive healing as a percentage of your maximum health each second.',[['Regeneration',(s.regen*100).toFixed(2)+'% / s'],['Healing per second',fmt(s.maxHp*s.regen)]]));
-  $('critInfoBtn').addEventListener('click',()=>openInfo('Critical Chance','Chance for an attack to deal critical damage.',[['Critical chance',Math.round(clamp(s.crit,0,.9)*100)+'%']]));
+  $('damageInfoBtn').addEventListener('click',()=>showStatInfo('Damage'));
+  $('speedInfoBtn').addEventListener('click',()=>showStatInfo('Attack'));
+  $('regenInfoBtn').addEventListener('click',()=>showStatInfo('Regen'));
+  $('critInfoBtn').addEventListener('click',()=>showStatInfo('Crit'));
   $('heroFighter').addEventListener('click',openProfile);$('enemyFighter').addEventListener('click',showEnemyInfo);
   $('milestoneInfo').addEventListener('click',()=>{const m=nextMilestone(s.stage+1);const label=(m.type==='boss'?'Wall Boss':'Power')+' at stage '+m.stage;openInfo('Next Milestone','Major powers and wall bosses are spaced out so each one feels significant.',[['Current stage',s.stage],['Next milestone',label],['Stages remaining',Math.max(0,m.stage-s.stage)],['World',worldFor(s.stage).name]])});
-  $('powerAlert').addEventListener('click',showPowerModal);$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  $('rerollPowerBtn').addEventListener('click',rerollPower);$('powerAlert').addEventListener('click',showPowerModal);$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
