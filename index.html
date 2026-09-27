@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.4.1</title>
+  <title>Powerfall: Ascension Prototype v0.5</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -256,6 +256,49 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .world-planetary{background:radial-gradient(circle at 50% 14%,rgba(255,142,52,.23),transparent 24%),linear-gradient(180deg,#20100d,#392018 58%,#0e0b0a)!important}
 .world-cosmic{background:radial-gradient(circle at 52% 19%,rgba(127,72,255,.38),transparent 31%),radial-gradient(circle at 17% 30%,rgba(69,173,255,.17),transparent 21%),linear-gradient(180deg,#090719,#15102b 61%,#06070d)!important}
 .world-cosmic .bg-city,.world-planetary .bg-city{opacity:.40!important}
+
+/* ================= POWERFALL v0.5 ================= */
+.active-strip{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.location-chip{position:absolute;left:50%;top:9px;transform:translateX(-50%);z-index:21;padding:5px 9px;border-radius:999px;background:rgba(7,12,20,.78);border:1px solid rgba(119,182,233,.28);font-size:8px;font-weight:900;letter-spacing:.12em;color:#b9d7f0}
+.ultimate-btn.ready{border-color:#d797ff!important;background:linear-gradient(#35214c,#1c152b)!important;box-shadow:0 0 17px rgba(193,108,255,.20)!important}
+.identity-badge{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);z-index:6;font-size:7px;letter-spacing:.12em;color:#a9c7df;opacity:.75}
+
+/* Eight distinct arenas; the "background" now rotates as the run progresses. */
+.battlefield.loc-backstreets{background:radial-gradient(circle at 45% 72%,rgba(46,122,180,.20),transparent 30%),linear-gradient(#07111d,#10263d 62%,#070c12)!important}
+.battlefield.loc-rooftops{background:radial-gradient(circle at 74% 17%,rgba(186,211,235,.12),transparent 16%),linear-gradient(#060d18,#13233b 58%,#070b11)!important}
+.battlefield.loc-docks{background:radial-gradient(ellipse at 50% 92%,rgba(36,151,189,.20),transparent 45%),linear-gradient(#07121d,#0c2834 60%,#071014)!important}
+.battlefield.loc-neon{background:radial-gradient(circle at 25% 42%,rgba(255,38,150,.16),transparent 25%),radial-gradient(circle at 77% 36%,rgba(35,191,255,.18),transparent 25%),linear-gradient(#0b0a1a,#17132b 61%,#090b12)!important}
+.battlefield.loc-lab{background:linear-gradient(90deg,rgba(89,221,255,.06) 1px,transparent 1px),linear-gradient(rgba(89,221,255,.05) 1px,transparent 1px),linear-gradient(#07141a,#0f2528 62%,#071010)!important;background-size:80px 100%,100% 50px,auto!important}
+.battlefield.loc-military{background:radial-gradient(circle at 50% 42%,rgba(155,190,128,.09),transparent 35%),linear-gradient(#0e1514,#1b2924 62%,#0b100f)!important}
+.battlefield.loc-ruins{background:radial-gradient(circle at 72% 58%,rgba(255,93,38,.13),transparent 22%),linear-gradient(#16100f,#28201e 62%,#0c0a0a)!important}
+.battlefield.loc-orbit{background:radial-gradient(circle at 66% 28%,rgba(87,146,255,.26),transparent 18%),radial-gradient(circle at 25% 70%,rgba(129,83,255,.16),transparent 24%),linear-gradient(#050713,#0b1530 64%,#05060c)!important}
+.battlefield.loc-void{background:radial-gradient(circle at 50% 45%,rgba(165,77,255,.28),transparent 24%),radial-gradient(circle at 17% 30%,rgba(38,189,255,.14),transparent 18%),linear-gradient(#04030c,#110b25 65%,#04040a)!important}
+
+/* Foreground silhouettes change by district. */
+.battlefield.loc-docks .bg-city{clip-path:polygon(0 58%,10% 58%,10% 42%,18% 42%,18% 65%,32% 65%,32% 34%,36% 34%,36% 68%,54% 68%,54% 50%,66% 50%,66% 67%,78% 67%,78% 39%,83% 39%,83% 66%,100% 66%,100% 100%,0 100%)!important}
+.battlefield.loc-lab .bg-city{opacity:.22!important;clip-path:none!important;background:repeating-linear-gradient(90deg,#0b1f25 0 9%,#102c34 9% 10%,#071419 10% 20%)!important}
+.battlefield.loc-military .bg-city{opacity:.55!important;clip-path:polygon(0 62%,9% 62%,9% 48%,20% 48%,20% 65%,33% 65%,33% 39%,47% 39%,47% 62%,59% 62%,59% 44%,70% 44%,70% 66%,83% 66%,83% 35%,89% 35%,89% 65%,100% 65%,100% 100%,0 100%)!important}
+.battlefield.loc-ruins .bg-city{opacity:.72!important;filter:contrast(1.15)!important}
+.battlefield.loc-orbit .bg-city,.battlefield.loc-void .bg-city{display:none!important}
+
+/* Weather / environmental reactions. */
+.battlefield.weather-rain::after{background:repeating-linear-gradient(105deg,transparent 0 18px,rgba(132,192,226,.10) 19px 20px,transparent 21px 39px)!important;animation:pfRain .8s linear infinite}
+.battlefield.weather-embers::after{background:radial-gradient(circle at 12% 82%,rgba(255,95,39,.55) 0 1px,transparent 2px),radial-gradient(circle at 37% 72%,rgba(255,168,55,.42) 0 1px,transparent 2px),radial-gradient(circle at 68% 80%,rgba(255,95,39,.5) 0 1px,transparent 2px),radial-gradient(circle at 88% 69%,rgba(255,179,69,.42) 0 1px,transparent 2px)!important;animation:pfEmbers 2.7s ease-in-out infinite}
+.battlefield.weather-storm::after{background:linear-gradient(120deg,transparent 46%,rgba(159,220,255,.18) 49%,transparent 52%)!important;animation:pfStorm 4.8s steps(1) infinite}
+@keyframes pfRain{to{background-position:30px 44px}}@keyframes pfEmbers{50%{transform:translateY(-8px);opacity:.65}}@keyframes pfStorm{0%,91%,100%{opacity:.08}92%{opacity:.9}93%{opacity:.18}95%{opacity:.7}}
+
+/* Hero visual transformation thresholds. */
+.hero.form-1 .aura{opacity:.20}.hero.form-2 .aura{opacity:.38!important;filter:blur(11px)}.hero.form-2 .body{transform:translateX(-50%) scale(1.12)!important}.hero.form-3 .aura{opacity:.62!important;filter:blur(15px)}.hero.form-3 .body{transform:translateX(-50%) scale(1.18)!important;filter:drop-shadow(0 0 10px rgba(151,111,255,.25))}
+.hero.form-3 .fighter-name{color:#d9c1ff;text-shadow:0 0 8px rgba(173,115,255,.55)}
+
+/* Boss phases / identity feedback. */
+.battlefield.boss-phase-2{box-shadow:inset 0 0 90px rgba(255,82,46,.14),0 12px 36px rgba(0,0,0,.28)!important}
+.battlefield.boss-phase-3{box-shadow:inset 0 0 110px rgba(255,35,82,.22),0 12px 36px rgba(0,0,0,.32)!important}
+.power-identity-flash{animation:identityFlash .28s ease}@keyframes identityFlash{50%{filter:brightness(1.35) saturate(1.25)}}
+
+/* Keep visual load bounded on very fast builds. */
+.damage-layer .damage-number:nth-child(n+13),.fx-layer>*:nth-child(n+13){display:none!important}
+@media(max-width:520px){.active-strip{grid-template-columns:repeat(5,minmax(0,1fr))!important}.active-btn{font-size:7px!important}.location-chip{top:35px}}
 </style>
 </head>
 <body>
@@ -264,7 +307,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.4.1</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.5</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -291,6 +334,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <div class="ground"></div>
         <div class="encounter-chip" id="encounterChip">CRIMINAL 1 / 10</div>
         <div class="faction-chip" id="factionChip">LOCAL CRIME</div>
+        <div class="location-chip" id="locationChip">BACKSTREETS</div>
 
         <div class="fighter hero info-tap" id="heroFighter" aria-label="Your hero" role="button" tabindex="0">
           <div class="aura" id="heroAura"></div>
@@ -344,6 +388,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <button id="dodgeBtn" class="active-btn ready" type="button"><strong>DODGE</strong><small id="dodgeLabel">READY</small></button>
         <button id="activePowerBtn" class="active-btn" type="button"><strong>POWER</strong><small id="activePowerLabel">NO POWER</small></button>
         <button id="finisherBtn" class="active-btn" type="button" disabled><strong>FINISH</strong><small id="finisherLabel">15% HP</small></button>
+        <button id="ultimateBtn" class="active-btn ultimate-btn" type="button" disabled><strong>ULT</strong><small id="ultimateLabel">0%</small></button>
         <button id="bountyBtn" class="active-btn" type="button"><strong>BOUNTY</strong><small id="bountyLabel">0 / 3</small></button>
       </section>
       <section class="combat-meter">
@@ -439,7 +484,9 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <div class="section-title compact"><div><h3>Current Powers</h3><p id="powerCountLabel">0 powers</p></div></div>
         <div id="profilePowers" class="power-list"></div>
 <div class="section-title compact"><div><h3>Artifacts</h3><p>Temporary elite and event loot</p></div></div>
-<div id="artifactList" class="power-list"></div>
+        <div id="artifactList" class="power-list"></div>
+        <div class="section-title compact"><div><h3>Power Evolutions</h3><p>Permanent changes to how this run fights</p></div></div>
+        <div id="evolutionList" class="power-list"></div>
         <div class="section-title compact"><div><h3>Discoveries</h3><p>Hidden evolutions you have found</p></div></div>
         <div id="discoveryList" class="discovery-list"></div>
       </div>
@@ -717,7 +764,7 @@ const fmt=n=>{n=Math.max(0,Number(n)||0);if(n<1000)return Math.floor(n).toString
 const byId=id=>PF_POWERS.find(p=>p.id===id);
 
 function defaultMeta(){return {
-  souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,
+  souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,rivalAdaptation:'',
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
   discoveries:[],storyFlags:[],seenStories:[]
 }}
@@ -736,6 +783,7 @@ let lastEnemyMs=0;
 let lastTick=performance.now();
 let ascensionLocked=false, choiceLocked=false, choiceTimer=null;
 let autoBuyElapsed=0;
+let lastHudRender=0,lastCombatFx=0,damageAggregate=0,damageAggregateTimer=null;
 
 function defaultRun(){
   const t=meta.soulTree;
@@ -748,7 +796,8 @@ function defaultRun(){
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
-    powers:[],combos:[],visual:[],artifacts:[],eventStages:[],kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
+    powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
+    ultimateCharge:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -780,6 +829,7 @@ function sanitizeRun(target){
   target.critMultiplier=clamp(target.critMultiplier,1,10);target.regen=clamp(target.regen,0,.5);
   target.visual=target.visual.filter(x=>typeof x==='string');target.powers=target.powers.filter(x=>byId(x));
 target.artifacts=Array.isArray(target.artifacts)?target.artifacts.filter(x=>typeof x==='string'):[];target.eventStages=Array.isArray(target.eventStages)?target.eventStages:[];target.bountyClaimed=target.bountyClaimed&&typeof target.bountyClaimed==='object'?target.bountyClaimed:{};
+  target.powerEvolutions=target.powerEvolutions&&typeof target.powerEvolutions==='object'?target.powerEvolutions:{};
 }
 function hitChance(perception,agility,dodge=0){
   // Equal attributes: 93%. Even extreme mismatches retain a 45% floor.
@@ -800,7 +850,10 @@ function enemyProfile(enemy,stage){
   const bossTypes={75:'tech',100:'tank',150:'speed',200:'tank',300:'regen',500:'psychic',750:'phase',1000:'energy'};
   const type=bossTypes[stage]||enemy.trait,profile=profiles[type]||profiles.brawler;
   enemy.attributes={strength:base*profile[0],agility:base*profile[1],vitality:base*profile[2],perception:base*profile[3]};
-  enemy.maxHp=clamp(enemy.maxHp*profile[2],1,1e150);enemy.damage=clamp(enemy.damage*profile[0],1,1e150);
+  const progressionPressure=Math.pow(1.0105,Math.min(stage,900))*(1+Math.floor(stage/100)*.18);
+  const threatDamage=Math.pow(1.0035,Math.min(stage,900));
+  enemy.maxHp=clamp(enemy.maxHp*profile[2]*progressionPressure*(enemy.elite&&!enemy.wall?1.28:1)*(enemy.wall?1.65:1),1,1e150);
+  enemy.damage=clamp(enemy.damage*profile[0]*threatDamage*(enemy.wall?1.18:1),1,1e150);
   enemy.attackMs=clamp(enemy.attackMs/(type==='speed'?1.35:1),380,5000);
   enemy.passive=stage===75?'suppression':stage===100?'rage':stage===200?'adaptive':profile[4];
   enemy.damageType=['energy','psychic','regen'].includes(type)?'elemental':'physical';
@@ -823,6 +876,138 @@ function floatText(text,enemyDmg){const d=document.createElement('div');d.classN
 function visualSet(){return new Set(s.visual||[])}
 function setVisual(set){s.visual=[...set]}
 
+const PF_LOCATIONS=[
+  {min:1,max:24,name:'BACKSTREETS',cls:'loc-backstreets',weather:''},
+  {min:25,max:49,name:'ROOFTOPS',cls:'loc-rooftops',weather:'weather-rain'},
+  {min:50,max:74,name:'INDUSTRIAL DOCKS',cls:'loc-docks',weather:''},
+  {min:75,max:99,name:'NEON DISTRICT',cls:'loc-neon',weather:'weather-rain'},
+  {min:100,max:149,name:'BLACKWIRE LAB',cls:'loc-lab',weather:''},
+  {min:150,max:224,name:'MILITARY CORDON',cls:'loc-military',weather:'weather-storm'},
+  {min:225,max:349,name:'RUINED DOWNTOWN',cls:'loc-ruins',weather:'weather-embers'},
+  {min:350,max:499,name:'ORBITAL FRONT',cls:'loc-orbit',weather:''},
+  {min:500,max:10000,name:'THE VOID',cls:'loc-void',weather:'weather-storm'}
+];
+const PF_EVOLUTIONS={
+  super_strength:[
+    {id:'seismic_titan',name:'Seismic Titan',desc:'Every fifth landed hit becomes a seismic strike with massive stagger.',apply:()=>{s.damageMult*=1.25}},
+    {id:'worldbreaker_path',name:'Worldbreaker Path',desc:'Raw damage surges, but the body becomes heavier.',apply:()=>{s.damageMult*=1.85;s.attackMs*=1.10}}
+  ],
+  hyper_speed:[
+    {id:'temporal_runner',name:'Temporal Runner',desc:'Speed flurries trigger more often and active cooldowns shorten.',apply:()=>{s.attackMs*=.82}},
+    {id:'infinite_momentum',name:'Infinite Momentum',desc:'Combo scaling becomes your main weapon.',apply:()=>{s.crit+=.08}}
+  ],
+  regeneration:[
+    {id:'cellular_rebirth_path',name:'Cellular Rebirth',desc:'Regeneration creates a living shield and grants a revive.',apply:()=>{s.regen+=.035;s.revives++}},
+    {id:'blood_phoenix',name:'Blood Phoenix',desc:'Low health dramatically amplifies damage and healing.',apply:()=>{s.lifesteal+=.10}}
+  ],
+  laser_vision:[
+    {id:'solar_beam',name:'Solar Beam',desc:'Repeated hits ignite a persistent burn.',apply:()=>{s.damageMult*=1.20}},
+    {id:'precision_gaze',name:'Precision Gaze',desc:'Extreme accuracy and critical focus.',apply:()=>{s.crit+=.15;PF_ATTRIBUTE(s,'perception',1.35)}}
+  ],
+  chain_lightning:[
+    {id:'living_lightning',name:'Living Lightning',desc:'Every third strike detonates an additional arc.',apply:()=>{s.attackMs*=.90}},
+    {id:'stormcaller',name:'Stormcaller',desc:'Your ultimate becomes a battlefield storm.',apply:()=>{s.damageMult*=1.18}}
+  ],
+  pyrokinesis:[
+    {id:'inferno_core',name:'Inferno Core',desc:'Burn damage becomes much more dangerous.',apply:()=>{s.damageMult*=1.30}},
+    {id:'phoenix_fire',name:'Phoenix Fire',desc:'Fire becomes survival: extra regen and one revive.',apply:()=>{s.regen+=.025;s.revives++}}
+  ],
+  telekinesis:[
+    {id:'gravity_well',name:'Gravity Well',desc:'Psychic hits rip through the Break meter.',apply:()=>{s.damageMult*=1.16}},
+    {id:'psionic_dominion',name:'Psionic Dominion',desc:'Telegraphed enemy attacks can be interrupted.',apply:()=>{s.crit+=.08}}
+  ],
+  phase_shift:[
+    {id:'quantum_phase',name:'Quantum Phase',desc:'Perfect dodges charge devastating counterattacks.',apply:()=>{s.dodge+=.08}},
+    {id:'ghostwalk',name:'Ghostwalk',desc:'Become increasingly difficult to touch.',apply:()=>{s.dodge+=.16}}
+  ]
+};
+function hasPower(id){return s.powers.includes(id)}
+function evolution(id){return s.powerEvolutions?.[id]||''}
+function powerTags(){const tags=new Set();for(const id of s.powers){byId(id)?.tags?.forEach(t=>tags.add(t))}return tags}
+function dominantFamily(){
+  const counts={strength:0,speed:0,regen:0,fire:0,lightning:0,psychic:0,gravity:0,phase:0,cosmic:0,tech:0,ice:0};
+  for(const id of s.powers){for(const tag of byId(id)?.tags||[]){if(tag in counts)counts[tag]++}}
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[1]?Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0]:'emerging';
+}
+function locationFor(stage){return PF_LOCATIONS.find(x=>stage>=x.min&&stage<=x.max)||PF_LOCATIONS[PF_LOCATIONS.length-1]}
+function renderEnvironment(){
+  const field=$('battlefield'),loc=locationFor(s.stage);
+  for(const x of PF_LOCATIONS)field.classList.remove(x.cls,x.weather);
+  field.classList.remove('weather-rain','weather-embers','weather-storm','power-fire-world','power-lightning-world','boss-phase-2','boss-phase-3');
+  field.classList.add(loc.cls);if(loc.weather)field.classList.add(loc.weather);
+  const tags=powerTags();
+  if(tags.has('fire')&&loc.cls!=='loc-orbit'&&loc.cls!=='loc-void')field.classList.add('weather-embers');
+  if(tags.has('lightning'))field.classList.add('weather-storm');
+  if(s.enemy?.wall&&s.fight.bossPhase>=2)field.classList.add('boss-phase-2');
+  if(s.enemy?.wall&&s.fight.bossPhase>=3)field.classList.add('boss-phase-3');
+  $('locationChip').textContent=loc.name;
+}
+function evolutionLabel(){
+  const vals=Object.values(s.powerEvolutions||{});
+  return vals.length?vals.map(id=>Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===id)?.name||id).join(', '):'None yet';
+}
+function maybePowerEvolution(){
+  if(s.stage<60||s.stage-(s.lastEvolutionStage||0)<80||!$('eventModal').classList.contains('hidden')||storyPaused)return;
+  const candidates=s.powers.filter(id=>PF_EVOLUTIONS[id]&&!s.powerEvolutions[id]);
+  if(!candidates.length)return;
+  const powerId=candidates[Math.floor(Math.random()*candidates.length)],base=byId(powerId),opts=PF_EVOLUTIONS[powerId];
+  s.lastEvolutionStage=s.stage;storyPaused=true;clearCombatTimers();
+  $('eventTitle').textContent=(base?.name||'Power')+' EVOLUTION';
+  $('eventText').textContent='This power has been used enough to branch into a new form. This choice changes how it behaves for the rest of the run.';
+  $('eventOptions').innerHTML='';
+  for(const evo of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+evo.name+'</strong><small>'+evo.desc+'</small>';b.addEventListener('click',()=>{s.powerEvolutions[powerId]=evo.id;evo.apply();$('eventModal').classList.add('hidden');storyPaused=false;startCombatTimers();toast('EVOLVED: '+evo.name);renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
+  $('eventModal').classList.remove('hidden');
+}
+function identityDamage(damage,manual){
+  const hit=(s.fight.hits||0)+1;
+  if(hasPower('super_strength')&&hit%5===0){damage*=evolution('super_strength')==='worldbreaker_path'?5.2:3.6;s.fight.break=Math.min(100,s.fight.break+34);identityCue('SEISMIC STRIKE')}
+  if(hasPower('hyper_speed')&&hit%(evolution('hyper_speed')==='temporal_runner'?5:8)===0){damage*=evolution('hyper_speed')==='infinite_momentum'?3.1:2.1;s.fight.combo+=2;identityCue('SPEED FLURRY')}
+  if(hasPower('chain_lightning')&&hit%3===0){damage*=evolution('chain_lightning')==='living_lightning'?2.4:1.65;identityCue('ARC')}
+  if(hasPower('laser_vision')&&hit%4===0){damage*=1.65;s.fight.burn=(s.fight.burn||0)+damage*(evolution('laser_vision')==='solar_beam'?.22:.10);identityCue('HEAT VISION')}
+  if(hasPower('pyrokinesis'))s.fight.burn=(s.fight.burn||0)+damage*(evolution('pyrokinesis')==='inferno_core'?.16:.07);
+  if(hasPower('cryokinesis')){s.fight.chill=(s.fight.chill||0)+1;if(s.fight.chill>=6){s.fight.chill=0;s.fight.freeze=Math.max(s.fight.freeze,1.8);identityCue('FROZEN')}}
+  if(hasPower('telekinesis'))s.fight.break=Math.min(100,s.fight.break+(evolution('telekinesis')==='gravity_well'?16:7));
+  if(hasPower('gravity_crush')&&manual){damage*=2.2;s.fight.break=Math.min(100,s.fight.break+30)}
+  if(hasPower('cosmic_force')&&hit%10===0){damage*=3.5;identityCue('COSMIC SURGE')}
+  if(s.fight.phaseCharge){damage*=evolution('phase_shift')==='quantum_phase'?5:3;s.fight.phaseCharge=0;identityCue('PHASE COUNTER')}
+  if(s.fight.retaliation){damage*=1+Math.min(3,s.fight.retaliation)*.35;s.fight.retaliation=0}
+  if(s.enemy?.rival&&meta.rivalAdaptation&&dominantFamily()===meta.rivalAdaptation)damage*=.72;
+  return damage;
+}
+function identityCue(text){
+  const now=performance.now();if(now-lastCombatFx<170)return;lastCombatFx=now;floatText(text,false);
+  const field=$('battlefield');field.classList.add('power-identity-flash');setTimeout(()=>field.classList.remove('power-identity-flash'),300)
+}
+function tickPowerIdentity(dt){
+  if(s.fight.burn>0&&s.enemyHp>0){const burn=Math.min(s.enemyHp,s.fight.burn*dt);s.enemyHp=Math.max(0,s.enemyHp-burn);s.fight.burn=Math.max(0,s.fight.burn*(1-dt*.22));if(s.enemyHp<=0)enemyDefeated()}
+  if(hasPower('regeneration')&&s.hp>=s.maxHp*.98)s.fight.regenShield=Math.min(s.maxHp*.25,(s.fight.regenShield||0)+s.maxHp*.025*dt);
+}
+function chargeUltimate(amount){s.ultimateCharge=clamp((s.ultimateCharge||0)+amount,0,100)}
+function useUltimate(){
+  if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return;
+  s.ultimateCharge=0;const family=dominantFamily();const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),500);
+  if(family==='speed'){for(let i=0;i<6;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*2,false,true)},i*70);toast('ULTIMATE: ZERO-TIME ASSAULT')}
+  else if(family==='regen'){s.hp=s.maxHp;s.fight.regenShield=s.maxHp*.4;dealDamageToEnemy(totalDamage()*8,true,true);toast('ULTIMATE: REBIRTH')}
+  else if(family==='psychic'||family==='gravity'){s.fight.freeze=5;s.fight.break=0;dealDamageToEnemy(totalDamage()*16,true,true);toast('ULTIMATE: SINGULARITY')}
+  else if(family==='lightning'){dealDamageToEnemy(totalDamage()*(evolution('chain_lightning')==='stormcaller'?22:16),true,true);s.fight.freeze=3;toast('ULTIMATE: STORMFRONT')}
+  else if(family==='fire'){s.fight.burn=(s.fight.burn||0)+totalDamage()*12;dealDamageToEnemy(totalDamage()*10,true,true);toast('ULTIMATE: INFERNO')}
+  else if(family==='phase'){s.fight.freeze=4;dealDamageToEnemy(totalDamage()*14,true,true);toast('ULTIMATE: REALITY CUT')}
+  else {dealDamageToEnemy(totalDamage()*18,true,true);s.fight.break=0;toast('ULTIMATE: WORLD IMPACT')}
+  scheduleSave()
+}
+function checkBossPhase(){
+  if(!s.enemy?.wall)return;
+  const ratio=s.enemyHp/s.enemyMaxHp;
+  if(ratio<=.5&&(s.fight.bossPhase||1)<2){s.fight.bossPhase=2;s.enemy.damage*=1.28;s.enemy.attackMs*=.86;toast('BOSS PHASE II');renderEnvironment()}
+  if(ratio<=.15&&(s.fight.bossPhase||1)<3){s.fight.bossPhase=3;s.enemy.damage*=1.35;s.enemy.attackMs*=.80;s.fight.freeze=0;toast('BOSS DESPERATION');renderEnvironment()}
+}
+function eventEligible(stage){
+  const now=Date.now();
+  if(stage<25||PF_ENEMIES.isWallBoss(stage)||storyPaused)return false;
+  if(stage-(s.lastEventStage||0)<35)return false;
+  if(now-(s.lastEventAt||0)<180000)return false;
+  return stage%10===7;
+}
 const PF_ARTIFACTS=[
 {id:'reactor_shard',name:'Cracked Reactor Shard',desc:'+35% damage, +15% incoming damage',apply:()=>{s.damageMult*=1.35;s.incomingMult*=1.15}},
 {id:'combat_stim',name:'Combat Stim',desc:'+22% attack speed',apply:()=>{s.attackMs*=.78;updateAttackTimer()}},
@@ -842,11 +1027,42 @@ function activeProfile(){const tags=new Set();s.powers.forEach(id=>byId(id)?.tag
 function useActivePower(){if(!s.powers.length||Date.now()<s.activeCdUntil||storyPaused||!s.enemy||s.enemyHp<=0)return;s.activeCdUntil=Date.now()+12000;const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),350);if(tags.has('time')){s.fight.freeze=Math.max(s.fight.freeze,3);floatText('TIME LOCK',false)}else if(tags.has('regen')){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.35);floatText('HEAL',false)}else if(tags.has('speed')){for(let i=0;i<3;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*1.35,false,true)},i*90)}else{const mult=tags.has('strength')?6:tags.has('psychic')||tags.has('gravity')?4.5:5;s.fight.break=Math.min(100,s.fight.break+(tags.has('strength')||tags.has('gravity')?45:25));dealDamageToEnemy(totalDamage()*mult,true,true)}toast(activeProfile()[0]);renderHUD();scheduleSave()}
 function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');$('dodgeBtn').classList.add('danger-ready');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');resolveHeavyAttack()},900)}
 function resolveHeavyAttack(){if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
-function dodgeAction(){const now=Date.now();if(now<s.dodgeCdUntil)return;s.dodgeCdUntil=now+4000;s.fight.dodgeWindow=.5;if(s.fight.telegraph){clearTimeout(timers.telegraph);s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');floatText('PERFECT DODGE',true);s.fight.combo+=3;s.coins+=Math.max(4,Math.floor(s.stage*.8));setTimeout(()=>playerAttack(true),70)}else floatText('DODGE READY',true);renderHUD()}
-function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;floatText('FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
+function dodgeAction(){const now=Date.now();if(now<s.dodgeCdUntil)return;s.dodgeCdUntil=now+4000;s.fight.dodgeWindow=.5;if(s.fight.telegraph){clearTimeout(timers.telegraph);s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');floatText('PERFECT DODGE',true);s.fight.combo+=3;chargeUltimate(12);if(hasPower('phase_shift'))s.fight.phaseCharge=1;if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;s.coins+=Math.max(4,Math.floor(s.stage*.6));setTimeout(()=>playerAttack(true),70)}else floatText('DODGE READY',true);renderHUD()}
+function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(){const item=powerQueue[0];if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;item.gambled=true;s.maxHp=Math.max(1,s.maxHp*.85);s.hp=Math.min(s.hp,s.maxHp);const r=Math.min(4,rarityValue(item.minRarity||'common')+1);item.minRarity=['common','rare','epic','legendary','cosmic'][r];item.options=[];activePowerChoices=[];showPowerModal();toast('RISK MUTATION: -15% MAX HP');saveNow()}
-function showRandomEncounter(stage){if(stage<12||stage%15!==12||s.eventStages.includes(stage)||PF_ENEMIES.isWallBoss(stage)||storyPaused)return;s.eventStages.push(stage);const type=Math.floor(stage/15)%4;const events=[['Armoured Convoy','A criminal convoy cuts across your route.',[['HIJACK THE CASH','Big coin payout; +5% incoming damage',()=>{s.coins+=Math.max(300,stage*22);s.incomingMult*=1.05}],['SAVE THE DRIVER','Heal fully and +8% coin bonus',()=>{s.hp=s.maxHp;s.storyCoinBonus*=1.08}],['WALK AWAY','No risk, no reward',()=>{}]]],['Experimental Lab','An illegal enhancement lab is evacuating.',[['TAKE THE SERUM','Gain a random artifact',()=>grantArtifact()],['DESTROY THE LAB','Damage x1.12 this run',()=>{s.damageMult*=1.12}],['LEAK THE FILES','Perception x1.2',()=>PF_ATTRIBUTE(s,'perception',1.2)]]],['Hostage Crisis','An elite crew is holding civilians.',[['RUSH THEM','Clear 5 stages in 45 seconds for loot',()=>{s.challenge={target:stage+5,deadline:Date.now()+45000}}],['EVACUATE CIVILIANS','Vitality x1.15 and heal 25%',()=>{PF_ATTRIBUTE(s,'vitality',1.15);s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.25)}],['HUNT THE LEADER','Next elite pays double',()=>{s.nextEliteDouble=1}]]],['Meteor Fragment','Something impossible lands in the city.',[['TOUCH IT','Artifact; +10% incoming damage',()=>{grantArtifact();s.incomingMult*=1.1}],['STUDY IT','Perception x1.3',()=>PF_ATTRIBUTE(s,'perception',1.3)],['SELL IT','Large coin payout',()=>{s.coins+=Math.max(500,stage*30)}]]]];const [title,text,opts]=events[type];$('eventTitle').textContent=title;$('eventText').textContent=text;$('eventOptions').innerHTML='';for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}$('eventModal').classList.remove('hidden')}
-function setupRival(){if(!s.enemy||s.enemy.wall||s.stage<40||s.stage%40!==0)return;s.enemy.rival=true;s.enemy.elite=true;s.enemy.name='RIVAL // VANTA '+(meta.rivalLevel+1);const mult=1+meta.rivalLevel*.18;s.enemy.maxHp*=1.75*mult;s.enemyHp=s.enemy.maxHp;s.enemy.damage*=1.28*mult;s.enemy.faction='VANTA'}
+function showRandomEncounter(stage){
+  if(!eventEligible(stage)||s.eventStages.includes(stage))return;
+  s.eventStages.push(stage);s.lastEventStage=stage;s.lastEventAt=Date.now();
+  const type=Math.floor(stage/35)%4;
+  const events=[
+    ['Armoured Convoy','A criminal convoy cuts across your route.',[
+      ['HIJACK THE CASH','Big coin payout; +5% incoming damage',()=>{s.coins+=Math.max(300,stage*18);s.incomingMult*=1.05;s.alignment--}],
+      ['SAVE THE DRIVER','Heal fully and +8% coin bonus',()=>{s.hp=s.maxHp;s.storyCoinBonus*=1.08;s.alignment++}],
+      ['WALK AWAY','No risk, no reward',()=>{}]]],
+    ['Experimental Lab','An illegal enhancement lab is evacuating.',[
+      ['TAKE THE SERUM','Gain a random artifact',()=>grantArtifact()],
+      ['DESTROY THE LAB','Damage x1.12 this run',()=>{s.damageMult*=1.12;s.alignment--}],
+      ['LEAK THE FILES','Perception x1.2',()=>{PF_ATTRIBUTE(s,'perception',1.2);s.alignment++}]]],
+    ['Hostage Crisis','An elite crew is holding civilians.',[
+      ['RUSH THEM','Clear 5 stages in 55 seconds for loot',()=>{s.challenge={target:stage+5,deadline:Date.now()+55000}}],
+      ['EVACUATE CIVILIANS','Vitality x1.15 and heal 25%',()=>{PF_ATTRIBUTE(s,'vitality',1.15);s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.25);s.alignment++}],
+      ['HUNT THE LEADER','Next elite pays double',()=>{s.nextEliteDouble=1;s.alignment--}]]],
+    ['Anomaly Impact','Something impossible tears through the district.',[
+      ['TOUCH IT','Artifact; +10% incoming damage',()=>{grantArtifact();s.incomingMult*=1.1}],
+      ['STUDY IT','Perception x1.3',()=>PF_ATTRIBUTE(s,'perception',1.3)],
+      ['DESTROY IT','Large coin payout and +10 ultimate charge',()=>{s.coins+=Math.max(500,stage*24);chargeUltimate(10)}]]]
+  ];
+  const [title,text,opts]=events[type];$('eventTitle').textContent=title;$('eventText').textContent=text;$('eventOptions').innerHTML='';
+  for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
+  $('eventModal').classList.remove('hidden')
+}
+function setupRival(){
+  if(!s.enemy||s.enemy.wall||s.stage<80||s.stage%80!==0)return;
+  s.enemy.rival=true;s.enemy.elite=true;s.enemy.name='RIVAL // VANTA '+(meta.rivalLevel+1);
+  const mult=1+meta.rivalLevel*.22;s.enemy.maxHp*=2.25*mult;s.enemyHp=s.enemy.maxHp;s.enemy.damage*=1.42*mult;s.enemy.faction='VANTA';
+  s.enemy.rivalAdaptation=meta.rivalAdaptation||'';
+  if(meta.rivalAdaptation)toast('VANTA ADAPTED TO '+meta.rivalAdaptation.toUpperCase())
+}
 function checkChallenge(){if(!s.challenge)return;if(Date.now()>s.challenge.deadline){toast('CHALLENGE FAILED');s.challenge=null;return}if(s.stage>=s.challenge.target){const reward=Math.max(600,s.stage*35);s.coins+=reward;grantArtifact();toast('CHALLENGE COMPLETE +'+fmt(reward)+' C');s.challenge=null}}
 function freshRun(){
   clearTimeout(choiceTimer);choiceLocked=false;hidePowerModal();
@@ -864,7 +1080,7 @@ function totalDamage(){
 function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
 function spawnEnemy(){
-  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0};
+  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1};
   s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
@@ -876,12 +1092,14 @@ showRandomEncounter(s.stage);
 function playerAttack(manual=false,echo=false){
   if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0)return;
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,s.attackMs*.65)))return;if(!echo)lastAttackMs=now;
-  if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;floatText('MISS',false);renderHUD();return}
-  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(25,s.fight.combo)*.025);
+  if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;if(now-lastCombatFx>150)floatText('MISS',false);renderHUD();return}
+  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);
   if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
   if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}
-  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;checkBounties()}
+  damage=identityDamage(damage,manual);
+  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties()}
+  else chargeUltimate(manual?3:1.5);
   s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
   if(enemyPassive('adaptive'))damage*=1-Math.min(.45,s.fight.hits*.03);
@@ -890,56 +1108,53 @@ function playerAttack(manual=false,echo=false){
   if(mirrored('suppression'))damage*=1.2;
   const fight=s.fight,runId=s.runId;
   dealDamageToEnemy(clamp(damage,0,1e150),crit,manual,echo);
-  if(!manual&&!echo&&Math.random()<clamp(s.doubleHit,0,.85)&&s.fight===fight){const echoTimer=setTimeout(()=>{pendingEchoes.delete(echoTimer);if(s.runId===runId&&s.fight===fight)playerAttack(false,true)},75);pendingEchoes.add(echoTimer)}
+  if(!manual&&!echo&&Math.random()<clamp(s.doubleHit,0,.85)&&s.fight===fight){const echoTimer=setTimeout(()=>{pendingEchoes.delete(echoTimer);if(s.runId===runId&&s.fight===fight)playerAttack(false,true)},90);pendingEchoes.add(echoTimer)}
 }
 function dealDamageToEnemy(amount,crit,manual,echo=false){
   const dealt=Math.min(s.enemyHp,amount);s.enemyHp=Math.max(0,s.enemyHp-amount);
   if(s.lifesteal>0)s.hp=clamp(s.hp+dealt*s.lifesteal,0,s.maxHp);
   animatePlayerAttack(crit,manual,echo);floatDamage(amount,crit,false);
-s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7));if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);floatText('STAGGERED',false);toast('BREAK - DAMAGE WINDOW')}
+  s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7));
+  if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);identityCue('STAGGERED')}
+  checkBossPhase();
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function enemyAttack(){
   if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
-  if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%4===0){startTelegraph();return}
-  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){floatText('MISS',true);return}
+  if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
   let dmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult*(1-defence());
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
+  if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
   dmg=clamp(dmg,0,1e150);
-  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);floatText('ABSORBED',true);renderHUD();return}
+  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);identityCue('ABSORBED');renderHUD();return}
   s.fight.hits=0;s.fight.combo=0;
+  if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
   if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
   s.hp-=dmg;animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
     else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
-    else{s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('KNOCKED BACK '+(old-s.stage)+' STAGES');spawnEnemy();saveNow()}
+    else{s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?7:3));s.coins=Math.floor(s.coins*.9);toast('KNOCKED BACK '+(old-s.stage)+' STAGES');spawnEnemy();saveNow()}
   }
   renderHUD();
 }
-
 function enemyDefeated(){
-  const defeatedStage=s.stage; const wasWall=!!s.enemy.wall; const wasBoss=!!s.enemy.wall;
-  s.kills++; if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.01,1,1e50);
-  if(wasBoss&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,1.3);toast('EVOLUTION: '+key.toUpperCase()+' +30%')}  // v0.3 economy: regular criminals fund upgrades; elites are satisfying paydays.
-  let reward=(18+defeatedStage*4.5)*Math.pow(1.050,Math.min(defeatedStage,4000))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult();
-  if(s.enemy.elite)reward*=3.5;
-if(s.nextEliteDouble&&s.enemy.elite){reward*=2;s.nextEliteDouble=0}if(s.fight.finisher)reward*=1.25;
-  if(wasWall)reward*=12;
-  const paid=Math.floor(reward);
-  s.coins=clamp(s.coins+paid,0,1e150);
-  showCoinBurst(paid);
-if(s.enemy.elite){s.elitesBeaten++;if(Math.random()<.28)grantArtifact();checkBounties()}if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;grantArtifact();toast('RIVAL DEFEATED - VANTA WILL RETURN')}checkBounties();
-  if(wasWall){
-    if(!s.bossRewards.includes(defeatedStage)){s.runBosses++; meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('BOS WALL BOSS DEFEATED — MUTATION EARNED')}
-  }
-  s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage); meta.bestStage=Math.max(meta.bestStage,s.stage);
-  checkPowerMilestone(s.stage); checkCombos(); checkChallenge(); spawnEnemy(); scheduleSave();
+  const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;
+  s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);
+  if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,1.3);toast('EVOLUTION: '+key.toUpperCase()+' +30%')}
+  let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult();
+  if(s.enemy.elite)reward*=3.2;if(s.nextEliteDouble&&s.enemy.elite){reward*=2;s.nextEliteDouble=0}if(s.fight.finisher)reward*=1.25;if(wasWall)reward*=10;
+  const paid=Math.floor(reward);s.coins=clamp(s.coins+paid,0,1e150);showCoinBurst(paid);
+  if(s.enemy.elite){s.elitesBeaten++;if(Math.random()<.18)grantArtifact();checkBounties()}
+  if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
+  if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
+  s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
+  checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();
 }
-
 function checkPowerMilestone(stage){
   if(PF_CONFIG.powerMilestones.includes(stage)&&!s.triggeredMilestones.includes(stage)){
     s.triggeredMilestones.push(stage); queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
@@ -1138,7 +1353,8 @@ function updatePowerAlert(){
   if(powerQueue.length){$('powerAlert').classList.remove('hidden');$('powerQueueBadge').textContent=powerQueue.length;$('powerAlertText').textContent=powerQueue.length>1?`${powerQueue.length} awakenings waiting`:'Choose a new ability'}else $('powerAlert').classList.add('hidden');
 }
 
-function renderHUD(){
+function renderHUD(force=false){
+  const hudNow=performance.now();if(!force&&hudNow-lastHudRender<110)return;lastHudRender=hudNow;
   $('coins').textContent=fmt(s.coins);$('souls').textContent=fmt(meta.souls);$('stageLabel').textContent=`Stage ${s.stage}`;$('worldLabel').textContent=worldFor(s.stage).name;
   const next=nextMilestone(s.stage+1);$('nextMilestoneIcon').textContent=next.icon;$('nextMilestoneText').textContent=`${next.type==='boss'?'Wall Boss':'Power'} at ${next.stage} â€¢ ${Math.max(0,next.stage-s.stage)} to go`;
   $('enemyName').textContent=s.enemy?.name||'Enemy';
@@ -1180,10 +1396,15 @@ function renderHUD(){
   $('finisherLabel').textContent=canFinish?'NOW':'15% HP';
   $('bountyLabel').textContent=bountyStatus().count+' / 3';
   $('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);
+  $('ultimateLabel').textContent=Math.floor(s.ultimateCharge||0)+'%';
+  $('ultimateBtn').disabled=(s.ultimateCharge||0)<100;
+  $('ultimateBtn').classList.toggle('ready',(s.ultimateCharge||0)>=100);
+  renderEnvironment();
   updatePowerAlert(); applyHeroVisuals();
 }
 function applyHeroVisuals(){
   const el=$('heroFighter');el.className='fighter hero info-tap idle';const v=new Set(s.visual||[]);if(v.has('flight'))el.classList.add('flying');if(v.has('lightning'))el.classList.add('lightning');if(v.has('fire')||v.has('solar'))el.classList.add('fire');if(v.has('cosmic'))el.classList.add('cosmic');if(v.has('regen'))el.classList.add('regen');if(v.has('psychic'))el.classList.add('psychic');if(v.has('dark')||v.has('phase'))el.classList.add('dark');if(s.attackMs<700)el.classList.add('speedy');if(s.armor>=.15)el.classList.add('iron');
+  if(s.powers.length>=3)el.classList.add('form-1');if(s.powers.length>=6)el.classList.add('form-2');if(s.powers.length>=9||s.combos.length>=2)el.classList.add('form-3');
 }
 function renderUpgrades(){
   $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
@@ -1207,11 +1428,12 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.4.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.5</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
   $('artifactList').innerHTML=s.artifacts.length?s.artifacts.map(id=>{const a=PF_ARTIFACTS.find(x=>x.id===id);return a?`<div class="artifact-row"><b>${escapeHtml(a.name)}</b><br>${escapeHtml(a.desc)}</div>`:''}).join(''):'<div class="power-row">No artifacts this run.</div>';
+  $('evolutionList').innerHTML=Object.keys(s.powerEvolutions||{}).length?Object.entries(s.powerEvolutions).map(([pid,eid])=>{const p=byId(pid),e=Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===eid);return `<div class="artifact-row"><b>${escapeHtml(e?.name||eid)}</b><br>${escapeHtml(p?.name||pid)} â€” ${escapeHtml(e?.desc||'Evolved')}</div>`}).join(''):'<div class="power-row">Powers can begin evolving after Stage 60.</div>';
   $('profilePowers').querySelectorAll('[data-power-id]').forEach(btn=>btn.addEventListener('click',()=>showPowerInfo(btn.dataset.powerId)));
   $('discoveryList').innerHTML=meta.discoveries.length?meta.discoveries.map(id=>{const c=PF_COMBOS.find(x=>x.id===id);return c?`<button type="button" class="power-row-btn" data-combo-id="${c.id}"><span><b>COMBO</b> ${escapeHtml(c.name)}</span><em>${escapeHtml(c.bonus)}</em></button>`:''}).join(''):'<div class="discovery-row">Hidden combinations will appear here once discovered.</div>';
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
@@ -1223,18 +1445,23 @@ function renderAscension(){
 function renderAll(){renderHUD();renderUpgrades();renderAscension()}
 
 function animatePlayerAttack(crit,manual,echo){
+  const now=performance.now();if(!manual&&!crit&&now-lastCombatFx<90)return;lastCombatFx=now;
   const hero=$('heroFighter');hero.classList.remove('attack');void hero.offsetWidth;hero.classList.add('attack');
-  const v=new Set(s.visual||[]);const fx=$('fxLayer');const rect=$('battlefield').getBoundingClientRect();
-  if(v.has('vision')||v.has('fire')){const beam=document.createElement('div');beam.className='beam';beam.style.left='31%';beam.style.top='40%';fx.appendChild(beam);setTimeout(()=>beam.remove(),260)}
-  else if(v.has('lightning')){const bolt=document.createElement('div');bolt.className='lightning-bolt';bolt.style.left='30%';bolt.style.top='46%';bolt.style.width='42%';fx.appendChild(bolt);setTimeout(()=>bolt.remove(),240)}
-  else if(v.has('psychic')&&Math.random()<.35){const wave=document.createElement('div');wave.className='psychic-wave';wave.style.left='45%';wave.style.top='37%';fx.appendChild(wave);setTimeout(()=>wave.remove(),450)}
+  const v=new Set(s.visual||[]),fx=$('fxLayer');
+  if(fx.children.length<10){
+    if(v.has('vision')||v.has('fire')){const beam=document.createElement('div');beam.className='beam';beam.style.left='31%';beam.style.top='40%';fx.appendChild(beam);setTimeout(()=>beam.remove(),220)}
+    else if(v.has('lightning')){const bolt=document.createElement('div');bolt.className='lightning-bolt';bolt.style.left='30%';bolt.style.top='46%';bolt.style.width='42%';fx.appendChild(bolt);setTimeout(()=>bolt.remove(),210)}
+    else if(v.has('psychic')&&Math.random()<.22){const wave=document.createElement('div');wave.className='psychic-wave';wave.style.left='45%';wave.style.top='37%';fx.appendChild(wave);setTimeout(()=>wave.remove(),360)}
+  }
   const enemy=$('enemyFighter');enemy.classList.remove('hit');void enemy.offsetWidth;enemy.classList.add('hit');
 }
 function animateEnemyAttack(){const h=$('heroFighter');h.classList.remove('hit');void h.offsetWidth;h.classList.add('hit')}
 function floatDamage(amount,crit,enemyDmg){
-  const d=document.createElement('div');d.className='damage-number'+(crit?' crit':'')+(enemyDmg?' enemy-dmg':'');d.textContent=(crit?'CRIT ':'')+fmt(amount);d.style.left=enemyDmg?'24%':'70%';d.style.top=enemyDmg?'45%':'38%';$('damageLayer').appendChild(d);setTimeout(()=>d.remove(),700);
-  const ring=document.createElement('div');ring.className='impact-ring';ring.style.left=enemyDmg?'25%':'72%';ring.style.top=enemyDmg?'45%':'40%';$('fxLayer').appendChild(ring);setTimeout(()=>ring.remove(),350);
-  if(crit){const field=$('battlefield');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');setTimeout(()=>field.classList.remove('shake'),220)}
+  const layer=$('damageLayer'),now=performance.now();
+  if(!crit&&!enemyDmg&&now-lastCombatFx<85){damageAggregate+=amount;clearTimeout(damageAggregateTimer);damageAggregateTimer=setTimeout(()=>{if(damageAggregate>0){const d=document.createElement('div');d.className='damage-number';d.textContent=fmt(damageAggregate)+' TOTAL';d.style.left='70%';d.style.top='38%';layer.appendChild(d);setTimeout(()=>d.remove(),520);damageAggregate=0}},120);return}
+  if(layer.children.length>=10)return;
+  const d=document.createElement('div');d.className='damage-number'+(crit?' crit':'')+(enemyDmg?' enemy-dmg':'');d.textContent=(crit?'CRIT ':'')+fmt(amount);d.style.left=enemyDmg?'24%':'70%';d.style.top=enemyDmg?'45%':'38%';layer.appendChild(d);setTimeout(()=>d.remove(),560);
+  if(crit&&performance.now()-lastCombatFx>130){const field=$('battlefield');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');setTimeout(()=>field.classList.remove('shake'),180)}
 }
 function showCoinBurst(amount){
   const d=document.createElement('div');d.className='coin-burst';d.textContent='+'+fmt(amount)+' C';d.style.left='68%';d.style.top='24%';$('damageLayer').appendChild(d);setTimeout(()=>d.remove(),850);
@@ -1277,13 +1504,13 @@ function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.e
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
-  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);
+  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
   autoBuyElapsed+=dt;if(meta.soulTree.autobuy&&autoBuyElapsed>=1){autoBuyElapsed=0;const def=upgradeDefs().sort((a,b)=>upgradeCost(a,s.upgrades[a.id])-upgradeCost(b,s.upgrades[b.id]))[0];buyUpgrade(def.id)}
   renderHUD();
-},200)}
+},300)}
 
 function snapshot(){return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue,timestamp:Date.now()}))}
 function saveNow(){clearTimeout(timers.save);const ok=PF_SAVE.write(snapshot());if(!ok)toast('SAVE FAILED — progress is not stored');return ok}
@@ -1292,6 +1519,7 @@ function restore(){
   const data=PF_SAVE.load();if(!data)return false;
   const savedMeta=data.meta&&typeof data.meta==='object'?data.meta:{};
   for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber','rivalLevel'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
+  meta.rivalAdaptation=typeof savedMeta.rivalAdaptation==='string'?savedMeta.rivalAdaptation:'';
   for(const key of ['discoveries','storyFlags','seenStories'])meta[key]=Array.isArray(savedMeta[key])?savedMeta[key].filter(x=>typeof x==='string'):[];
   for(const node of PF_CONFIG.soulTree)meta.soulTree[node.id]=Math.floor(clamp(savedMeta.soulTree?.[node.id]||0,0,node.max));
   const old=data.run&&typeof data.run==='object'?data.run:{};
@@ -1327,7 +1555,7 @@ function restore(){
 
 function bind(){
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
-  $('dodgeBtn').addEventListener('click',dodgeAction);$('activePowerBtn').addEventListener('click',useActivePower);$('finisherBtn').addEventListener('click',useFinisher);$('bountyBtn').addEventListener('click',showBounties);$('gamblePowerBtn').addEventListener('click',gamblePower);
+  $('dodgeBtn').addEventListener('click',dodgeAction);$('activePowerBtn').addEventListener('click',useActivePower);$('finisherBtn').addEventListener('click',useFinisher);$('ultimateBtn').addEventListener('click',useUltimate);$('bountyBtn').addEventListener('click',showBounties);$('gamblePowerBtn').addEventListener('click',gamblePower);
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
   $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
@@ -1354,6 +1582,7 @@ init();
 </html>
 
  
+
 
 
 
