@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.3</title>
+  <title>Powerfall: Ascension Prototype v0.4</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -96,6 +96,35 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
 .dock-button{transition:transform .12s ease,border-color .12s ease,background .12s ease}.dock-button:active{transform:translateY(1px) scale(.985)}
 .upgrade-card{transition:transform .12s ease,border-color .12s ease}.upgrade-card:not(:disabled):active{transform:scale(.985)}
 @media(max-width:420px){.fighter{width:112px;height:162px}.fighter.hero{left:1%}.fighter.enemy{right:1%}.encounter-chip,.faction-chip{font-size:7px;padding:4px 6px}}
+
+/* ================= POWERFALL v0.4 ================= */
+.bg-stars{opacity:.08!important;background-size:86px 86px!important}
+.bg-city{bottom:15%!important;height:50%!important;opacity:1!important;background:
+linear-gradient(90deg,#09121d 0 6%,transparent 6% 9%,#101c2b 9% 16%,transparent 16% 19%,#0d1724 19% 29%,transparent 29% 32%,#142237 32% 40%,transparent 40% 44%,#0a1420 44% 54%,transparent 54% 58%,#112136 58% 67%,transparent 67% 71%,#0d1826 71% 80%,transparent 80% 84%,#111f31 84% 93%,transparent 93% 96%,#0a1420 96% 100%)!important}
+.bg-city::before{content:"";position:absolute;left:0;right:0;bottom:18%;height:82%;opacity:.72;background:
+linear-gradient(90deg,transparent 0 4%,#101d2c 4% 10%,transparent 10% 14%,#16243a 14% 21%,transparent 21% 25%,#0f1a28 25% 33%,transparent 33% 38%,#17263d 38% 47%,transparent 47% 53%,#101b2a 53% 61%,transparent 61% 67%,#142339 67% 75%,transparent 75% 81%,#0f1927 81% 89%,transparent 89% 94%,#132137 94% 100%);
+clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21% 55%,27% 55%,27% 40%,33% 40%,33% 67%,39% 67%,39% 18%,47% 18%,47% 56%,53% 56%,53% 33%,61% 33%,61% 64%,67% 64%,67% 24%,75% 24%,75% 57%,82% 57%,82% 36%,89% 36%,89% 61%,95% 61%,95% 28%,100% 28%,100% 100%,0 100%)}
+.bg-city::after{content:"";position:absolute;inset:12% 2% 4%;opacity:.36;background-image:radial-gradient(circle,#ffd66b 0 1px,transparent 1.5px),radial-gradient(circle,#69d8ff 0 1px,transparent 1.5px);background-size:57px 38px,73px 47px;background-position:8px 7px,31px 20px}
+.city-lights{opacity:.20!important}.scene-glow{height:43%!important;bottom:8%!important}
+.ground{height:16%!important;background:linear-gradient(180deg,rgba(69,125,172,.20),transparent 2px),repeating-linear-gradient(90deg,transparent 0 74px,rgba(77,130,177,.07) 75px 76px),linear-gradient(#111a26,#070b11)!important}
+.battlefield{background:radial-gradient(circle at 50% 62%,rgba(37,107,166,.18),transparent 32%),radial-gradient(circle at 50% 0%,rgba(31,72,120,.28),transparent 48%),linear-gradient(180deg,#081321 0%,#10223a 58%,#0a111b 59%,#070b11 100%)!important}
+.battlefield::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(180deg,transparent 0 65%,rgba(5,9,14,.34) 100%);box-shadow:inset 0 0 75px rgba(0,0,0,.34)}
+.world-global{background:radial-gradient(circle at 50% 18%,rgba(211,69,64,.24),transparent 43%),linear-gradient(#1a111b 0%,#261d2d 58%,#0c0d13 59%)!important}
+.world-planetary{background:radial-gradient(circle at 50% 16%,rgba(238,126,48,.25),transparent 43%),linear-gradient(#211516 0%,#33231d 58%,#0d0d11 59%)!important}
+.world-cosmic{background:radial-gradient(circle at 50% 15%,rgba(137,75,255,.34),transparent 43%),linear-gradient(#0d0b20 0%,#19122f 58%,#070810 59%)!important}
+.fighter::after{content:"";position:absolute;left:23%;right:23%;bottom:7%;height:10px;border-radius:50%;background:rgba(0,0,0,.42);filter:blur(4px);z-index:-2}
+.active-strip{display:grid;grid-template-columns:1.1fr 1.1fr 1.1fr .9fr;gap:5px}
+.active-btn{border:1px solid #30425a;background:linear-gradient(#182436,#101824);border-radius:10px;min-height:38px;padding:5px 6px;font-weight:900;font-size:10px}
+.active-btn strong{display:block}.active-btn small{display:block;font-size:7px;color:#92a5bd;margin-top:2px}.active-btn.ready{border-color:#64d6ff}.active-btn.danger-ready{border-color:#ffbf57;background:linear-gradient(#392912,#1e180f)}.active-btn:disabled{opacity:.42}
+.combat-meter{border:1px solid #2c3b4e;background:#0c131d;border-radius:10px;padding:5px 7px;display:grid;gap:3px}.combat-meter span{font-size:7px;color:#8fa3bb;display:flex;justify-content:space-between}.microbar{height:4px;border-radius:99px;background:#192332;overflow:hidden}.microbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#63ccff,#a882ff);transition:width .12s}
+.telegraph{position:absolute;left:50%;top:24%;transform:translateX(-50%);z-index:25;padding:8px 13px;border:1px solid #ff9b56;border-radius:12px;background:rgba(56,20,11,.93);font-size:10px;font-weight:900;letter-spacing:.11em;box-shadow:0 0 26px rgba(255,87,44,.30);animation:telePulse .42s ease-in-out infinite alternate}
+@keyframes telePulse{from{transform:translateX(-50%) scale(.97);opacity:.78}to{transform:translateX(-50%) scale(1.04);opacity:1}}
+.rival-banner{position:absolute;left:50%;top:68px;transform:translateX(-50%);z-index:22;border:1px solid #b98cff;border-radius:999px;padding:5px 10px;background:#241638;font-size:8px;font-weight:900;letter-spacing:.13em;color:#e2cfff}
+.event-card{width:min(620px,94vw);max-height:84dvh;overflow:auto;background:linear-gradient(180deg,#111b28,#0b111a);border:1px solid #38516f;border-radius:18px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.62)}
+.event-card h2{margin:2px 0 6px;font-size:20px}.event-card p{color:#afbed0;font-size:12px;line-height:1.45}.event-options{display:grid;gap:7px;margin-top:12px}.event-choice{border:1px solid #304159;background:#152131;border-radius:12px;padding:10px;text-align:left}.event-choice strong{display:block;font-size:12px}.event-choice small{display:block;color:#8fa3bb;margin-top:3px;font-size:9px}
+.artifact-row{border:1px solid #39425b;background:#151b2a;border-radius:10px;padding:7px 9px;font-size:9px}.artifact-row b{color:#ffd46d}.gamble-btn{border-color:#8a5bc2!important;color:#d8b7ff!important}
+.power-active-flash{animation:powerFlash .32s ease}@keyframes powerFlash{50%{filter:brightness(1.65) saturate(1.3)}}
+@media(max-width:520px){.active-strip{grid-template-columns:repeat(4,1fr)}.active-btn{min-height:34px;padding:4px}.active-btn strong{font-size:8px}.active-btn small{font-size:6px}}
 </style>
 </head>
 <body>
@@ -104,7 +133,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.3</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.4</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -158,7 +187,9 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
         <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
         <div id="damageLayer" class="damage-layer" aria-hidden="true"></div>
 
-        <div class="elite-banner hidden" id="eliteBanner">ELITE CRIMINAL</div>
+        <div class="telegraph hidden" id="telegraph">HEAVY ATTACK - DODGE!</div>
+<div class="rival-banner hidden" id="rivalBanner">RIVAL ENCOUNTER</div>
+<div class="elite-banner hidden" id="eliteBanner">ELITE CRIMINAL</div>
         <div class="boss-banner hidden" id="bossBanner">WALL BOSS</div>
       </section>
 
@@ -177,6 +208,16 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
           <button class="mini-stat-btn info-tap" id="regenInfoBtn" type="button">REG <b id="regenStat">0%</b></button>
           <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
         </div>
+      </section>
+      <section class="active-strip" aria-label="Active combat controls">
+        <button id="dodgeBtn" class="active-btn ready" type="button"><strong>DODGE</strong><small id="dodgeLabel">READY</small></button>
+        <button id="activePowerBtn" class="active-btn" type="button"><strong>POWER</strong><small id="activePowerLabel">NO POWER</small></button>
+        <button id="finisherBtn" class="active-btn" type="button" disabled><strong>FINISH</strong><small id="finisherLabel">15% HP</small></button>
+        <button id="bountyBtn" class="active-btn" type="button"><strong>BOUNTY</strong><small id="bountyLabel">0 / 3</small></button>
+      </section>
+      <section class="combat-meter">
+        <span><b id="comboText">COMBO x0</b><b id="breakText">BREAK 0%</b></span>
+        <div class="microbar"><i id="breakFill"></i></div>
       </section>
 
       <button id="powerAlert" class="power-alert hidden" type="button">
@@ -244,7 +285,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
           <div class="queue-badge big" id="powerModalQueue">1</div>
         </div>
         <div id="powerChoices" class="power-grid"></div>
-        <div class="power-actions"><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button></div>
+        <div class="power-actions"><button id="gamblePowerBtn" class="close-btn subtle gamble-btn" type="button">Risk Mutation</button><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button></div>
       </div>
     </div>
 
@@ -266,6 +307,8 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
         <div id="profileStats" class="profile-stats"></div>
         <div class="section-title compact"><div><h3>Current Powers</h3><p id="powerCountLabel">0 powers</p></div></div>
         <div id="profilePowers" class="power-list"></div>
+<div class="section-title compact"><div><h3>Artifacts</h3><p>Temporary elite and event loot</p></div></div>
+<div id="artifactList" class="power-list"></div>
         <div class="section-title compact"><div><h3>Discoveries</h3><p>Hidden evolutions you have found</p></div></div>
         <div id="discoveryList" class="discovery-list"></div>
       </div>
@@ -280,7 +323,14 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
         <button id="infoCloseBottom" class="info-close" type="button">Close</button>
       </div>
     </div>
-    <div id="toast" class="toast hidden" aria-live="assertive"></div>
+    
+    <div id="eventModal" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="event-card"><small>LIVE INCIDENT</small><h2 id="eventTitle">City Event</h2><p id="eventText"></p><div id="eventOptions" class="event-options"></div></div>
+    </div>
+    <div id="modifierModal" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="event-card"><small>RUN CONDITION</small><h2>Choose a run modifier</h2><p>Take a risk for a different run. Idle progress still works; active play makes the dangerous options stronger.</p><div id="modifierOptions" class="event-options"></div></div>
+    </div>
+<div id="toast" class="toast hidden" aria-live="assertive"></div>
   </main>
 
   <script>
@@ -536,13 +586,13 @@ const fmt=n=>{n=Math.max(0,Number(n)||0);if(n<1000)return Math.floor(n).toString
 const byId=id=>PF_POWERS.find(p=>p.id===id);
 
 function defaultMeta(){return {
-  souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,
+  souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
   discoveries:[],storyFlags:[],seenStories:[]
 }}
 const meta=defaultMeta();
 let s={};
-let timers={attack:null,enemy:null,tick:null,save:null,autosave:null};
+let timers={attack:null,enemy:null,tick:null,save:null,autosave:null,telegraph:null};
 const pendingEchoes=new Set();
 let resetBusy=false;
 let powerQueue=[];
@@ -562,12 +612,12 @@ function defaultRun(){
   return {
     runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},evolvedBosses:[],
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
-    fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0},
+    fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0},
     stage:1,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
-    powers:[],combos:[],visual:[],kills:0,runBosses:0,
+    powers:[],combos:[],visual:[],artifacts:[],eventStages:[],kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -598,6 +648,7 @@ function sanitizeRun(target){
   for(const key of ['damageMult','adaptiveBonus','storyDamageBonus','storyCoinBonus','tempBossBonus','incomingMult','enemySlow'])target[key]=clamp(target[key],.01,1e50);
   target.critMultiplier=clamp(target.critMultiplier,1,10);target.regen=clamp(target.regen,0,.5);
   target.visual=target.visual.filter(x=>typeof x==='string');target.powers=target.powers.filter(x=>byId(x));
+target.artifacts=Array.isArray(target.artifacts)?target.artifacts.filter(x=>typeof x==='string'):[];target.eventStages=Array.isArray(target.eventStages)?target.eventStages:[];target.bountyClaimed=target.bountyClaimed&&typeof target.bountyClaimed==='object'?target.bountyClaimed:{};
 }
 function hitChance(perception,agility,dodge=0){
   // Equal attributes: 93%. Even extreme mismatches retain a 45% floor.
@@ -641,10 +692,35 @@ function floatText(text,enemyDmg){const d=document.createElement('div');d.classN
 function visualSet(){return new Set(s.visual||[])}
 function setVisual(set){s.visual=[...set]}
 
+const PF_ARTIFACTS=[
+{id:'reactor_shard',name:'Cracked Reactor Shard',desc:'+35% damage, +15% incoming damage',apply:()=>{s.damageMult*=1.35;s.incomingMult*=1.15}},
+{id:'combat_stim',name:'Combat Stim',desc:'+22% attack speed',apply:()=>{s.attackMs*=.78;updateAttackTimer()}},
+{id:'phase_coin',name:'Phase Coin',desc:'+10% dodge, +8% crit',apply:()=>{s.dodge+=.10;s.crit+=.08}},
+{id:'blood_cell',name:'Regenerator Cell',desc:'+2.5% max HP/sec',apply:()=>{s.regen+=.025}},
+{id:'targeting_eye',name:'Targeting Eye',desc:'Perception x1.4',apply:()=>PF_ATTRIBUTE(s,'perception',1.4)},
+{id:'titan_fragment',name:'Titan Fragment',desc:'Strength x1.35, Vitality x1.2',apply:()=>{PF_ATTRIBUTE(s,'strength',1.35);PF_ATTRIBUTE(s,'vitality',1.2)}}
+];
+function grantArtifact(){const pool=PF_ARTIFACTS.filter(a=>!s.artifacts.includes(a.id));const a=(pool.length?pool:PF_ARTIFACTS)[Math.floor(Math.random()*(pool.length||PF_ARTIFACTS.length))];if(a&&!s.artifacts.includes(a.id)){s.artifacts.push(a.id);a.apply();toast('ARTIFACT: '+a.name);scheduleSave()}}
+function modifierCoinMult(){return s.modifier==='bounty_hunter'?1.35:s.modifier==='fortified'?.85:1}
+function applyModifier(id){if(s.modifier)return;s.modifier=id;if(id==='adrenaline'){s.attackMs*=.76;s.incomingMult*=1.22;updateAttackTimer()}if(id==='fortified'){s.maxHp*=1.4;s.hp=s.maxHp}$('modifierModal').classList.add('hidden');toast('RUN MODIFIER: '+id.replace('_',' ').toUpperCase());renderAll();scheduleSave()}
+function showModifierModal(){if(s.modifier||storyPaused||s.stage>2)return;const opts=[['bounty_hunter','Bounty Hunter','+35% coins. Elites gain +20% health.'],['adrenaline','Adrenaline','Attack 24% faster. Take 22% more damage.'],['fortified','Fortified','+40% max HP. Earn 15% fewer coins.']];$('modifierOptions').innerHTML='';for(const [id,name,desc] of opts){const b=document.createElement('button');b.className='event-choice';b.type='button';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>applyModifier(id));$('modifierOptions').appendChild(b)}$('modifierModal').classList.remove('hidden')}
+function bountyStatus(){const c=[s.kills>=25,s.critsLanded>=10,s.elitesBeaten>=3];return {count:c.filter(Boolean).length}}
+function checkBounties(){const defs=[['kills',s.kills>=25,Math.max(150,s.stage*14),'25 criminals'],['crits',s.critsLanded>=10,Math.max(180,s.stage*16),'10 critical hits'],['elites',s.elitesBeaten>=3,Math.max(240,s.stage*20),'3 elite criminals']];for(const [id,done,reward,label] of defs){if(done&&!s.bountyClaimed[id]){s.bountyClaimed[id]=1;s.coins+=reward;toast('BOUNTY COMPLETE: '+label+' +'+fmt(reward)+' C')}}}
+function showBounties(){const b=bountyStatus();openInfo('Run Bounties','Optional objectives reward active play without blocking idle progress.',[['Criminals',Math.min(25,s.kills)+' / 25'],['Critical hits',Math.min(10,s.critsLanded)+' / 10'],['Elites',Math.min(3,s.elitesBeaten)+' / 3'],['Completed',b.count+' / 3'],['Modifier',s.modifier||'None']])}
+function activeProfile(){const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));if(tags.has('time'))return ['TIME LOCK'];if(tags.has('regen'))return ['REGEN SURGE'];if(tags.has('psychic')||tags.has('gravity'))return ['PSIONIC CRUSH'];if(tags.has('lightning')||tags.has('energy')||tags.has('fire'))return ['POWER BLAST'];if(tags.has('speed'))return ['OVERDRIVE'];if(tags.has('strength'))return ['HEAVY SMASH'];return s.powers.length?['POWER BURST']:['NO POWER']}
+function useActivePower(){if(!s.powers.length||Date.now()<s.activeCdUntil||storyPaused||!s.enemy||s.enemyHp<=0)return;s.activeCdUntil=Date.now()+12000;const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),350);if(tags.has('time')){s.fight.freeze=Math.max(s.fight.freeze,3);floatText('TIME LOCK',false)}else if(tags.has('regen')){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.35);floatText('HEAL',false)}else if(tags.has('speed')){for(let i=0;i<3;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*1.35,false,true)},i*90)}else{const mult=tags.has('strength')?6:tags.has('psychic')||tags.has('gravity')?4.5:5;s.fight.break=Math.min(100,s.fight.break+(tags.has('strength')||tags.has('gravity')?45:25));dealDamageToEnemy(totalDamage()*mult,true,true)}toast(activeProfile()[0]);renderHUD();scheduleSave()}
+function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');$('dodgeBtn').classList.add('danger-ready');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');resolveHeavyAttack()},900)}
+function resolveHeavyAttack(){if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
+function dodgeAction(){const now=Date.now();if(now<s.dodgeCdUntil)return;s.dodgeCdUntil=now+4000;s.fight.dodgeWindow=.5;if(s.fight.telegraph){clearTimeout(timers.telegraph);s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');floatText('PERFECT DODGE',true);s.fight.combo+=3;s.coins+=Math.max(4,Math.floor(s.stage*.8));setTimeout(()=>playerAttack(true),70)}else floatText('DODGE READY',true);renderHUD()}
+function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;floatText('FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
+function gamblePower(){const item=powerQueue[0];if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;item.gambled=true;s.maxHp=Math.max(1,s.maxHp*.85);s.hp=Math.min(s.hp,s.maxHp);const r=Math.min(4,rarityValue(item.minRarity||'common')+1);item.minRarity=['common','rare','epic','legendary','cosmic'][r];item.options=[];activePowerChoices=[];showPowerModal();toast('RISK MUTATION: -15% MAX HP');saveNow()}
+function showRandomEncounter(stage){if(stage<12||stage%15!==12||s.eventStages.includes(stage)||PF_ENEMIES.isWallBoss(stage)||storyPaused)return;s.eventStages.push(stage);const type=Math.floor(stage/15)%4;const events=[['Armoured Convoy','A criminal convoy cuts across your route.',[['HIJACK THE CASH','Big coin payout; +5% incoming damage',()=>{s.coins+=Math.max(300,stage*22);s.incomingMult*=1.05}],['SAVE THE DRIVER','Heal fully and +8% coin bonus',()=>{s.hp=s.maxHp;s.storyCoinBonus*=1.08}],['WALK AWAY','No risk, no reward',()=>{}]]],['Experimental Lab','An illegal enhancement lab is evacuating.',[['TAKE THE SERUM','Gain a random artifact',()=>grantArtifact()],['DESTROY THE LAB','Damage x1.12 this run',()=>{s.damageMult*=1.12}],['LEAK THE FILES','Perception x1.2',()=>PF_ATTRIBUTE(s,'perception',1.2)]]],['Hostage Crisis','An elite crew is holding civilians.',[['RUSH THEM','Clear 5 stages in 45 seconds for loot',()=>{s.challenge={target:stage+5,deadline:Date.now()+45000}}],['EVACUATE CIVILIANS','Vitality x1.15 and heal 25%',()=>{PF_ATTRIBUTE(s,'vitality',1.15);s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.25)}],['HUNT THE LEADER','Next elite pays double',()=>{s.nextEliteDouble=1}]]],['Meteor Fragment','Something impossible lands in the city.',[['TOUCH IT','Artifact; +10% incoming damage',()=>{grantArtifact();s.incomingMult*=1.1}],['STUDY IT','Perception x1.3',()=>PF_ATTRIBUTE(s,'perception',1.3)],['SELL IT','Large coin payout',()=>{s.coins+=Math.max(500,stage*30)}]]]];const [title,text,opts]=events[type];$('eventTitle').textContent=title;$('eventText').textContent=text;$('eventOptions').innerHTML='';for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}$('eventModal').classList.remove('hidden')}
+function setupRival(){if(!s.enemy||s.enemy.wall||s.stage<40||s.stage%40!==0)return;s.enemy.rival=true;s.enemy.elite=true;s.enemy.name='RIVAL // VANTA '+(meta.rivalLevel+1);const mult=1+meta.rivalLevel*.18;s.enemy.maxHp*=1.75*mult;s.enemyHp=s.enemy.maxHp;s.enemy.damage*=1.28*mult;s.enemy.faction='VANTA'}
+function checkChallenge(){if(!s.challenge)return;if(Date.now()>s.challenge.deadline){toast('CHALLENGE FAILED');s.challenge=null;return}if(s.stage>=s.challenge.target){const reward=Math.max(600,s.stage*35);s.coins+=reward;grantArtifact();toast('CHALLENGE COMPLETE +'+fmt(reward)+' C');s.challenge=null}}
 function freshRun(){
   clearTimeout(choiceTimer);choiceLocked=false;hidePowerModal();
   s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3); powerQueue=[]; activePowerChoices=[]; powerModalVisible=false; storyPaused=false;
-  spawnEnemy(); maybeStory(1,true); renderAll(); scheduleSave();
+  spawnEnemy(); maybeStory(1,true); renderAll(); scheduleSave();if(meta.seenStories.includes('awakening'))setTimeout(showModifierModal,150);
 }
 
 function totalDamage(){
@@ -657,23 +733,25 @@ function totalDamage(){
 function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
 function spawnEnemy(){
-  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0};
+  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0};
   s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
   if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
+showRandomEncounter(s.stage);
   renderAll();
 }
 
 function playerAttack(manual=false,echo=false){
   if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0)return;
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,s.attackMs*.65)))return;if(!echo)lastAttackMs=now;
-  if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.misses++;floatText('MISS',false);return}
-  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1);
+  if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;floatText('MISS',false);renderHUD();return}
+  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(25,s.fight.combo)*.025);
   if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
   if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}
-  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0}
-  s.fight.hits++;
+  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;checkBounties()}
+  s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
   if(enemyPassive('adaptive'))damage*=1-Math.min(.45,s.fight.hits*.03);
   if(enemyPassive('suppression'))damage*=.8;
@@ -687,19 +765,20 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   const dealt=Math.min(s.enemyHp,amount);s.enemyHp=Math.max(0,s.enemyHp-amount);
   if(s.lifesteal>0)s.hp=clamp(s.hp+dealt*s.lifesteal,0,s.maxHp);
   animatePlayerAttack(crit,manual,echo);floatDamage(amount,crit,false);
+s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7));if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);floatText('STAGGERED',false);toast('BREAK - DAMAGE WINDOW')}
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function enemyAttack(){
-  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0)return;
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
+  if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%4===0){startTelegraph();return}
   if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){floatText('MISS',true);return}
   let dmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult*(1-defence());
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   dmg=clamp(dmg,0,1e150);
   if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);floatText('ABSORBED',true);renderHUD();return}
-  s.fight.hits=0;
-  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
+  s.fight.hits=0;s.fight.combo=0;`n  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
   s.hp-=dmg;animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
@@ -714,17 +793,19 @@ function enemyDefeated(){
   const defeatedStage=s.stage; const wasWall=!!s.enemy.wall; const wasBoss=!!s.enemy.wall;
   s.kills++; if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.01,1,1e50);
   if(wasBoss&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,1.3);toast('EVOLUTION: '+key.toUpperCase()+' +30%')}  // v0.3 economy: regular criminals fund upgrades; elites are satisfying paydays.
-  let reward=(18+defeatedStage*4.5)*Math.pow(1.050,Math.min(defeatedStage,4000))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus;
+  let reward=(18+defeatedStage*4.5)*Math.pow(1.050,Math.min(defeatedStage,4000))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult();
   if(s.enemy.elite)reward*=3.5;
+if(s.nextEliteDouble&&s.enemy.elite){reward*=2;s.nextEliteDouble=0}if(s.fight.finisher)reward*=1.25;
   if(wasWall)reward*=12;
   const paid=Math.floor(reward);
   s.coins=clamp(s.coins+paid,0,1e150);
   showCoinBurst(paid);
+if(s.enemy.elite){s.elitesBeaten++;if(Math.random()<.28)grantArtifact();checkBounties()}if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;grantArtifact();toast('RIVAL DEFEATED - VANTA WILL RETURN')}checkBounties();
   if(wasWall){
     if(!s.bossRewards.includes(defeatedStage)){s.runBosses++; meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('BOS WALL BOSS DEFEATED — MUTATION EARNED')}
   }
   s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage); meta.bestStage=Math.max(meta.bestStage,s.stage);
-  checkPowerMilestone(s.stage); checkCombos(); spawnEnemy(); scheduleSave();
+  checkPowerMilestone(s.stage); checkCombos(); checkChallenge(); spawnEnemy(); scheduleSave();
 }
 
 function checkPowerMilestone(stage){
@@ -758,7 +839,7 @@ function showPowerModal(){
   item.status='pending';item.selectedPowerId=null;
   powerModalVisible=true;$('powerModal').classList.remove('hidden');
   if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
-  activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);scheduleSave();
+  activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);updateGambleButton();scheduleSave();
 }
 function hidePowerModal(){if(choiceLocked)return;$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
@@ -815,6 +896,7 @@ function choosePower(id,choiceId){
   },300);
 }
 function rerollPower(){const item=powerQueue[0];if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);showPowerModal();saveNow()}
+function updateGambleButton(){const item=powerQueue[0];$('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked}
 
 function checkCombos(){
   const tags=new Set(); for(const id of s.powers){const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))}
@@ -836,7 +918,7 @@ function maybeStory(stage,force){
   const scene=PF_STORY[stage]; if(!scene)return; if(meta.seenStories.includes(scene.id)&&!force)return;
   const storyRunId=s.runId;storyPaused=true; clearCombatTimers();
   $('storySpeaker').textContent=scene.speaker;$('storyPortrait').textContent=scene.portrait;$('storyText').textContent=reactiveStoryText(scene.text);
-  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused||s.runId!==storyRunId)return;if(!meta.seenStories.includes(scene.id))meta.seenStories.push(scene.id);meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave()});$('storyChoices').appendChild(b)});
+  $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused||s.runId!==storyRunId)return;if(!meta.seenStories.includes(scene.id))meta.seenStories.push(scene.id);meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave();if(scene.id==='awakening')setTimeout(showModifierModal,120)});$('storyChoices').appendChild(b)});
   $('storyModal').classList.remove('hidden');
 }
 function reactiveStoryText(base){
@@ -902,12 +984,12 @@ function resetGame(full){
     for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,previous.meta);s=previousRun;powerQueue=previousQueue;
     toast('RESET NOT SAVED — original progress kept. Free browser storage and retry.');return;
   }
-  clearCombatTimers();clearInterval(timers.tick);clearInterval(timers.autosave);clearTimeout(timers.save);clearTimeout(choiceTimer);
+  clearCombatTimers();clearInterval(timers.tick);clearInterval(timers.autosave);clearTimeout(timers.save);clearTimeout(choiceTimer);clearTimeout(timers.telegraph);
   pendingEchoes.forEach(clearTimeout);pendingEchoes.clear();clearTimeout($('toast')._to);$('toast').classList.add('hidden');
   choiceTimer=null;choiceLocked=false;ascensionLocked=false;powerModalVisible=false;activePowerChoices=[];storyPaused=false;
   lastAttackMs=0;lastEnemyMs=0;autoBuyElapsed=0;buyMode='1';
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.buy==='1'));
-  ['powerModal','storyModal','profileModal','upgradeSheet','infoModal'].forEach(id=>$(id).classList.add('hidden'));
+  ['powerModal','storyModal','profileModal','upgradeSheet','infoModal','eventModal','modifierModal','telegraph'].forEach(id=>$(id).classList.add('hidden'));
   ['powerChoices','storyChoices','fxLayer','damageLayer'].forEach(id=>$(id).replaceChildren());
   $('enemyFighter').classList.remove('hit');$('hidePowerModalBtn').disabled=false;$('rerollPowerBtn').disabled=false;
   showScreen('gameScreen');renderAll();renderProfile();
@@ -949,6 +1031,23 @@ function renderHUD(){
   const type=(s.enemy?.trait||'').toLowerCase();
   for(const cls of ['brawler','speed','tech','tank','psychic','phase','energy','regen'])if(type.includes(cls))enemy.classList.add(cls);
 
+  const combo=Math.floor(s.fight.combo||0),breakPct=Math.floor(s.fight.break||0);
+  $('comboText').textContent='COMBO x'+combo;
+  $('breakText').textContent='BREAK '+breakPct+'%';
+  $('breakFill').style.width=breakPct+'%';
+  const now=Date.now(),dodgeLeft=Math.max(0,s.dodgeCdUntil-now),powerLeft=Math.max(0,s.activeCdUntil-now);
+  $('dodgeBtn').disabled=dodgeLeft>0;
+  $('dodgeLabel').textContent=dodgeLeft>0?(dodgeLeft/1000).toFixed(1)+'s':'READY';
+  const ap=activeProfile();
+  $('activePowerBtn').disabled=!s.powers.length||powerLeft>0;
+  $('activePowerBtn').classList.toggle('ready',s.powers.length&&powerLeft<=0);
+  $('activePowerLabel').textContent=powerLeft>0?(powerLeft/1000).toFixed(1)+'s':ap[0];
+  const canFinish=!!s.enemy&&(s.enemy.elite||s.enemy.wall)&&!s.fight.finisher&&s.enemyHp/s.enemyMaxHp<=.15;
+  $('finisherBtn').disabled=!canFinish;
+  $('finisherBtn').classList.toggle('danger-ready',canFinish);
+  $('finisherLabel').textContent=canFinish?'NOW':'15% HP';
+  $('bountyLabel').textContent=bountyStatus().count+' / 3';
+  $('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);
   updatePowerAlert(); applyHeroVisuals();
 }
 function applyHeroVisuals(){
@@ -976,10 +1075,11 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.3</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.4</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
+  $('artifactList').innerHTML=s.artifacts.length?s.artifacts.map(id=>{const a=PF_ARTIFACTS.find(x=>x.id===id);return a?`<div class="artifact-row"><b>${escapeHtml(a.name)}</b><br>${escapeHtml(a.desc)}</div>`:''}).join(''):'<div class="power-row">No artifacts this run.</div>';
   $('profilePowers').querySelectorAll('[data-power-id]').forEach(btn=>btn.addEventListener('click',()=>showPowerInfo(btn.dataset.powerId)));
   $('discoveryList').innerHTML=meta.discoveries.length?meta.discoveries.map(id=>{const c=PF_COMBOS.find(x=>x.id===id);return c?`<button type="button" class="power-row-btn" data-combo-id="${c.id}"><span><b>COMBO</b> ${escapeHtml(c.name)}</span><em>${escapeHtml(c.bonus)}</em></button>`:''}).join(''):'<div class="discovery-row">Hidden combinations will appear here once discovered.</div>';
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
@@ -1045,7 +1145,7 @@ function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.e
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
-  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);
+  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
@@ -1059,7 +1159,7 @@ function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow
 function restore(){
   const data=PF_SAVE.load();if(!data)return false;
   const savedMeta=data.meta&&typeof data.meta==='object'?data.meta:{};
-  for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
+  for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber','rivalLevel'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
   for(const key of ['discoveries','storyFlags','seenStories'])meta[key]=Array.isArray(savedMeta[key])?savedMeta[key].filter(x=>typeof x==='string'):[];
   for(const node of PF_CONFIG.soulTree)meta.soulTree[node.id]=Math.floor(clamp(savedMeta.soulTree?.[node.id]||0,0,node.max));
   const old=data.run&&typeof data.run==='object'?data.run:{};
@@ -1095,6 +1195,7 @@ function restore(){
 
 function bind(){
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
+  $('dodgeBtn').addEventListener('click',dodgeAction);$('activePowerBtn').addEventListener('click',useActivePower);$('finisherBtn').addEventListener('click',useFinisher);$('bountyBtn').addEventListener('click',showBounties);$('gamblePowerBtn').addEventListener('click',gamblePower);
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
   $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
@@ -1121,5 +1222,6 @@ init();
 </html>
 
  
+
 
 
