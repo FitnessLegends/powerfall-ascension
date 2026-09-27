@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.5</title>
+  <title>Powerfall: Ascension Prototype v0.5.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -299,6 +299,9 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 /* Keep visual load bounded on very fast builds. */
 .damage-layer .damage-number:nth-child(n+13),.fx-layer>*:nth-child(n+13){display:none!important}
 @media(max-width:520px){.active-strip{grid-template-columns:repeat(5,minmax(0,1fr))!important}.active-btn{font-size:7px!important}.location-chip{top:35px}}
+
+/* v0.5.1 modal safety */
+#powerModal.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -307,7 +310,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.5</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.5.1</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1188,7 +1191,19 @@ function showPowerModal(){
   if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
   activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);updateGambleButton();scheduleSave();
 }
-function hidePowerModal(){if(choiceLocked)return;$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
+function hidePowerModal(){
+  const item=powerQueue[0];
+  if(choiceLocked&&item?.status==='pending')return;
+  $('powerModal').classList.add('hidden');
+  powerModalVisible=false;
+  choiceLocked=false;
+  activePowerChoices=[];
+  $('powerChoices').classList.remove('input-locked');
+  $('hidePowerModalBtn').disabled=false;
+  $('rerollPowerBtn').disabled=false;
+  $('gamblePowerBtn').disabled=false;
+  updatePowerAlert();
+}
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
   const index=powerQueue.findIndex(x=>x.id===choiceId);
@@ -1204,13 +1219,6 @@ function choosePower(id,choiceId){
   const grid=$('powerChoices');
   grid.classList.add('input-locked');
   grid.querySelectorAll('button').forEach(b=>b.disabled=true);
-  grid.replaceChildren();
-  const confirm=document.createElement('div');
-  confirm.className='power-confirm';
-  confirm.innerHTML='<strong>POWER ACQUIRED</strong><small>'+escapeHtml(power.name)+'</small>';
-  grid.appendChild(confirm);
-  $('hidePowerModalBtn').disabled=true;
-  $('rerollPowerBtn').disabled=true;
 
   if(!s.powers.includes(id)){
     s.powers.push(id);
@@ -1225,22 +1233,21 @@ function choosePower(id,choiceId){
   checkCombos();
   updateAttackTimer();
   updateEnemyTimer();
+
+  // Close before rerender/save so a later error can never strand this overlay.
+  $('powerModal').classList.add('hidden');
+  powerModalVisible=false;
+  choiceLocked=false;
+  activePowerChoices=[];
+  grid.classList.remove('input-locked');
+  $('hidePowerModalBtn').disabled=false;
+  $('rerollPowerBtn').disabled=false;
+  $('gamblePowerBtn').disabled=false;
+
   renderAll();
   saveNow();
-
-  const runId=s.runId;
-  choiceTimer=setTimeout(()=>{
-    if(s.runId!==runId)return;
-    $('powerModal').classList.add('hidden');
-    powerModalVisible=false;
-    choiceLocked=false;
-    activePowerChoices=[];
-    grid.classList.remove('input-locked');
-    $('hidePowerModalBtn').disabled=false;
-    $('rerollPowerBtn').disabled=false;
-    updatePowerAlert();
-    toast(power.name+' ACQUIRED'+(powerQueue.length?' â€¢ '+powerQueue.length+' CHOICE'+(powerQueue.length===1?'':'S')+' QUEUED':''));
-  },300);
+  updatePowerAlert();
+  toast(power.name+' ACQUIRED'+(powerQueue.length?' â€¢ '+powerQueue.length+' CHOICE'+(powerQueue.length===1?'':'S')+' QUEUED':''));
 }
 function rerollPower(){const item=powerQueue[0];if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);showPowerModal();saveNow()}
 function updateGambleButton(){const item=powerQueue[0];$('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked}
@@ -1428,7 +1435,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.5</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.5.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -1582,6 +1589,7 @@ init();
 </html>
 
  
+
 
 
 
