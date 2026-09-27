@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.4</title>
+  <title>Powerfall: Ascension Prototype v0.4.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -125,6 +125,137 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .artifact-row{border:1px solid #39425b;background:#151b2a;border-radius:10px;padding:7px 9px;font-size:9px}.artifact-row b{color:#ffd46d}.gamble-btn{border-color:#8a5bc2!important;color:#d8b7ff!important}
 .power-active-flash{animation:powerFlash .32s ease}@keyframes powerFlash{50%{filter:brightness(1.65) saturate(1.3)}}
 @media(max-width:520px){.active-strip{grid-template-columns:repeat(4,1fr)}.active-btn{min-height:34px;padding:4px}.active-btn strong{font-size:8px}.active-btn small{font-size:6px}}
+
+/* =============== POWERFALL v0.4.1 WORLD REBUILD =============== */
+/* Kill the old dotted debug-space look completely. */
+.bg-stars{display:none!important}
+
+/* The battlefield is now a cinematic night-city arena rather than a flat grid. */
+.battlefield{
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 115%,rgba(38,111,170,.22) 0%,transparent 40%),
+    radial-gradient(circle at 78% 17%,rgba(66,111,164,.12) 0%,transparent 17%),
+    linear-gradient(180deg,#06101c 0%,#0a1929 44%,#10243a 66%,#07101a 100%)!important;
+  border-color:rgba(104,162,215,.24)!important;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.48),0 12px 36px rgba(0,0,0,.28)!important
+}
+
+/* Distant skyline. Irregular roofline, no repeating giant boxes. */
+.bg-city{
+  display:block!important;
+  position:absolute!important;
+  left:-2%!important;right:-2%!important;bottom:14%!important;
+  width:auto!important;height:50%!important;
+  opacity:1!important;
+  filter:none!important;
+  background:linear-gradient(180deg,#13263a 0%,#0b1724 100%)!important;
+  clip-path:polygon(
+    0 47%,3% 47%,3% 31%,6% 31%,6% 52%,9% 52%,9% 22%,13% 22%,
+    13% 43%,16% 43%,16% 34%,19% 34%,19% 55%,22% 55%,22% 18%,27% 18%,
+    27% 48%,30% 48%,30% 28%,34% 28%,34% 58%,37% 58%,37% 38%,40% 38%,
+    40% 13%,45% 13%,45% 49%,49% 49%,49% 25%,52% 25%,52% 56%,56% 56%,
+    56% 32%,60% 32%,60% 17%,64% 17%,64% 46%,68% 46%,68% 27%,72% 27%,
+    72% 59%,75% 59%,75% 35%,79% 35%,79% 20%,84% 20%,84% 51%,87% 51%,
+    87% 30%,90% 30%,90% 43%,94% 43%,94% 24%,98% 24%,98% 49%,100% 49%,
+    100% 100%,0 100%
+  )!important;
+  box-shadow:none!important
+}
+
+/* Window light layer, deliberately sparse rather than a uniform dot wall. */
+.bg-city::after{
+  content:"";
+  position:absolute;inset:14% 1% 4%;
+  opacity:.46!important;
+  background:
+    radial-gradient(circle at 4% 54%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 8% 71%,#54cfff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 14% 49%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 19% 63%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 25% 42%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 31% 68%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 36% 51%,#ffb36b 0 1px,transparent 1.8px),
+    radial-gradient(circle at 43% 74%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 49% 44%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 55% 61%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 62% 48%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 69% 70%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 76% 43%,#ffb36b 0 1px,transparent 1.8px),
+    radial-gradient(circle at 82% 64%,#64d7ff 0 1px,transparent 1.8px),
+    radial-gradient(circle at 89% 50%,#ffd16f 0 1px,transparent 1.8px),
+    radial-gradient(circle at 96% 69%,#64d7ff 0 1px,transparent 1.8px)!important
+}
+
+/* Near buildings provide depth and silhouette variation. */
+.bg-city::before{
+  content:"";
+  position:absolute;left:-3%;right:-3%;bottom:-1%;height:58%;
+  opacity:1!important;
+  background:linear-gradient(180deg,#0a1420,#050a10)!important;
+  clip-path:polygon(
+    0 44%,5% 44%,5% 17%,10% 17%,10% 61%,15% 61%,15% 33%,20% 33%,
+    20% 71%,25% 71%,25% 25%,31% 25%,31% 53%,36% 53%,36% 11%,42% 11%,
+    42% 68%,47% 68%,47% 37%,53% 37%,53% 75%,58% 75%,58% 20%,64% 20%,
+    64% 56%,69% 56%,69% 29%,75% 29%,75% 72%,81% 72%,81% 14%,87% 14%,
+    87% 59%,92% 59%,92% 35%,97% 35%,97% 67%,100% 67%,100% 100%,0 100%
+  )!important
+}
+
+/* Atmospheric horizon haze plus a moon / light source. */
+.scene-glow{
+  display:block!important;
+  left:10%!important;right:10%!important;bottom:13%!important;height:39%!important;
+  filter:blur(14px)!important;
+  background:radial-gradient(ellipse at 50% 100%,rgba(42,145,217,.22),transparent 64%)!important;
+  opacity:.95!important
+}
+.scene-glow::before{
+  content:"";position:absolute;right:8%;top:-93%;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%,#d7e9ff 0 8%,#8aa6c8 36%,#46617d 70%,transparent 73%);
+  opacity:.38;box-shadow:0 0 45px rgba(121,174,227,.18)
+}
+.scene-glow::after{
+  content:"";position:absolute;left:18%;right:18%;bottom:7%;height:22px;border-radius:50%;
+  background:rgba(42,119,177,.11);filter:blur(12px)
+}
+
+/* City haze is no longer another window-grid layer. */
+.city-lights{
+  inset:auto 0 14% 0!important;height:18%!important;opacity:.32!important;
+  background:linear-gradient(180deg,transparent,rgba(47,109,159,.11) 55%,rgba(16,44,68,.22))!important;
+  filter:blur(6px)!important
+}
+
+/* Street / rooftop floor with depth and perspective. */
+.ground{
+  bottom:0!important;height:15%!important;
+  background:
+    linear-gradient(180deg,rgba(92,161,212,.20) 0 1px,transparent 1px),
+    linear-gradient(90deg,transparent 0 8%,rgba(69,114,148,.08) 8% 8.15%,transparent 8.15% 25%,rgba(69,114,148,.06) 25% 25.15%,transparent 25.15% 75%,rgba(69,114,148,.06) 75% 75.15%,transparent 75.15% 92%,rgba(69,114,148,.08) 92% 92.15%,transparent 92.15%),
+    linear-gradient(180deg,#0b141f,#05090e)!important;
+  box-shadow:inset 0 12px 30px rgba(0,0,0,.26)!important
+}
+.ground::before{
+  content:"";position:absolute;left:12%;right:12%;top:0;bottom:0;
+  background:
+    linear-gradient(79deg,transparent 48.8%,rgba(96,147,184,.08) 49.5%,transparent 50.2%),
+    linear-gradient(101deg,transparent 48.8%,rgba(96,147,184,.08) 49.5%,transparent 50.2%);
+  opacity:.55
+}
+
+/* Better figure separation from the background. */
+.fighter{filter:drop-shadow(0 16px 10px rgba(0,0,0,.58))!important}
+.fighter::after{left:17%!important;right:17%!important;bottom:5%!important;height:12px!important;background:rgba(0,0,0,.58)!important;filter:blur(5px)!important}
+.hero .body{filter:drop-shadow(0 0 8px rgba(48,166,235,.10))}
+.enemy .body{filter:drop-shadow(0 0 8px rgba(226,70,104,.08))}
+
+/* Future world tiers now visibly change atmosphere instead of just tinting the same rectangle. */
+.world-global{background:radial-gradient(circle at 60% 17%,rgba(255,74,57,.16),transparent 20%),linear-gradient(180deg,#170c12,#27121b 56%,#0b0d12)!important}
+.world-planetary{background:radial-gradient(circle at 50% 14%,rgba(255,142,52,.23),transparent 24%),linear-gradient(180deg,#20100d,#392018 58%,#0e0b0a)!important}
+.world-cosmic{background:radial-gradient(circle at 52% 19%,rgba(127,72,255,.38),transparent 31%),radial-gradient(circle at 17% 30%,rgba(69,173,255,.17),transparent 21%),linear-gradient(180deg,#090719,#15102b 61%,#06070d)!important}
+.world-cosmic .bg-city,.world-planetary .bg-city{opacity:.40!important}
 </style>
 </head>
 <body>
@@ -133,7 +264,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.4</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.4.1</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -778,7 +909,8 @@ function enemyAttack(){
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   dmg=clamp(dmg,0,1e150);
   if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);floatText('ABSORBED',true);renderHUD();return}
-  s.fight.hits=0;s.fight.combo=0;`n  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
+  s.fight.hits=0;s.fight.combo=0;
+  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
   s.hp-=dmg;animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
@@ -1075,7 +1207,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.4</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.4.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -1222,6 +1354,7 @@ init();
 </html>
 
  
+
 
 
 
