@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.5.1</title>
+  <title>Powerfall: Ascension Prototype v0.6</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -302,6 +302,22 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 
 /* v0.5.1 modal safety */
 #powerModal.hidden{display:none!important}
+
+/* ================= POWERFALL v0.6 ================= */
+.integrity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.integrity-item{border:1px solid #2c3c50;background:#101923;border-radius:10px;padding:8px}
+.integrity-item small{display:block;color:#8194aa;font-size:7px;text-transform:uppercase;letter-spacing:.08em}
+.integrity-item strong{display:block;margin-top:2px;font-size:10px;color:#d9e8f7}
+.integrity-item.good{border-color:rgba(75,210,142,.38);background:linear-gradient(180deg,rgba(34,90,65,.18),#101923)}
+.integrity-item.warn{border-color:rgba(255,184,72,.42);background:linear-gradient(180deg,rgba(102,70,25,.18),#101923)}
+.power-choice.mastery-choice{border-color:#8062b5;background:linear-gradient(180deg,#1d1730,#111420)}
+.power-choice.mastery-choice .rarity{border-color:#9876ca;color:#dabfff}
+.power-alert.integrity-ok{border-color:#46b98a}
+.power-alert.integrity-ok .power-alert-icon{color:#78e0b4}
+#powerModal.hidden{display:none!important}
+#upgradeSheet{z-index:150}
+.power-modal{z-index:145}
+@media(max-width:520px){.integrity-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -310,7 +326,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.5.1</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.6</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -489,7 +505,11 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 <div class="section-title compact"><div><h3>Artifacts</h3><p>Temporary elite and event loot</p></div></div>
         <div id="artifactList" class="power-list"></div>
         <div class="section-title compact"><div><h3>Power Evolutions</h3><p>Permanent changes to how this run fights</p></div></div>
-        <div id="evolutionList" class="power-list"></div>
+                <div id="evolutionList" class="power-list"></div>
+        <div class="section-title compact"><div><h3>Run Summary</h3><p>Current build and progression snapshot</p></div></div>
+        <div id="runSummaryList" class="integrity-grid"></div>
+        <div class="section-title compact"><div><h3>System Integrity</h3><p>Power reward state is automatically repaired on load</p></div></div>
+        <div id="systemIntegrityList" class="integrity-grid"></div>
         <div class="section-title compact"><div><h3>Discoveries</h3><p>Hidden evolutions you have found</p></div></div>
         <div id="discoveryList" class="discovery-list"></div>
       </div>
@@ -516,7 +536,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 
   <script>
 window.PF_CONFIG = {
-  saveVersion: 2,
+  saveVersion: 3,
   startingStats: {
     maxHp: 100,
     damage: 8,
@@ -787,12 +807,13 @@ let lastTick=performance.now();
 let ascensionLocked=false, choiceLocked=false, choiceTimer=null;
 let autoBuyElapsed=0;
 let lastHudRender=0,lastCombatFx=0,damageAggregate=0,damageAggregateTimer=null;
+let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending:0,lastResolved:0};
 
 function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*(1+t.survival*.12);
   return {
-    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},evolvedBosses:[],
+    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0},
     stage:1,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
@@ -800,7 +821,7 @@ function defaultRun(){
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
-    ultimateCharge:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,
+    ultimateCharge:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -832,7 +853,11 @@ function sanitizeRun(target){
   target.critMultiplier=clamp(target.critMultiplier,1,10);target.regen=clamp(target.regen,0,.5);
   target.visual=target.visual.filter(x=>typeof x==='string');target.powers=target.powers.filter(x=>byId(x));
 target.artifacts=Array.isArray(target.artifacts)?target.artifacts.filter(x=>typeof x==='string'):[];target.eventStages=Array.isArray(target.eventStages)?target.eventStages:[];target.bountyClaimed=target.bountyClaimed&&typeof target.bountyClaimed==='object'?target.bountyClaimed:{};
-  target.powerEvolutions=target.powerEvolutions&&typeof target.powerEvolutions==='object'?target.powerEvolutions:{};
+    target.powerEvolutions=target.powerEvolutions&&typeof target.powerEvolutions==='object'?target.powerEvolutions:{};
+  target.powerRewards=target.powerRewards&&typeof target.powerRewards==='object'&&!Array.isArray(target.powerRewards)?target.powerRewards:{};
+  target.powerMastery=target.powerMastery&&typeof target.powerMastery==='object'&&!Array.isArray(target.powerMastery)?target.powerMastery:{};
+  target.runStartedAt=clamp(finite(target.runStartedAt,Date.now()),1,Date.now());
+  target.masteryBreak=clamp(finite(target.masteryBreak,0),0,100);
 }
 function hitChance(perception,agility,dodge=0){
   // Equal attributes: 93%. Even extreme mismatches retain a 45% floor.
@@ -1032,7 +1057,20 @@ function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp
 function resolveHeavyAttack(){if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
 function dodgeAction(){const now=Date.now();if(now<s.dodgeCdUntil)return;s.dodgeCdUntil=now+4000;s.fight.dodgeWindow=.5;if(s.fight.telegraph){clearTimeout(timers.telegraph);s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');floatText('PERFECT DODGE',true);s.fight.combo+=3;chargeUltimate(12);if(hasPower('phase_shift'))s.fight.phaseCharge=1;if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;s.coins+=Math.max(4,Math.floor(s.stage*.6));setTimeout(()=>playerAttack(true),70)}else floatText('DODGE READY',true);renderHUD()}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
-function gamblePower(){const item=powerQueue[0];if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;item.gambled=true;s.maxHp=Math.max(1,s.maxHp*.85);s.hp=Math.min(s.hp,s.maxHp);const r=Math.min(4,rarityValue(item.minRarity||'common')+1);item.minRarity=['common','rare','epic','legendary','cosmic'][r];item.options=[];activePowerChoices=[];showPowerModal();toast('RISK MUTATION: -15% MAX HP');saveNow()}
+function gamblePower(){
+  repairPowerState('gamble');
+  const item=pendingPowerRewards()[0];
+  if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;
+  item.gambled=true;
+  s.maxHp=Math.max(1,s.maxHp*.85);s.hp=Math.min(s.hp,s.maxHp);
+  const r=Math.min(4,rarityValue(item.minRarity||'common')+1);
+  item.minRarity=['common','rare','epic','legendary','cosmic'][r];
+  item.options=rollPowerChoices(item).map(p=>p.id);
+  activePowerChoices=item.options.map(byId).filter(Boolean);
+  renderPowerChoices(item);updateGambleButton();
+  toast('RISK MUTATION: -15% MAX HP / RARITY FLOOR RAISED');
+  saveNow()
+}
 function showRandomEncounter(stage){
   if(!eventEligible(stage)||s.eventStages.includes(stage))return;
   s.eventStages.push(stage);s.lastEventStage=stage;s.lastEventAt=Date.now();
@@ -1068,11 +1106,14 @@ function setupRival(){
 }
 function checkChallenge(){if(!s.challenge)return;if(Date.now()>s.challenge.deadline){toast('CHALLENGE FAILED');s.challenge=null;return}if(s.stage>=s.challenge.target){const reward=Math.max(600,s.stage*35);s.coins+=reward;grantArtifact();toast('CHALLENGE COMPLETE +'+fmt(reward)+' C');s.challenge=null}}
 function freshRun(){
-  clearTimeout(choiceTimer);choiceLocked=false;hidePowerModal();
-  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3); powerQueue=[]; activePowerChoices=[]; powerModalVisible=false; storyPaused=false;
-  spawnEnemy(); maybeStory(1,true); renderAll(); scheduleSave();if(meta.seenStories.includes('awakening'))setTimeout(showModifierModal,150);
+  clearTimeout(choiceTimer);choiceLocked=false;
+  $('powerModal').classList.add('hidden');powerModalVisible=false;
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);
+  powerQueue=[];activePowerChoices=[];storyPaused=false;
+  repairPowerState('fresh-run',[]);
+  spawnEnemy();maybeStory(1,true);renderAll();scheduleSave();
+  if(meta.seenStories.includes('awakening'))setTimeout(showModifierModal,150)
 }
-
 function totalDamage(){
   let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
@@ -1117,7 +1158,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   const dealt=Math.min(s.enemyHp,amount);s.enemyHp=Math.max(0,s.enemyHp-amount);
   if(s.lifesteal>0)s.hp=clamp(s.hp+dealt*s.lifesteal,0,s.maxHp);
   animatePlayerAttack(crit,manual,echo);floatDamage(amount,crit,false);
-  s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7));
+  s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7)+(s.masteryBreak||0));
   if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);identityCue('STAGGERED')}
   checkBossPhase();
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
@@ -1158,42 +1199,259 @@ function enemyDefeated(){
   s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
   checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();
 }
+function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
+function legacyRewardKey(source,stage){return s.runId+':'+source+':'+Math.floor(stage)}
+function validRewardSource(source){return source==='milestone'||source==='boss'}
+function normalizeReward(raw,keyHint=''){
+  if(!raw||typeof raw!=='object')return null;
+  const source=validRewardSource(raw.source)?raw.source:(String(keyHint).includes('boss')?'boss':'milestone');
+  const stage=Math.floor(clamp(raw.stage||Number(String(keyHint).split(':').pop())||1,1,10000));
+  const key=rewardKey(source,stage);
+  const options=Array.isArray(raw.options)?[...new Set(raw.options)].filter(x=>byId(x)):[];
+  const status=raw.status==='resolved'?'resolved':'pending';
+  return {
+    id:key,key,source,stage,status,
+    selectedPowerId:typeof raw.selectedPowerId==='string'&&byId(raw.selectedPowerId)?raw.selectedPowerId:null,
+    minRarity:raw.minRarity||'common',
+    options,
+    rerolled:!!raw.rerolled,
+    gambled:!!raw.gambled,
+    createdAt:finite(raw.createdAt,Date.now())
+  };
+}
+function pendingPowerRewards(){
+  if(!s.powerRewards||typeof s.powerRewards!=='object')s.powerRewards={};
+  return Object.values(s.powerRewards)
+    .filter(x=>x&&x.status==='pending')
+    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||a.stage-b.stage||a.source.localeCompare(b.source));
+}
+function resolvedPowerRewardCount(){
+  return Object.values(s.powerRewards||{}).filter(x=>x?.status==='resolved').length
+}
+function syncPowerQueue(){
+  powerQueue=pendingPowerRewards();
+  return powerQueue
+}
+function ensurePowerReward(item,status='pending'){
+  const source=validRewardSource(item?.source)?item.source:'milestone';
+  const stage=Math.floor(clamp(item?.stage||s.stage,1,10000));
+  const key=rewardKey(source,stage);
+  if(!s.powerRewards||typeof s.powerRewards!=='object')s.powerRewards={};
+  const existing=s.powerRewards[key];
+  if(existing?.status==='resolved')return existing;
+  const normalized=normalizeReward({...existing,...item,source,stage,status:existing?.status||status,createdAt:existing?.createdAt||Date.now()},key);
+  s.powerRewards[key]=normalized;
+  return normalized
+}
+function oldRewardWasResolved(source,stage){
+  const canonical=rewardKey(source,stage),legacy=legacyRewardKey(source,stage);
+  return !!(s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||s.consumedChoices?.includes(canonical)||s.consumedChoices?.includes(legacy))
+}
+function oldSelectedPower(source,stage){
+  const canonical=rewardKey(source,stage),legacy=legacyRewardKey(source,stage);
+  return s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||null
+}
+function repairPowerState(reason='runtime',legacyQueue=null){
+  powerRepairStats.runs++;powerRepairStats.lastReason=reason;
+  let removed=0,recovered=0;
+  if(!s.powerRewards||typeof s.powerRewards!=='object'||Array.isArray(s.powerRewards))s.powerRewards={};
+  if(!s.resolvedPowerChoices||typeof s.resolvedPowerChoices!=='object')s.resolvedPowerChoices={};
+  if(!Array.isArray(s.consumedChoices))s.consumedChoices=[];
+  if(!Array.isArray(s.triggeredMilestones))s.triggeredMilestones=[];
+  if(!Array.isArray(s.bossRewards))s.bossRewards=[];
+
+  const previousRewards=Object.values(s.powerRewards);
+  const rebuilt={};
+  for(const raw of previousRewards){
+    const r=normalizeReward(raw,raw?.id||raw?.key||'');
+    if(!r){removed++;continue}
+    if(r.stage>s.stage&&r.source==='milestone'){removed++;continue}
+    if(r.source==='boss'&&r.stage>=s.stage&&!s.bossRewards.includes(r.stage)){removed++;continue}
+    if(r.status==='pending'&&oldRewardWasResolved(r.source,r.stage)){
+      r.status='resolved';r.selectedPowerId=r.selectedPowerId||oldSelectedPower(r.source,r.stage);removed++
+    }
+    rebuilt[r.key]=r
+  }
+  s.powerRewards=rebuilt;
+
+  const legacyItems=Array.isArray(legacyQueue)?legacyQueue:Array.isArray(powerQueue)?powerQueue:[];
+  for(const raw of legacyItems){
+    if(!raw||typeof raw!=='object')continue;
+    const source=raw.source==='boss'?'boss':'milestone';
+    const stage=Math.floor(clamp(raw.stage,1,10000));
+    const key=rewardKey(source,stage);
+    if(s.powerRewards[key])continue;
+    if(oldRewardWasResolved(source,stage)){
+      s.powerRewards[key]=normalizeReward({...raw,source,stage,status:'resolved',selectedPowerId:oldSelectedPower(source,stage)},key);
+      recovered++;continue
+    }
+    if(stage<=s.stage||(source==='boss'&&s.bossRewards.includes(stage))){
+      s.powerRewards[key]=normalizeReward({...raw,source,stage,status:'pending'},key);
+      recovered++
+    }
+  }
+
+  // Reconcile historical milestone records. If an old save says the milestone
+  // triggered but has no pending queue entry, treat it as already consumed.
+  for(const stageRaw of [...new Set(s.triggeredMilestones)]){
+    const stage=Math.floor(clamp(stageRaw,1,10000));
+    if(!PF_CONFIG.powerMilestones.includes(stage)||stage>s.stage)continue;
+    const key=rewardKey('milestone',stage);
+    if(!s.powerRewards[key]){
+      const pendingLegacy=legacyItems.find(x=>x&&x.source!=='boss'&&Math.floor(x.stage)===stage&&!oldRewardWasResolved('milestone',stage));
+      s.powerRewards[key]=normalizeReward({
+        source:'milestone',stage,
+        status:pendingLegacy?'pending':'resolved',
+        selectedPowerId:oldSelectedPower('milestone',stage),
+        minRarity:stage>=350?'epic':stage>=125?'rare':'common',
+        options:pendingLegacy?.options||[]
+      },key);
+      recovered++
+    }
+  }
+  for(const stageRaw of [...new Set(s.bossRewards)]){
+    const stage=Math.floor(clamp(stageRaw,1,10000)),key=rewardKey('boss',stage);
+    if(!s.powerRewards[key]){
+      const pendingLegacy=legacyItems.find(x=>x&&x.source==='boss'&&Math.floor(x.stage)===stage&&!oldRewardWasResolved('boss',stage));
+      s.powerRewards[key]=normalizeReward({
+        source:'boss',stage,
+        status:pendingLegacy?'pending':'resolved',
+        selectedPowerId:oldSelectedPower('boss',stage),
+        minRarity:stage>=100?'legendary':'epic',
+        options:pendingLegacy?.options||[]
+      },key);
+      recovered++
+    }
+  }
+
+  // A resolving transaction from a crashed/closed tab is deterministically
+  // finalized if its selected power exists; otherwise it safely returns pending.
+  for(const r of Object.values(s.powerRewards)){
+    if(r.status!=='pending'&&r.status!=='resolved')r.status=r.selectedPowerId?'resolved':'pending';
+    if(r.status==='resolved'){
+      const oldKey=legacyRewardKey(r.source,r.stage);
+      const chosen=r.selectedPowerId||s.resolvedPowerChoices[r.key]||s.resolvedPowerChoices[oldKey]||null;
+      r.selectedPowerId=chosen&&byId(chosen)?chosen:null;
+      if(chosen){s.resolvedPowerChoices[r.key]=chosen;s.resolvedPowerChoices[oldKey]=chosen}
+      if(!s.consumedChoices.includes(r.key))s.consumedChoices.push(r.key)
+    }
+  }
+
+  // UI state is never authoritative.
+  choiceLocked=false;
+  activePowerChoices=[];
+  syncPowerQueue();
+  const pending=powerQueue.length;
+  if(pending===0&&document.getElementById('powerModal')){
+    $('powerModal').classList.add('hidden');powerModalVisible=false;
+    $('powerChoices').classList.remove('input-locked');
+  }
+
+  powerRepairStats.removed+=removed;
+  powerRepairStats.recovered+=recovered;
+  powerRepairStats.lastPending=pending;
+  powerRepairStats.lastResolved=resolvedPowerRewardCount();
+  console.info('[Powerfall v0.6] power state repair',reason,{pending,resolved:powerRepairStats.lastResolved,removed,recovered});
+  return {pending,resolved:powerRepairStats.lastResolved,removed,recovered}
+}
+function powerSystemReport(){
+  const pending=pendingPowerRewards(),resolved=resolvedPowerRewardCount();
+  const keys=Object.keys(s.powerRewards||{});
+  const unique=new Set(keys).size===keys.length;
+  const stale=pending.filter(r=>s.resolvedPowerChoices?.[r.key]||s.consumedChoices?.includes(r.key)).length;
+  const ok=unique&&stale===0&&!choiceLocked;
+  return {ok,pending:pending.length,resolved,stale,repairs:powerRepairStats.runs,recovered:powerRepairStats.recovered,removed:powerRepairStats.removed,lastReason:powerRepairStats.lastReason}
+}
+function runPowerSelfTest(){
+  const report=powerSystemReport();
+  const rewards=Object.values(s.powerRewards||{});
+  const ids=rewards.map(r=>r.key);
+  const unique=new Set(ids).size===ids.length;
+  const validStatuses=rewards.every(r=>r.status==='pending'||r.status==='resolved');
+  const resolvedNotPending=rewards.every(r=>r.status!=='resolved'||!pendingPowerRewards().some(p=>p.key===r.key));
+  const modalValid=!powerModalVisible||pendingPowerRewards().length>0;
+  const upgradesIndependent=typeof openUpgrades==='function';
+  return {pass:unique&&validStatuses&&resolvedNotPending&&modalValid&&upgradesIndependent,unique,validStatuses,resolvedNotPending,modalValid,upgradesIndependent,report}
+}
+window.PF_SELFTEST=runPowerSelfTest;
+window.PF_REPAIR_POWER_STATE=()=>{const r=repairPowerState('manual');updatePowerAlert();renderAll();saveNow();return r};
+
 function checkPowerMilestone(stage){
   if(PF_CONFIG.powerMilestones.includes(stage)&&!s.triggeredMilestones.includes(stage)){
-    s.triggeredMilestones.push(stage); queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
+    s.triggeredMilestones.push(stage);
+    queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
   }
 }
-function queuePower(item){const id=s.runId+':'+item.source+':'+item.stage;if(s.resolvedPowerChoices?.[id]||s.consumedChoices.includes(id)||powerQueue.some(x=>x.id===id))return;powerQueue.push({...item,id,status:'pending',selectedPowerId:null});updatePowerAlert();if(!powerModalVisible&&!choiceLocked)showPowerModal()}
-
+function queuePower(item){
+  const reward=ensurePowerReward(item,'pending');
+  if(reward.status==='resolved')return;
+  syncPowerQueue();
+  updatePowerAlert();
+  scheduleSave();
+  toast('POWER AWAKENING READY');
+}
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
 function rollPowerChoices(item){
   const min=rarityValue(item.minRarity||'common');
   const owned=new Set(s.powers);
-  let pool=PF_POWERS.filter(p=>!owned.has(p.id)); if(pool.length<3)pool=PF_POWERS.slice();
+  const unowned=PF_POWERS.filter(p=>!owned.has(p.id));
   const stage=item.stage||s.stage;
   const weights={common:stage<80?48:25,rare:35,epic:stage<50?8:25,legendary:stage<100?1:12,cosmic:stage<250?0:5};
-  function pickOne(exclude){
+  function weightedPick(pool,exclude){
     let available=pool.filter(p=>!exclude.has(p.id)&&rarityValue(p.rarity)>=min);
-    if(available.length===0)available=pool.filter(p=>!exclude.has(p.id));
-    const weighted=[]; for(const x of available){let w=weights[x.rarity]??1;if(rarityValue(x.rarity)<min)w=.1;for(let i=0;i<Math.ceil(w*x.weight);i++)weighted.push(x)}
-    return weighted[Math.floor(Math.random()*weighted.length)]||available[Math.floor(Math.random()*available.length)];
+    if(!available.length)available=pool.filter(p=>!exclude.has(p.id));
+    if(!available.length)return null;
+    const weighted=[];
+    for(const x of available){let w=weights[x.rarity]??1;if(rarityValue(x.rarity)<min)w=.1;for(let i=0;i<Math.max(1,Math.ceil(w*x.weight));i++)weighted.push(x)}
+    return weighted[Math.floor(Math.random()*weighted.length)]||available[0]
   }
   const count=3+(meta.soulTree.choice>0?1:0),picked=[],used=new Set();
-  for(let i=0;i<count;i++){const x=pickOne(used);if(x){picked.push(x);used.add(x.id)}}
-  return picked;
+  while(picked.length<count&&used.size<PF_POWERS.length){
+    let pool=unowned.length?unowned:PF_POWERS;
+    // Later runs may intentionally roll one owned power as a Mastery choice.
+    if(stage>=125&&s.powers.length&&picked.length===count-1&&Math.random()<.35)pool=PF_POWERS.filter(p=>owned.has(p.id));
+    const x=weightedPick(pool,used)||weightedPick(PF_POWERS,used);
+    if(!x)break;picked.push(x);used.add(x.id)
+  }
+  return picked
+}
+function masteryPreview(power){
+  const rank=(s.powerMastery?.[power.id]||0)+1;
+  const tags=power.tags||[];
+  if(tags.includes('strength'))return `Mastery ${rank}: +15% damage and stronger Break`;
+  if(tags.includes('speed'))return `Mastery ${rank}: +8% attack speed`;
+  if(tags.includes('regen'))return `Mastery ${rank}: +0.8% max HP regen/sec`;
+  if(tags.includes('phase')||tags.includes('reflex'))return `Mastery ${rank}: +2.5% dodge`;
+  if(tags.includes('psychic')||tags.includes('gravity'))return `Mastery ${rank}: +3% crit and +8% Perception`;
+  if(tags.includes('cosmic')||tags.includes('reality'))return `Mastery ${rank}: +18% damage and +2% crit`;
+  return `Mastery ${rank}: +12% damage`
+}
+function applyPowerMastery(power){
+  const tags=power.tags||[];
+  s.powerMastery[power.id]=(s.powerMastery[power.id]||0)+1;
+  if(tags.includes('strength')){s.damageMult*=1.15;s.masteryBreak+=3}
+  else if(tags.includes('speed'))s.attackMs=Math.max(120,s.attackMs*.92);
+  else if(tags.includes('regen'))s.regen=Math.min(.5,s.regen+.008);
+  else if(tags.includes('phase')||tags.includes('reflex'))s.dodge+=.025;
+  else if(tags.includes('psychic')||tags.includes('gravity')){s.crit+=.03;PF_ATTRIBUTE(s,'perception',1.08)}
+  else if(tags.includes('cosmic')||tags.includes('reality')){s.damageMult*=1.18;s.crit+=.02}
+  else s.damageMult*=1.12;
+  updateAttackTimer()
 }
 function showPowerModal(){
-  if(!powerQueue.length||choiceLocked)return;
-  const item=powerQueue[0];
-  if((item.status&&item.status!=='pending')||s.resolvedPowerChoices?.[item.id])return;
-  item.status='pending';item.selectedPowerId=null;
-  powerModalVisible=true;$('powerModal').classList.remove('hidden');
+  repairPowerState('modal-open');
+  const item=pendingPowerRewards()[0];
+  if(!item||choiceLocked){updatePowerAlert();return}
+  powerQueue=pendingPowerRewards();
+  powerModalVisible=true;
+  $('powerModal').classList.remove('hidden');
   if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
-  activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);updateGambleButton();scheduleSave();
+  activePowerChoices=item.options.map(byId).filter(Boolean);
+  renderPowerChoices(item);
+  updateGambleButton();
+  scheduleSave()
 }
 function hidePowerModal(){
-  const item=powerQueue[0];
-  if(choiceLocked&&item?.status==='pending')return;
   $('powerModal').classList.add('hidden');
   powerModalVisible=false;
   choiceLocked=false;
@@ -1202,39 +1460,41 @@ function hidePowerModal(){
   $('hidePowerModalBtn').disabled=false;
   $('rerollPowerBtn').disabled=false;
   $('gamblePowerBtn').disabled=false;
-  updatePowerAlert();
+  syncPowerQueue();
+  updatePowerAlert()
 }
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
-  const index=powerQueue.findIndex(x=>x.id===choiceId);
-  const item=index>=0?powerQueue[index]:null,power=byId(id);
-  if(ascensionLocked||choiceLocked||!powerModalVisible||!item||index!==0||item.status!=='pending'||s.resolvedPowerChoices?.[choiceId]||!item.options?.includes(id)||!power)return;
+  repairPowerState('pre-choice');
+  const reward=s.powerRewards?.[choiceId]||pendingPowerRewards().find(x=>x.id===choiceId||x.key===choiceId);
+  const power=byId(id);
+  if(ascensionLocked||choiceLocked||!powerModalVisible||!reward||reward.status!=='pending'||!reward.options?.includes(id)||!power)return;
 
-  item.status='resolving';
-  item.selectedPowerId=id;
   choiceLocked=true;
-  s.resolvedPowerChoices[choiceId]=id;
-  if(!s.consumedChoices.includes(choiceId))s.consumedChoices.push(choiceId);
-
+  reward.status='resolving';
+  reward.selectedPowerId=id;
   const grid=$('powerChoices');
   grid.classList.add('input-locked');
   grid.querySelectorAll('button').forEach(b=>b.disabled=true);
 
-  if(!s.powers.includes(id)){
+  // Transaction commit: exactly one reward becomes exactly one selected power/mastery.
+  if(s.powers.includes(id))applyPowerMastery(power);
+  else{
     s.powers.push(id);
     meta.totalPowersFound++;
-    applyEffect(s,power.effect);
-  }else{
-    console.warn('Powerfall duplicate power blocked for choice',choiceId,id);
+    applyEffect(s,power.effect)
   }
 
-  item.status='resolved';
-  powerQueue.splice(index,1);
+  reward.status='resolved';
+  s.resolvedPowerChoices[reward.key]=id;
+  s.resolvedPowerChoices[legacyRewardKey(reward.source,reward.stage)]=id;
+  if(!s.consumedChoices.includes(reward.key))s.consumedChoices.push(reward.key);
+
   checkCombos();
   updateAttackTimer();
   updateEnemyTimer();
 
-  // Close before rerender/save so a later error can never strand this overlay.
+  // UI closes before render/save. Queue is then derived from the ledger.
   $('powerModal').classList.add('hidden');
   powerModalVisible=false;
   choiceLocked=false;
@@ -1244,13 +1504,24 @@ function choosePower(id,choiceId){
   $('rerollPowerBtn').disabled=false;
   $('gamblePowerBtn').disabled=false;
 
-  renderAll();
+  repairPowerState('post-choice');
   saveNow();
+  renderAll();
   updatePowerAlert();
-  toast(power.name+' ACQUIRED'+(powerQueue.length?' â€¢ '+powerQueue.length+' CHOICE'+(powerQueue.length===1?'':'S')+' QUEUED':''));
+  toast(power.name+(s.powerMastery?.[id]?' MASTERY '+s.powerMastery[id]:' ACQUIRED'))
 }
-function rerollPower(){const item=powerQueue[0];if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);showPowerModal();saveNow()}
-function updateGambleButton(){const item=powerQueue[0];$('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked}
+function rerollPower(){
+  repairPowerState('reroll');
+  const item=pendingPowerRewards()[0];
+  if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;
+  item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);
+  activePowerChoices=item.options.map(byId).filter(Boolean);
+  renderPowerChoices(item);updateGambleButton();saveNow()
+}
+function updateGambleButton(){
+  const item=pendingPowerRewards()[0];
+  $('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked
+}
 
 function checkCombos(){
   const tags=new Set(); for(const id of s.powers){const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))}
@@ -1357,9 +1628,18 @@ function nextMilestone(stage){
   const events=[];PF_CONFIG.powerMilestones.forEach(x=>{if(x>=stage)events.push({stage:x,type:'power',icon:'DNA'})});PF_CONFIG.wallBosses.forEach(x=>{if(x>=stage)events.push({stage:x,type:'boss',icon:'BOS'})});events.sort((a,b)=>a.stage-b.stage||(a.type==='boss'?-1:1));return events[0]||{stage:stage+100,type:'unknown',icon:'?'};
 }
 function updatePowerAlert(){
-  if(powerQueue.length){$('powerAlert').classList.remove('hidden');$('powerQueueBadge').textContent=powerQueue.length;$('powerAlertText').textContent=powerQueue.length>1?`${powerQueue.length} awakenings waiting`:'Choose a new ability'}else $('powerAlert').classList.add('hidden');
+  syncPowerQueue();
+  const pending=powerQueue.length,report=powerSystemReport(),alert=$('powerAlert');
+  alert.classList.toggle('integrity-ok',report.ok);
+  if(pending){
+    alert.classList.remove('hidden');
+    $('powerQueueBadge').textContent=pending;
+    $('powerAlertText').textContent=pending>1?`${pending} awakenings waiting`:'Choose a new ability';
+  }else{
+    alert.classList.add('hidden');
+    $('powerQueueBadge').textContent='0'
+  }
 }
-
 function renderHUD(force=false){
   const hudNow=performance.now();if(!force&&hudNow-lastHudRender<110)return;lastHudRender=hudNow;
   $('coins').textContent=fmt(s.coins);$('souls').textContent=fmt(meta.souls);$('stageLabel').textContent=`Stage ${s.stage}`;$('worldLabel').textContent=worldFor(s.stage).name;
@@ -1417,14 +1697,20 @@ function renderUpgrades(){
   $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
 }
 function renderPowerChoices(item){
-  $('powerModalQueue').textContent=powerQueue.length;$('hidePowerModalBtn').disabled=false;
+  $('powerModalQueue').textContent=pendingPowerRewards().length;$('hidePowerModalBtn').disabled=false;
   $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=!!item.rerolled;
   const grid=$('powerChoices');grid.innerHTML='';grid.classList.remove('input-locked');grid.classList.toggle('four',activePowerChoices.length===4);
-  activePowerChoices.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='power-choice';b.dataset.powerId=p.id;
-    b.innerHTML=`<div class="top"><strong>${p.icon} ${escapeHtml(p.name)}</strong><span class="rarity ${p.rarity}">${p.rarity}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff?`<div class="tradeoff">${escapeHtml(p.tradeoff)}</div>`:''}<small class="power-preview">${escapeHtml(powerPreview(p))}</small>`;
-    b.addEventListener('pointerup',ev=>{if(ev.pointerType==='mouse'&&ev.button!==0)return;ev.preventDefault();choosePower(p.id,item.id)},{passive:false});
-    b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();choosePower(p.id,item.id)}});
-    grid.appendChild(b)});
+  activePowerChoices.forEach(p=>{
+    const owned=s.powers.includes(p.id),b=document.createElement('button');
+    b.type='button';b.className='power-choice'+(owned?' mastery-choice':'');b.dataset.powerId=p.id;
+    const title=owned?'MASTERY · '+p.name:p.icon+' '+p.name;
+    const badge=owned?'mastery':p.rarity;
+    const preview=owned?masteryPreview(p):powerPreview(p);
+    b.innerHTML=`<div class="top"><strong>${escapeHtml(title)}</strong><span class="rarity ${p.rarity}">${escapeHtml(badge)}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff&&!owned?`<div class="tradeoff">${escapeHtml(p.tradeoff)}</div>`:''}<small class="power-preview">${escapeHtml(preview)}</small>`;
+    b.addEventListener('pointerup',ev=>{if(ev.pointerType==='mouse'&&ev.button!==0)return;ev.preventDefault();choosePower(p.id,item.key)},{passive:false});
+    b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();choosePower(p.id,item.key)}});
+    grid.appendChild(b)
+  })
 }
 function powerPreview(power){
   if(power.id==='unstable_core')return 'Random attributes are rolled once on selection';
@@ -1435,12 +1721,22 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.5.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.6</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
   $('artifactList').innerHTML=s.artifacts.length?s.artifacts.map(id=>{const a=PF_ARTIFACTS.find(x=>x.id===id);return a?`<div class="artifact-row"><b>${escapeHtml(a.name)}</b><br>${escapeHtml(a.desc)}</div>`:''}).join(''):'<div class="power-row">No artifacts this run.</div>';
-  $('evolutionList').innerHTML=Object.keys(s.powerEvolutions||{}).length?Object.entries(s.powerEvolutions).map(([pid,eid])=>{const p=byId(pid),e=Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===eid);return `<div class="artifact-row"><b>${escapeHtml(e?.name||eid)}</b><br>${escapeHtml(p?.name||pid)} â€” ${escapeHtml(e?.desc||'Evolved')}</div>`}).join(''):'<div class="power-row">Powers can begin evolving after Stage 60.</div>';
+    $('evolutionList').innerHTML=Object.keys(s.powerEvolutions||{}).length?Object.entries(s.powerEvolutions).map(([pid,eid])=>{const p=byId(pid),e=Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===eid);return `<div class="artifact-row"><b>${escapeHtml(e?.name||eid)}</b><br>${escapeHtml(p?.name||pid)} - ${escapeHtml(e?.desc||'Evolved')}</div>`}).join(''):'<div class="power-row">Powers can begin evolving after Stage 60.</div>';
+  const elapsed=Math.max(0,Date.now()-(s.runStartedAt||Date.now())),mins=Math.floor(elapsed/60000),masteries=Object.values(s.powerMastery||{}).reduce((a,b)=>a+(Number(b)||0),0);
+  $('runSummaryList').innerHTML=[
+    ['Stage',s.stage],['Run time',mins+' min'],['Power family',dominantFamily()],['Powers',s.powers.length],
+    ['Masteries',masteries],['Evolutions',Object.keys(s.powerEvolutions||{}).length],['Elites',s.elitesBeaten],['Bosses',s.runBosses]
+  ].map(([a,b])=>`<div class="integrity-item"><small>${escapeHtml(a)}</small><strong>${escapeHtml(String(b))}</strong></div>`).join('');
+  const sys=powerSystemReport();
+  $('systemIntegrityList').innerHTML=[
+    ['Status',sys.ok?'STABLE':'REPAIRING'],['Pending rewards',sys.pending],['Resolved rewards',sys.resolved],['Stale rewards',sys.stale],
+    ['Repair passes',sys.repairs],['Recovered',sys.recovered],['Removed',sys.removed],['Last check',sys.lastReason]
+  ].map(([a,b],i)=>`<div class="integrity-item ${i===0?(sys.ok?'good':'warn'):''}"><small>${escapeHtml(a)}</small><strong>${escapeHtml(String(b))}</strong></div>`).join('');
   $('profilePowers').querySelectorAll('[data-power-id]').forEach(btn=>btn.addEventListener('click',()=>showPowerInfo(btn.dataset.powerId)));
   $('discoveryList').innerHTML=meta.discoveries.length?meta.discoveries.map(id=>{const c=PF_COMBOS.find(x=>x.id===id);return c?`<button type="button" class="power-row-btn" data-combo-id="${c.id}"><span><b>COMBO</b> ${escapeHtml(c.name)}</span><em>${escapeHtml(c.bonus)}</em></button>`:''}).join(''):'<div class="discovery-row">Hidden combinations will appear here once discovered.</div>';
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
@@ -1500,7 +1796,12 @@ function showEnemyInfo(){
   openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType]]);
 }
 function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension()}
-function openUpgrades(){$('upgradeSheet').classList.remove('hidden');renderUpgrades()}
+function openUpgrades(){
+  repairPowerState('upgrade-open');
+  if(powerModalVisible)hidePowerModal();
+  $('upgradeSheet').classList.remove('hidden');
+  renderUpgrades()
+}
 function closeUpgrades(){$('upgradeSheet').classList.add('hidden')}
 function openProfile(){renderProfile();$('profileModal').classList.remove('hidden')}
 function closeProfile(){$('profileModal').classList.add('hidden')}
@@ -1519,7 +1820,10 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
   renderHUD();
 },300)}
 
-function snapshot(){return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue,timestamp:Date.now()}))}
+function snapshot(){
+  syncPowerQueue();
+  return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue:pendingPowerRewards(),timestamp:Date.now()}))
+}
 function saveNow(){clearTimeout(timers.save);const ok=PF_SAVE.write(snapshot());if(!ok)toast('SAVE FAILED — progress is not stored');return ok}
 function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow,250)}
 function restore(){
@@ -1529,37 +1833,39 @@ function restore(){
   meta.rivalAdaptation=typeof savedMeta.rivalAdaptation==='string'?savedMeta.rivalAdaptation:'';
   for(const key of ['discoveries','storyFlags','seenStories'])meta[key]=Array.isArray(savedMeta[key])?savedMeta[key].filter(x=>typeof x==='string'):[];
   for(const node of PF_CONFIG.soulTree)meta.soulTree[node.id]=Math.floor(clamp(savedMeta.soulTree?.[node.id]||0,0,node.max));
+
   const old=data.run&&typeof data.run==='object'?data.run:{};
-  s=Object.assign(defaultRun(),old);s.runId=typeof old.runId==='string'?old.runId:uid();
+  s=Object.assign(defaultRun(),old);
+  s.runId=typeof old.runId==='string'?old.runId:uid();
   s.attributes=Object.assign({strength:10,agility:10,vitality:10,perception:10},old.attributes||{});
   s.upgrades=Object.assign({strength:0,agility:0,vitality:0,perception:0},old.upgrades||{});
+
   if(data.saveVersion===1){
-    // Retain legacy derived damage/HP/speed and powers; map purchased ranks without reapplying effects.
     s.upgrades={strength:old.upgrades?.damage||0,agility:old.upgrades?.speed||0,vitality:old.upgrades?.health||0,perception:old.upgrades?.regen||0};
     for(const [key,rank] of Object.entries(s.upgrades))s.attributes[key]=clamp(10*Math.pow(1.18,clamp(rank,0,800)),1,1e100);
     s.bestStage=Math.max(1,finite(old.stage,1));s.consumed=false;
-    if(s.powers?.includes('energy_absorption'))s.energyAbsorption=true;
+    if(s.powers?.includes('energy_absorption'))s.energyAbsorption=true
   }
+
   sanitizeRun(s);
   s.bestStage=Math.max(s.stage,s.bestStage);
-  const seen=new Set(s.consumedChoices);powerQueue=[];
-  for(const item of Array.isArray(data.powerQueue)?data.powerQueue:[]){
-    if(!item||typeof item!=='object'||item.consumed)continue;
-    const stage=clamp(item.stage,1,10000),source=item.source==='boss'?'boss':'milestone',id=typeof item.id==='string'?item.id:s.runId+':'+source+':'+stage;
-    if(seen.has(id))continue;seen.add(id);
-    if(s.resolvedPowerChoices?.[id])continue;
-    const options=Array.isArray(item.options)?[...new Set(item.options)].filter(x=>byId(x)):[];
-    powerQueue.push({id,source,stage,minRarity:item.minRarity||'common',options,rerolled:!!item.rerolled,status:'pending',selectedPowerId:null});
-  }
-  if(s.consumed){s=defaultRun();powerQueue=[]}
+  if(s.consumed){s=defaultRun()}
+
+  powerQueue=Array.isArray(data.powerQueue)?data.powerQueue:[];
+  repairPowerState('restore',powerQueue);
+
   const enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);
-  s.enemy=enemy;if(!(s.enemyMaxHp>0)||!(s.enemyHp>0)){s.enemyMaxHp=enemy.maxHp;s.enemyHp=enemy.maxHp}
+  s.enemy=enemy;
+  if(!(s.enemyMaxHp>0)||!(s.enemyHp>0)){s.enemyMaxHp=enemy.maxHp;s.enemyHp=enemy.maxHp}
+
   const elapsed=clamp((Date.now()-finite(data.timestamp,Date.now()))/1000,0,8*3600);
-  if(elapsed>60){const offline=Math.floor(elapsed/60*(2+s.stage*.25)*(1+meta.soulTree.fortune*.2));s.coins=clamp(s.coins+offline,0,1e150);toast('WELCOME BACK +'+fmt(offline)+' COINS')}
-  return true;
+  if(elapsed>60){
+    const offline=Math.floor(elapsed/60*(2+s.stage*.25)*(1+meta.soulTree.fortune*.2));
+    s.coins=clamp(s.coins+offline,0,1e150);
+    toast('WELCOME BACK +'+fmt(offline)+' COINS')
+  }
+  return true
 }
-
-
 function bind(){
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
   $('dodgeBtn').addEventListener('click',dodgeAction);$('activePowerBtn').addEventListener('click',useActivePower);$('finisherBtn').addEventListener('click',useFinisher);$('ultimateBtn').addEventListener('click',useUltimate);$('bountyBtn').addEventListener('click',showBounties);$('gamblePowerBtn').addEventListener('click',gamblePower);
@@ -1580,7 +1886,21 @@ function bind(){
   document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
 }
 
-function init(){bind();const restored=restore();if(!restored)freshRun();else{renderAll();if(powerQueue.length)updatePowerAlert();if(!meta.seenStories.includes('awakening'))maybeStory(1,true)}startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000)}
+function init(){
+  bind();
+  const restored=restore();
+  if(!restored)freshRun();
+  else{
+    repairPowerState('init');
+    renderAll();
+    updatePowerAlert();
+    if(!meta.seenStories.includes('awakening'))maybeStory(1,true)
+  }
+  const selfTest=runPowerSelfTest();
+  if(!selfTest.pass)console.error('[Powerfall v0.6] SELF TEST FAILED',selfTest);
+  else console.info('[Powerfall v0.6] self test PASS',selfTest);
+  startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000)
+}
 init();
 })();
 
@@ -1589,6 +1909,7 @@ init();
 </html>
 
  
+
 
 
 
