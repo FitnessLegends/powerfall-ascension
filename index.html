@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.2</title>
+  <title>Powerfall: Ascension Prototype v0.2.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -37,7 +37,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
 @media(max-height:700px){.brand-sub{display:none}.battlefield{min-height:180px}.fighter{transform:scale(.9);transform-origin:bottom center}.combat-hud{gap:3px}.dock-button{padding:5px 3px}.screen.active{gap:5px}.milestone-strip{padding:6px 8px}.mini-stats span{padding:3px 2px}}
 
 /* Power cards share one click target; overlays above them remain intentional. */
-.power-choice>*{pointer-events:none}.power-choice:disabled{pointer-events:none;opacity:.55}.power-choice.selected{opacity:1;border-color:var(--good);background:#173728}.power-preview{display:block;color:#8de4bb;font-size:9px;line-height:1.3;margin-top:4px}.power-choice .top{flex-wrap:wrap}.power-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}.power-modal{z-index:110}.story-modal{z-index:130}#profileModal,#upgradeSheet{z-index:120}#infoModal{z-index:140}.info-card{max-height:85dvh;overflow:auto}.power-card{max-height:75dvh;overflow:auto}.power-choice{touch-action:manipulation}.stat-help{font-size:9px;color:var(--muted);margin-top:5px}.power-actions{display:flex;gap:6px}.power-actions button{flex:1}
+.power-choice>*{pointer-events:none}.power-grid.input-locked{pointer-events:none}.power-choice:disabled{pointer-events:none;opacity:.55}.power-choice.selected{opacity:1;border-color:var(--good);background:#173728}.power-confirm{padding:18px 10px;text-align:center;border:1px solid var(--good);border-radius:12px;background:#173728}.power-confirm strong{display:block;font-size:14px}.power-confirm small{display:block;color:var(--muted);margin-top:4px}.power-preview{display:block;color:#8de4bb;font-size:9px;line-height:1.3;margin-top:4px}.power-choice .top{flex-wrap:wrap}.power-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}.power-modal{z-index:110}.story-modal{z-index:130}#profileModal,#upgradeSheet{z-index:120}#infoModal{z-index:140}.info-card{max-height:85dvh;overflow:auto}.power-card{max-height:75dvh;overflow:auto}.power-choice{touch-action:manipulation}.stat-help{font-size:9px;color:var(--muted);margin-top:5px}.power-actions{display:flex;gap:6px}.power-actions button{flex:1}
 @media(max-width:420px){.power-choice{padding:7px}.power-choice p{margin-top:3px}.power-grid{gap:5px}.power-card{max-height:75dvh}.power-preview{font-size:8px}}
 .reset-section{flex:0 0 auto}.reset-section h2{margin:0 0 8px;font-size:15px}.reset-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.reset-options p{font-size:10px;line-height:1.4;color:var(--muted);margin:5px 0 0}.reset-options button{width:100%;border:1px solid var(--line);background:#182130;border-radius:10px;padding:9px;font-size:11px}.reset-options .danger{border-color:#874353;color:#ff9aaa}.reset-options button:disabled{opacity:.5}
 </style>
@@ -48,7 +48,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.2</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.2.1</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -221,7 +221,6 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highligh
     </div>
     <div id="toast" class="toast hidden" aria-live="assertive"></div>
   </main>
-  <footer style="position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:9px;line-height:10px;color:var(--muted);pointer-events:none">Codex pipeline test</footer>
 
   <script>
 window.PF_CONFIG = {
@@ -471,7 +470,7 @@ function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*(1+t.survival*.12);
   return {
-    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],evolvedBosses:[],
+    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},evolvedBosses:[],
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0},
     stage:1,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
@@ -498,6 +497,7 @@ function sanitizeRun(target){
     if(typeof value==='number')target[key]=clamp(finite(target[key],value),0,1e150);
     if(Array.isArray(value))target[key]=Array.isArray(target[key])?target[key]:[];
   }
+  target.resolvedPowerChoices=target.resolvedPowerChoices&&typeof target.resolvedPowerChoices==='object'?target.resolvedPowerChoices:{};
   target.attributes=target.attributes&&typeof target.attributes==='object'?target.attributes:{};
   for(const key of ['strength','agility','vitality','perception'])target.attributes[key]=clamp(finite(target.attributes[key],10),.1,1e100);
   target.upgrades=target.upgrades&&typeof target.upgrades==='object'?target.upgrades:{};
@@ -639,7 +639,7 @@ function checkPowerMilestone(stage){
     s.triggeredMilestones.push(stage); queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
   }
 }
-function queuePower(item){const id=s.runId+':'+item.source+':'+item.stage;if(s.consumedChoices.includes(id)||powerQueue.some(x=>x.id===id))return;powerQueue.push({...item,id,consumed:false});updatePowerAlert();if(!powerModalVisible&&!choiceLocked)showPowerModal()}
+function queuePower(item){const id=s.runId+':'+item.source+':'+item.stage;if(s.resolvedPowerChoices?.[id]||s.consumedChoices.includes(id)||powerQueue.some(x=>x.id===id))return;powerQueue.push({...item,id,status:'pending',selectedPowerId:null});updatePowerAlert();if(!powerModalVisible&&!choiceLocked)showPowerModal()}
 
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
 function rollPowerChoices(item){
@@ -660,7 +660,9 @@ function rollPowerChoices(item){
 }
 function showPowerModal(){
   if(!powerQueue.length||choiceLocked)return;
-  const item=powerQueue[0];if(item.consumed)return;
+  const item=powerQueue[0];
+  if((item.status&&item.status!=='pending')||s.resolvedPowerChoices?.[item.id])return;
+  item.status='pending';item.selectedPowerId=null;
   powerModalVisible=true;$('powerModal').classList.remove('hidden');
   if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
   activePowerChoices=item.options.map(byId).filter(Boolean);renderPowerChoices(item);scheduleSave();
@@ -668,15 +670,56 @@ function showPowerModal(){
 function hidePowerModal(){if(choiceLocked)return;$('powerModal').classList.add('hidden');powerModalVisible=false;updatePowerAlert()}
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
-  const item=powerQueue[0],power=byId(id);
-  if(ascensionLocked||choiceLocked||!powerModalVisible||!item||item.id!==choiceId||item.consumed||s.consumedChoices.includes(choiceId)||!item.options.includes(id)||!power)return;
-  choiceLocked=true;item.consumed=true;s.consumedChoices.push(choiceId);
-  $('powerChoices').querySelectorAll('button').forEach(b=>{b.disabled=true;b.classList.toggle('selected',b.dataset.powerId===id)});
-  $('hidePowerModalBtn').disabled=true;$('rerollPowerBtn').disabled=true;
-  // Consume before effects or UI delay, and persist the grant and queue together.
-  s.powers.push(id);meta.totalPowersFound++;applyEffect(s,power.effect);powerQueue.shift();checkCombos();
-  updateAttackTimer();updateEnemyTimer();renderAll();saveNow();
-  const runId=s.runId;choiceTimer=setTimeout(()=>{if(s.runId!==runId)return;choiceLocked=false;activePowerChoices=[];hidePowerModal();toast(power.name+' ACQUIRED');if(powerQueue.length)showPowerModal()},200);
+  const index=powerQueue.findIndex(x=>x.id===choiceId);
+  const item=index>=0?powerQueue[index]:null,power=byId(id);
+  if(ascensionLocked||choiceLocked||!powerModalVisible||!item||index!==0||item.status!=='pending'||s.resolvedPowerChoices?.[choiceId]||!item.options?.includes(id)||!power)return;
+
+  item.status='resolving';
+  item.selectedPowerId=id;
+  choiceLocked=true;
+  s.resolvedPowerChoices[choiceId]=id;
+  if(!s.consumedChoices.includes(choiceId))s.consumedChoices.push(choiceId);
+
+  const grid=$('powerChoices');
+  grid.classList.add('input-locked');
+  grid.querySelectorAll('button').forEach(b=>b.disabled=true);
+  grid.replaceChildren();
+  const confirm=document.createElement('div');
+  confirm.className='power-confirm';
+  confirm.innerHTML='<strong>POWER ACQUIRED</strong><small>'+escapeHtml(power.name)+'</small>';
+  grid.appendChild(confirm);
+  $('hidePowerModalBtn').disabled=true;
+  $('rerollPowerBtn').disabled=true;
+
+  if(!s.powers.includes(id)){
+    s.powers.push(id);
+    meta.totalPowersFound++;
+    applyEffect(s,power.effect);
+  }else{
+    console.warn('Powerfall duplicate power blocked for choice',choiceId,id);
+  }
+
+  item.status='resolved';
+  powerQueue.splice(index,1);
+  checkCombos();
+  updateAttackTimer();
+  updateEnemyTimer();
+  renderAll();
+  saveNow();
+
+  const runId=s.runId;
+  choiceTimer=setTimeout(()=>{
+    if(s.runId!==runId)return;
+    $('powerModal').classList.add('hidden');
+    powerModalVisible=false;
+    choiceLocked=false;
+    activePowerChoices=[];
+    grid.classList.remove('input-locked');
+    $('hidePowerModalBtn').disabled=false;
+    $('rerollPowerBtn').disabled=false;
+    updatePowerAlert();
+    toast(power.name+' ACQUIRED'+(powerQueue.length?' â€¢ '+powerQueue.length+' CHOICE'+(powerQueue.length===1?'':'S')+' QUEUED':''));
+  },300);
 }
 function rerollPower(){const item=powerQueue[0];if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);showPowerModal();saveNow()}
 
@@ -806,10 +849,12 @@ function renderUpgrades(){
 function renderPowerChoices(item){
   $('powerModalQueue').textContent=powerQueue.length;$('hidePowerModalBtn').disabled=false;
   $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=!!item.rerolled;
-  const grid=$('powerChoices');grid.innerHTML='';grid.classList.toggle('four',activePowerChoices.length===4);
+  const grid=$('powerChoices');grid.innerHTML='';grid.classList.remove('input-locked');grid.classList.toggle('four',activePowerChoices.length===4);
   activePowerChoices.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='power-choice';b.dataset.powerId=p.id;
     b.innerHTML=`<div class="top"><strong>${p.icon} ${escapeHtml(p.name)}</strong><span class="rarity ${p.rarity}">${p.rarity}</span></div><p>${escapeHtml(p.desc)}</p>${p.tradeoff?`<div class="tradeoff">${escapeHtml(p.tradeoff)}</div>`:''}<small class="power-preview">${escapeHtml(powerPreview(p))}</small>`;
-    b.addEventListener('click',()=>choosePower(p.id,item.id));grid.appendChild(b)});
+    b.addEventListener('pointerup',ev=>{if(ev.pointerType==='mouse'&&ev.button!==0)return;ev.preventDefault();choosePower(p.id,item.id)},{passive:false});
+    b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();choosePower(p.id,item.id)}});
+    grid.appendChild(b)});
 }
 function powerPreview(power){
   if(power.id==='unstable_core')return 'Random attributes are rolled once on selection';
@@ -820,7 +865,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('');
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.2.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -917,8 +962,9 @@ function restore(){
     if(!item||typeof item!=='object'||item.consumed)continue;
     const stage=clamp(item.stage,1,10000),source=item.source==='boss'?'boss':'milestone',id=typeof item.id==='string'?item.id:s.runId+':'+source+':'+stage;
     if(seen.has(id))continue;seen.add(id);
+    if(s.resolvedPowerChoices?.[id])continue;
     const options=Array.isArray(item.options)?[...new Set(item.options)].filter(x=>byId(x)):[];
-    powerQueue.push({id,source,stage,minRarity:item.minRarity||'common',options,rerolled:!!item.rerolled,consumed:false});
+    powerQueue.push({id,source,stage,minRarity:item.minRarity||'common',options,rerolled:!!item.rerolled,status:'pending',selectedPowerId:null});
   }
   if(s.consumed){s=defaultRun();powerQueue=[]}
   const enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);
@@ -957,3 +1003,4 @@ init();
 </html>
 
  
+
