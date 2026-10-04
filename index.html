@@ -885,10 +885,10 @@ function hitChance(perception,agility,dodge=0){
 }
 function dodgeChance(target=s){return clamp(target.dodge+.18*(1-10/Math.max(10,target.attributes.agility)),0,.65)}
 function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target.attributes.strength))+(target.lastStand&&target.hp/target.maxHp<.3?.3:0)+(target.adaptiveArmour||mirrored('adaptive',target)?Math.min(.36,target.fight.adapt):0)+(mirrored('armour',target)?.15:0),0,.8)}
-function regenRate(target=s){return clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5)}
+function regenRate(target=s){const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5);return enemyPassive('void')?base*.45:base}
 function critChance(target=s){return clamp(target.crit+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
 function critEffect(target=s){return clamp(target.critMultiplier+.6*(1-10/Math.max(10,target.attributes.perception)),1,10)}
-function playerAccuracy(target=s){return clamp(hitChance(target.attributes.perception,target.enemy?.attributes?.agility||10,!target.powerNullification&&target.enemy?.passive==='evasion'?.12:0)+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.08:0),.45,.98)}
+function playerAccuracy(target=s){return clamp(hitChance(target.attributes.perception,target.enemy?.attributes?.agility||10,!target.powerNullification&&target.enemy?.passive==='evasion'?.12:0)+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.08:0)-(enemyPassive('reality')?.10:0),.45,.98)}
 function mirrored(passive,target=s){return target.mirrorMutation&&target.enemy?.boss&&target.enemy.passive===passive}
 function enemyPassive(passive){return !s.powerNullification&&s.enemy?.passive===passive}
 function enemyProfile(enemy,stage){
@@ -902,7 +902,19 @@ function enemyProfile(enemy,stage){
   enemy.maxHp=clamp(enemy.maxHp*profile[2]*progressionPressure*(enemy.elite&&!enemy.wall?1.28:1)*(enemy.wall?1.65:1),1,1e150);
   enemy.damage=clamp(enemy.damage*profile[0]*threatDamage*(enemy.wall?1.18:1),1,1e150);
   enemy.attackMs=clamp(enemy.attackMs/(type==='speed'?1.35:1),380,5000);
-  enemy.passive=stage===75?'suppression':stage===100?'rage':stage===200?'adaptive':profile[4];
+  const bossPassive={75:'suppression',100:'rage',150:'time_lock',200:'adaptive',300:'devour',500:'reality',750:'void',1000:'origin'}[stage];
+  enemy.passive=bossPassive||profile[4];
+  if(enemy.elite&&!enemy.wall){
+    const mods=[
+      {name:'FRENZIED',apply:e=>{e.damage*=1.28;e.attackMs*=.80}},
+      {name:'ARMORED',apply:e=>{e.maxHp*=1.5;e.passive='armour'}},
+      {name:'VAMPIRIC',apply:e=>{e.maxHp*=1.18;e.passive='regen'}},
+      {name:'NULLIFIER',apply:e=>{e.damage*=1.12;e.passive='suppression'}},
+      {name:'PHASED',apply:e=>{e.attackMs*=.92;e.passive='evasion'}},
+      {name:'DEADEYE',apply:e=>{e.damage*=1.35;e.passive='precision'}}
+    ];
+    const mod=mods[Math.floor(stage/10)%mods.length];mod.apply(enemy);enemy.modifier=mod.name;enemy.name+=' // '+mod.name
+  }
   enemy.damageType=['energy','psychic','regen'].includes(type)?'elemental':'physical';
   return enemy;
 }
@@ -964,8 +976,36 @@ const PF_EVOLUTIONS={
     {id:'psionic_dominion',name:'Psionic Dominion',desc:'Telegraphed enemy attacks can be interrupted.',apply:()=>{s.crit+=.08}}
   ],
   phase_shift:[
-    {id:'quantum_phase',name:'Quantum Phase',desc:'Perfect dodges charge devastating counterattacks.',apply:()=>{s.dodge+=.08}},
+    {id:'quantum_phase',name:'Quantum Phase',desc:'Automatic perfect dodges charge devastating counterattacks.',apply:()=>{s.dodge+=.08}},
     {id:'ghostwalk',name:'Ghostwalk',desc:'Become increasingly difficult to touch.',apply:()=>{s.dodge+=.16}}
+  ],
+  flight:[
+    {id:'solar_comet',name:'Solar Comet',desc:'Flight becomes an offensive weapon: +35% damage and +5% crit.',apply:()=>{s.damageMult*=1.35;s.crit+=.05}},
+    {id:'sky_guardian',name:'Sky Guardian',desc:'Air control favours survival: +12% dodge and +18% max HP.',apply:()=>{s.dodge+=.12;s.maxHp*=1.18;s.hp*=1.18}}
+  ],
+  iron_skin:[
+    {id:'living_alloy',name:'Living Alloy',desc:'Regenerating armour adds 2% max HP regen/sec.',apply:()=>{s.regen+=.02}},
+    {id:'kinetic_fortress',name:'Kinetic Fortress',desc:'Become much harder to move: +12% resistance and +20% damage.',apply:()=>{s.armor+=.12;s.damageMult*=1.2}}
+  ],
+  cryokinesis:[
+    {id:'absolute_winter',name:'Absolute Winter',desc:'Freezes trigger faster and enemy actions slow further.',apply:()=>{s.enemySlow*=1.18}},
+    {id:'ice_armour',name:'Ice Armour',desc:'Cold hardens around you: +18% max HP and +10% resistance.',apply:()=>{s.maxHp*=1.18;s.hp*=1.18;s.armor+=.10}}
+  ],
+  gravity_crush:[
+    {id:'singularity_engine',name:'Singularity Engine',desc:'Burst hits gain enormous Break pressure and +30% damage.',apply:()=>{s.damageMult*=1.3;s.masteryBreak+=8}},
+    {id:'event_horizon',name:'Event Horizon',desc:'Gravity trades speed for devastating force.',apply:()=>{s.damageMult*=1.75;s.attackMs*=1.12}}
+  ],
+  technopathy:[
+    {id:'combat_ai',name:'Combat AI',desc:'Automatic powers cycle 25% faster.',apply:()=>{s.autoPowerRate=.75}},
+    {id:'war_machine',name:'War Machine',desc:'Tech becomes direct firepower: +35% damage, +8% crit.',apply:()=>{s.damageMult*=1.35;s.crit+=.08}}
+  ],
+  cosmic_force:[
+    {id:'stellar_avatar',name:'Stellar Avatar',desc:'Cosmic surges occur more violently: +45% damage.',apply:()=>{s.damageMult*=1.45}},
+    {id:'void_crown',name:'Void Crown',desc:'Cosmic control: +12% dodge, +12% crit, +1.5% regen/sec.',apply:()=>{s.dodge+=.12;s.crit+=.12;s.regen+=.015}}
+  ],
+  vampirism:[
+    {id:'blood_lord',name:'Blood Lord',desc:'Lifesteal +12% and low-health damage rises sharply.',apply:()=>{s.lifesteal+=.12;s.berserk=true}},
+    {id:'night_immortal',name:'Night Immortal',desc:'Gain a revive and stronger regeneration.',apply:()=>{s.revives++;s.regen+=.025}}
   ]
 };
 function hasPower(id){return s.powers.includes(id)}
@@ -1082,7 +1122,13 @@ const PF_ARTIFACTS=[
 {id:'phase_coin',name:'Phase Coin',desc:'+10% dodge, +8% crit',apply:()=>{s.dodge+=.10;s.crit+=.08}},
 {id:'blood_cell',name:'Regenerator Cell',desc:'+2.5% max HP/sec',apply:()=>{s.regen+=.025}},
 {id:'targeting_eye',name:'Targeting Eye',desc:'Perception x1.4',apply:()=>PF_ATTRIBUTE(s,'perception',1.4)},
-{id:'titan_fragment',name:'Titan Fragment',desc:'Strength x1.35, Vitality x1.2',apply:()=>{PF_ATTRIBUTE(s,'strength',1.35);PF_ATTRIBUTE(s,'vitality',1.2)}}
+{id:'titan_fragment',name:'Titan Fragment',desc:'Strength x1.35, Vitality x1.2',apply:()=>{PF_ATTRIBUTE(s,'strength',1.35);PF_ATTRIBUTE(s,'vitality',1.2)}},
+{id:'broken_cape',name:'Broken Cape',desc:'+18% damage, +8% dodge',apply:()=>{s.damageMult*=1.18;s.dodge+=.08}},
+{id:'alien_core',name:'Alien Core',desc:'+28% damage, +5% crit',apply:()=>{s.damageMult*=1.28;s.crit+=.05;s.visual.push('cosmic')}},
+{id:'godkiller_shard',name:'Godkiller Shard',desc:'+18% boss damage',apply:()=>{s.tempBossBonus*=1.18}},
+{id:'chronal_gear',name:'Chronal Gear',desc:'+15% attack speed, +5% dodge',apply:()=>{s.attackMs*=.85;s.dodge+=.05;updateAttackTimer()}},
+{id:'living_ember',name:'Living Ember',desc:'+18% damage, +1.5% regen/sec',apply:()=>{s.damageMult*=1.18;s.regen+=.015;s.visual.push('fire')}},
+{id:'glass_reactor',name:'Glass Reactor',desc:'+65% damage, -30% max HP',apply:()=>{s.damageMult*=1.65;s.maxHp*=.70;s.hp=Math.min(s.hp,s.maxHp)}}
 ];
 function grantArtifact(){const pool=PF_ARTIFACTS.filter(a=>!s.artifacts.includes(a.id));const a=(pool.length?pool:PF_ARTIFACTS)[Math.floor(Math.random()*(pool.length||PF_ARTIFACTS.length))];if(a&&!s.artifacts.includes(a.id)){s.artifacts.push(a.id);a.apply();toast('ARTIFACT: '+a.name);scheduleSave()}}
 function modifierCoinMult(){return s.modifier==='bounty_hunter'?1.35:s.modifier==='fortified'?.85:1}
@@ -1114,7 +1160,7 @@ function gamblePower(){
 function showRandomEncounter(stage){
   if(!eventEligible(stage)||s.eventStages.includes(stage))return;
   s.eventStages.push(stage);s.lastEventStage=stage;s.lastEventAt=Date.now();
-  const type=Math.floor(stage/35)%4;
+  const type=Math.floor(stage/35)%6;
   const events=[
     ['Armoured Convoy','A criminal convoy cuts across your route.',[
       ['HIJACK THE CASH','Big coin payout; +5% incoming damage',()=>{s.coins+=Math.max(300,stage*18);s.incomingMult*=1.05;s.alignment--}],
@@ -1131,7 +1177,15 @@ function showRandomEncounter(stage){
     ['Anomaly Impact','Something impossible tears through the district.',[
       ['TOUCH IT','Artifact; +10% incoming damage',()=>{grantArtifact();s.incomingMult*=1.1}],
       ['STUDY IT','Perception x1.3',()=>PF_ATTRIBUTE(s,'perception',1.3)],
-      ['DESTROY IT','Large coin payout and +10 ultimate charge',()=>{s.coins+=Math.max(500,stage*24);chargeUltimate(10)}]]]
+      ['DESTROY IT','Large coin payout and +10 ultimate charge',()=>{s.coins+=Math.max(500,stage*24);chargeUltimate(10)}]]],
+    ['Black Market Cache','A broker offers illegal hero-tech before the authorities arrive.',[
+      ['BUY THE PROTOTYPE','Spend 25% of your coins for an artifact',()=>{const cost=Math.floor(s.coins*.25);s.coins-=cost;grantArtifact()}],
+      ['ROB THE CACHE','Damage x1.18; incoming damage +8%',()=>{s.damageMult*=1.18;s.incomingMult*=1.08;s.alignment--}],
+      ['WALK AWAY','Vitality x1.12 for choosing restraint',()=>{PF_ATTRIBUTE(s,'vitality',1.12);s.alignment++}]]],
+    ['Fallen Hero Signal','A wounded powered vigilante is broadcasting from a collapsed block.',[
+      ['RESCUE THEM','Heal fully; max HP +12%',()=>{s.maxHp*=1.12;s.hp=s.maxHp;s.alignment++}],
+      ['TAKE THEIR CORE','Artifact; crit +5%',()=>{grantArtifact();s.crit+=.05;s.alignment--}],
+      ['HUNT THEIR ATTACKER','Next elite pays double',()=>{s.nextEliteDouble=1}]]]
   ];
   const [title,text,opts]=events[type];$('eventTitle').textContent=title;$('eventText').textContent=text;$('eventOptions').innerHTML='';
   for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
@@ -1213,12 +1267,13 @@ function enemyAttack(){
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
   dmg=clamp(dmg,0,1e150);
+  if(enemyPassive('origin'))dmg*=1.25;
   if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);identityCue('ABSORBED');renderHUD();return}
   s.fight.hits=0;s.fight.combo=0;
   if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
   if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
-  s.hp-=dmg;animateEnemyAttack();floatDamage(dmg,crit,true);
+  s.hp-=dmg;if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.freeze=Math.max(s.fight.freeze,.7);identityCue('TIME PRESSURE')}if(enemyPassive('devour'))s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+Math.min(s.enemyMaxHp*.04,dmg*2));animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
     else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
