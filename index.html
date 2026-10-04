@@ -318,6 +318,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 #upgradeSheet{z-index:150}
 .power-modal{z-index:145}
 @media(max-width:520px){.integrity-grid{grid-template-columns:1fr 1fr}}
+
 /* ================= POWERFALL v0.7: FLOW OVERHAUL ================= */
 .flow-strip{display:grid;grid-template-columns:minmax(112px,.85fr) minmax(0,2.15fr);gap:6px;align-items:stretch}
 .finisher-wide{min-height:45px;border-color:#5c3440;background:linear-gradient(180deg,#25151b,#151016)}
@@ -988,7 +989,7 @@ const PF_EVOLUTIONS={
     {id:'kinetic_fortress',name:'Kinetic Fortress',desc:'Become much harder to move: +12% resistance and +20% damage.',apply:()=>{s.armor+=.12;s.damageMult*=1.2}}
   ],
   cryokinesis:[
-    {id:'absolute_winter',name:'Absolute Winter',desc:'Freezes trigger faster and enemy actions slow further.',apply:()=>{s.enemySlow*=1.18}},
+    {id:'absolute_winter',name:'Absolute Winter',desc:'Enemy actions slow further and freezes become more oppressive.',apply:()=>{s.enemySlow*=1.18}},
     {id:'ice_armour',name:'Ice Armour',desc:'Cold hardens around you: +18% max HP and +10% resistance.',apply:()=>{s.maxHp*=1.18;s.hp*=1.18;s.armor+=.10}}
   ],
   gravity_crush:[
@@ -1000,7 +1001,7 @@ const PF_EVOLUTIONS={
     {id:'war_machine',name:'War Machine',desc:'Tech becomes direct firepower: +35% damage, +8% crit.',apply:()=>{s.damageMult*=1.35;s.crit+=.08}}
   ],
   cosmic_force:[
-    {id:'stellar_avatar',name:'Stellar Avatar',desc:'Cosmic surges occur more violently: +45% damage.',apply:()=>{s.damageMult*=1.45}},
+    {id:'stellar_avatar',name:'Stellar Avatar',desc:'Cosmic surges become overwhelming: +45% damage.',apply:()=>{s.damageMult*=1.45}},
     {id:'void_crown',name:'Void Crown',desc:'Cosmic control: +12% dodge, +12% crit, +1.5% regen/sec.',apply:()=>{s.dodge+=.12;s.crit+=.12;s.regen+=.015}}
   ],
   vampirism:[
@@ -1017,26 +1018,46 @@ function dominantFamily(){
   return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[1]?Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0]:'emerging';
 }
 function identityTitle(){
-  const tags=powerTags(),combos=[[['lightning','speed'],'STORMRUNNER'],[['fire','flight'],'SOLAR COMET'],[['strength','durability'],'IRON COLOSSUS'],[['cosmic','psychic'],'VOID SOVEREIGN'],[['dark','regen'],'BLOOD REVENANT'],[['tech','energy'],'ARC ARCHITECT'],[['phase','speed'],'GHOST VELOCITY'],[['strength','fire'],'BURNING COLOSSUS'],[['gravity','cosmic'],'EVENT HORIZON']];
-  for(const [needs,name] of combos)if(needs.every(x=>tags.has(x)))return name;
-  return ({strength:'THE TITAN',speed:'THE BLUR',regen:'THE UNDYING',fire:'THE INFERNO',lightning:'THE TEMPEST',psychic:'THE MINDSTORM',gravity:'THE SINGULARITY',phase:'THE PHANTOM',cosmic:'THE ASCENDANT',tech:'THE MACHINE',ice:'THE WHITEOUT'})[dominantFamily()]||'EMERGING HERO'
+  const tags=powerTags(),pairs=[
+    [['lightning','speed'],'STORMRUNNER'],[['fire','flight'],'SOLAR COMET'],[['strength','durability'],'IRON COLOSSUS'],
+    [['cosmic','psychic'],'VOID SOVEREIGN'],[['dark','regen'],'BLOOD REVENANT'],[['tech','energy'],'ARC ARCHITECT'],
+    [['phase','speed'],'GHOST VELOCITY'],[['strength','fire'],'BURNING COLOSSUS'],[['gravity','cosmic'],'EVENT HORIZON']
+  ];
+  for(const [needs,name] of pairs)if(needs.every(x=>tags.has(x)))return name;
+  const names={strength:'THE TITAN',speed:'THE BLUR',regen:'THE UNDYING',fire:'THE INFERNO',lightning:'THE TEMPEST',psychic:'THE MINDSTORM',gravity:'THE SINGULARITY',phase:'THE PHANTOM',cosmic:'THE ASCENDANT',tech:'THE MACHINE',ice:'THE WHITEOUT'};
+  return names[dominantFamily()]||'EMERGING HERO'
 }
 function checkIdentityAwakening(){
-  if(s.identityAwakened||s.powers.length<5)return;const family=dominantFamily(),title=identityTitle();
-  if(family==='strength')s.damageMult*=1.15;else if(family==='speed')s.attackMs*=.92;else if(family==='regen'){s.maxHp*=1.12;s.hp*=1.12;s.regen+=.01}else if(family==='psychic'||family==='gravity'){s.crit+=.07;s.damageMult*=1.08}else if(family==='phase')s.dodge+=.08;else if(family==='tech')s.attackMs*=.95;else s.damageMult*=1.12;
+  if(s.identityAwakened||s.powers.length<5)return;
+  const family=dominantFamily(),title=identityTitle();
+  if(family==='strength')s.damageMult*=1.15;
+  else if(family==='speed')s.attackMs*=.92;
+  else if(family==='regen'){s.maxHp*=1.12;s.hp*=1.12;s.regen+=.01}
+  else if(family==='psychic'||family==='gravity'){s.crit+=.07;s.damageMult*=1.08}
+  else if(family==='phase')s.dodge+=.08;
+  else if(family==='tech')s.attackMs*=.95;
+  else s.damageMult*=1.12;
   s.identityAwakened=title;toast('IDENTITY AWAKENED: '+title);scheduleSave()
 }
 function locationFor(stage){return PF_LOCATIONS.find(x=>stage>=x.min&&stage<=x.max)||PF_LOCATIONS[PF_LOCATIONS.length-1]}
 const PF_ASCENSION_PATHS=[
-  {id:'titan',name:'Titan',desc:'Strength +25% / Vitality +25%',apply:()=>{PF_ATTRIBUTE(s,'strength',1.25);PF_ATTRIBUTE(s,'vitality',1.25)}},
-  {id:'speedster',name:'Speedster',desc:'Agility +35% / attack +8%',apply:()=>{PF_ATTRIBUTE(s,'agility',1.35);s.attackMs*=.92}},
-  {id:'mystic',name:'Mystic',desc:'Perception +30% / crit +4%',apply:()=>{PF_ATTRIBUTE(s,'perception',1.3);s.crit+=.04}},
+  {id:'titan',name:'Titan',desc:'STR +25% / VIT +25%',apply:()=>{PF_ATTRIBUTE(s,'strength',1.25);PF_ATTRIBUTE(s,'vitality',1.25)}},
+  {id:'speedster',name:'Speedster',desc:'AGI +35% / attack +8%',apply:()=>{PF_ATTRIBUTE(s,'agility',1.35);s.attackMs*=.92}},
+  {id:'mystic',name:'Mystic',desc:'PER +30% / crit +4%',apply:()=>{PF_ATTRIBUTE(s,'perception',1.3);s.crit+=.04}},
   {id:'cosmic',name:'Cosmic',desc:'Damage +12% / dodge +5%',apply:()=>{s.damageMult*=1.12;s.dodge+=.05;s.visual.push('cosmic')}},
-  {id:'tech',name:'Tech',desc:'Start with 90 coins / attack +5%',apply:()=>{s.coins+=90;s.attackMs*=.95}}
+  {id:'tech',name:'Tech',desc:'90 coins / attack +5%',apply:()=>{s.coins+=90;s.attackMs*=.95}}
 ];
 function ascensionPathUnlocked(){return meta.ascensions>=2||meta.bestStage>=100}
-function applyAscensionPath(){if(s.pathApplied||!meta.ascensionPath)return;const path=PF_ASCENSION_PATHS.find(x=>x.id===meta.ascensionPath);if(!path)return;path.apply();s.pathApplied=true}
-function setAscensionPath(id){if(!ascensionPathUnlocked())return;const path=PF_ASCENSION_PATHS.find(x=>x.id===id);if(!path)return;meta.ascensionPath=id;saveNow();renderAscension();toast('ASCENSION PATH: '+path.name.toUpperCase()+' — applies next run')}
+function applyAscensionPath(){
+  if(s.pathApplied||!meta.ascensionPath)return;
+  const path=PF_ASCENSION_PATHS.find(x=>x.id===meta.ascensionPath);if(!path)return;
+  path.apply();s.pathApplied=true
+}
+function setAscensionPath(id){
+  if(!ascensionPathUnlocked())return;
+  const path=PF_ASCENSION_PATHS.find(x=>x.id===id);if(!path)return;
+  meta.ascensionPath=id;saveNow();renderAscension();toast('ASCENSION PATH: '+path.name.toUpperCase()+' — NEXT RUN')
+}
 function renderEnvironment(){
   const field=$('battlefield'),loc=locationFor(s.stage);
   for(const x of PF_LOCATIONS)field.classList.remove(x.cls,x.weather);
@@ -1089,19 +1110,26 @@ function tickPowerIdentity(dt){
   if(s.fight.burn>0&&s.enemyHp>0){const burn=Math.min(s.enemyHp,s.fight.burn*dt);s.enemyHp=Math.max(0,s.enemyHp-burn);s.fight.burn=Math.max(0,s.fight.burn*(1-dt*.22));if(s.enemyHp<=0)enemyDefeated()}
   if(hasPower('regeneration')&&s.hp>=s.maxHp*.98)s.fight.regenShield=Math.min(s.maxHp*.25,(s.fight.regenShield||0)+s.maxHp*.025*dt);
 }
-function chargeUltimate(amount){const before=s.ultimateCharge||0;s.ultimateCharge=clamp(before+amount,0,100);if(before<100&&s.ultimateCharge>=100)s.ultimateReadyAt=Date.now()}
-function shouldAutoUltimate(){if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return false;if(s.enemy.wall||s.enemy.elite)return true;return s.enemyHp/s.enemyMaxHp>=.70||Date.now()-(s.ultimateReadyAt||Date.now())>5000}
+function chargeUltimate(amount){
+  const before=s.ultimateCharge||0;s.ultimateCharge=clamp(before+amount,0,100);
+  if(before<100&&s.ultimateCharge>=100)s.ultimateReadyAt=Date.now()
+}
+function shouldAutoUltimate(){
+  if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return false;
+  if(s.enemy.wall||s.enemy.elite)return true;
+  return s.enemyHp/s.enemyMaxHp>=.70||Date.now()-(s.ultimateReadyAt||Date.now())>5000
+}
 function useUltimate(){
   if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return;
-  s.ultimateCharge=0;s.ultimateReadyAt=0;const family=dominantFamily();const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),500);
-  if(family==='speed'){for(let i=0;i<6;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*2,false,true)},i*70);toast('ULTIMATE: ZERO-TIME ASSAULT')}
-  else if(family==='regen'){s.hp=s.maxHp;s.fight.regenShield=s.maxHp*.4;dealDamageToEnemy(totalDamage()*8,true,true);toast('ULTIMATE: REBIRTH')}
-  else if(family==='psychic'||family==='gravity'){s.fight.freeze=5;s.fight.break=0;dealDamageToEnemy(totalDamage()*16,true,true);toast('ULTIMATE: SINGULARITY')}
-  else if(family==='lightning'){dealDamageToEnemy(totalDamage()*(evolution('chain_lightning')==='stormcaller'?22:16),true,true);s.fight.freeze=3;toast('ULTIMATE: STORMFRONT')}
-  else if(family==='fire'){s.fight.burn=(s.fight.burn||0)+totalDamage()*12;dealDamageToEnemy(totalDamage()*10,true,true);toast('ULTIMATE: INFERNO')}
-  else if(family==='phase'){s.fight.freeze=4;dealDamageToEnemy(totalDamage()*14,true,true);toast('ULTIMATE: REALITY CUT')}
-  else {dealDamageToEnemy(totalDamage()*18,true,true);s.fight.break=0;toast('ULTIMATE: WORLD IMPACT')}
-  scheduleSave()
+  s.ultimateCharge=0;s.ultimateReadyAt=0;const family=dominantFamily();let name='WORLD IMPACT';const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),500);
+  if(family==='speed'){name='ZERO-TIME ASSAULT';for(let i=0;i<6;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*2,false,true)},i*70)}
+  else if(family==='regen'){name='REBIRTH';s.hp=s.maxHp;s.fight.regenShield=s.maxHp*.4;dealDamageToEnemy(totalDamage()*8,true,true)}
+  else if(family==='psychic'||family==='gravity'){name='SINGULARITY';s.fight.freeze=5;s.fight.break=0;dealDamageToEnemy(totalDamage()*16,true,true)}
+  else if(family==='lightning'){name='STORMFRONT';dealDamageToEnemy(totalDamage()*(evolution('chain_lightning')==='stormcaller'?22:16),true,true);s.fight.freeze=3}
+  else if(family==='fire'){name='INFERNO';s.fight.burn=(s.fight.burn||0)+totalDamage()*12;dealDamageToEnemy(totalDamage()*10,true,true)}
+  else if(family==='phase'){name='REALITY CUT';s.fight.freeze=4;dealDamageToEnemy(totalDamage()*14,true,true)}
+  else {dealDamageToEnemy(totalDamage()*18,true,true);s.fight.break=0}
+  toast('ULTIMATE: '+name);scheduleSave()
 }
 function checkBossPhase(){
   if(!s.enemy?.wall)return;
@@ -1139,9 +1167,17 @@ function checkBounties(){const defs=[['kills',s.kills>=25,Math.max(150,s.stage*1
 function showBounties(){const b=bountyStatus();openInfo('Run Bounties','Optional objectives reward active play without blocking idle progress.',[['Criminals',Math.min(25,s.kills)+' / 25'],['Critical hits',Math.min(10,s.critsLanded)+' / 10'],['Elites',Math.min(3,s.elitesBeaten)+' / 3'],['Completed',b.count+' / 3'],['Modifier',s.modifier||'None']])}
 function activeProfile(){const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));if(tags.has('time'))return ['TIME LOCK'];if(tags.has('regen'))return ['REGEN SURGE'];if(tags.has('psychic')||tags.has('gravity'))return ['PSIONIC CRUSH'];if(tags.has('lightning')||tags.has('energy')||tags.has('fire'))return ['POWER BLAST'];if(tags.has('speed'))return ['OVERDRIVE'];if(tags.has('strength'))return ['HEAVY SMASH'];return s.powers.length?['POWER BURST']:['NO POWER']}
 function useActivePower(auto=false){if(!s.powers.length||Date.now()<s.activeCdUntil||storyPaused||!s.enemy||s.enemyHp<=0)return;s.activeCdUntil=Date.now()+12000*(s.autoPowerRate||1);const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),350);if(tags.has('time')){s.fight.freeze=Math.max(s.fight.freeze,3);floatText('TIME LOCK',false)}else if(tags.has('regen')){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.35);floatText('HEAL',false)}else if(tags.has('speed')){for(let i=0;i<3;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*1.35,false,true)},i*90)}else{const mult=tags.has('strength')?6:tags.has('psychic')||tags.has('gravity')?4.5:5;s.fight.break=Math.min(100,s.fight.break+(tags.has('strength')||tags.has('gravity')?45:25));dealDamageToEnemy(totalDamage()*mult,true,true)}if(auto)identityCue(activeProfile()[0]);else toast(activeProfile()[0]);renderHUD();scheduleSave()}
-function autoDodgeHeavy(){const chance=clamp(.18+dodgeChance()*.92+(hasPower('precognition')?.10:0)+(hasPower('perfect_reflex')?.08:0),.18,.92);if(Math.random()>=chance)return false;floatText('AUTO DODGE',true);s.fight.combo+=3;chargeUltimate(10);if(hasPower('phase_shift'))s.fight.phaseCharge=1;if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;return true}
+function autoDodgeHeavy(){
+  const chance=clamp(.18+dodgeChance()*.92+(hasPower('precognition')?.10:0)+(hasPower('perfect_reflex')?.08:0),.18,.92);
+  if(Math.random()>=chance)return false;
+  floatText('AUTO DODGE',true);s.fight.combo+=3;chargeUltimate(10);
+  if(hasPower('phase_shift'))s.fight.phaseCharge=1;
+  if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;
+  return true
+}
 function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
 function resolveHeavyAttack(){if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
+function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(){
   repairPowerState('gamble');
@@ -1179,7 +1215,7 @@ function showRandomEncounter(stage){
       ['STUDY IT','Perception x1.3',()=>PF_ATTRIBUTE(s,'perception',1.3)],
       ['DESTROY IT','Large coin payout and +10 ultimate charge',()=>{s.coins+=Math.max(500,stage*24);chargeUltimate(10)}]]],
     ['Black Market Cache','A broker offers illegal hero-tech before the authorities arrive.',[
-      ['BUY THE PROTOTYPE','Spend 25% of your coins for an artifact',()=>{const cost=Math.floor(s.coins*.25);s.coins-=cost;grantArtifact()}],
+      ['BUY THE PROTOTYPE','Spend 25% of your coins for an artifact',()=>{s.coins-=Math.floor(s.coins*.25);grantArtifact()}],
       ['ROB THE CACHE','Damage x1.18; incoming damage +8%',()=>{s.damageMult*=1.18;s.incomingMult*=1.08;s.alignment--}],
       ['WALK AWAY','Vitality x1.12 for choosing restraint',()=>{PF_ATTRIBUTE(s,'vitality',1.12);s.alignment++}]]],
     ['Fallen Hero Signal','A wounded powered vigilante is broadcasting from a collapsed block.',[
@@ -1218,7 +1254,7 @@ function totalDamage(){
 function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
 function spawnEnemy(){
-  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1};
+  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0};
   s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
@@ -1228,7 +1264,7 @@ showRandomEncounter(s.stage);
 }
 
 function playerAttack(manual=false,echo=false){
-  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0)return;
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||(s.fight.playerFreeze||0)>0)return;
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,s.attackMs*.65)))return;if(!echo)lastAttackMs=now;
   if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;if(now-lastCombatFx>150)floatText('MISS',false);renderHUD();return}
   let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);
@@ -1266,14 +1302,17 @@ function enemyAttack(){
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
-  dmg=clamp(dmg,0,1e150);
   if(enemyPassive('origin'))dmg*=1.25;
+  dmg=clamp(dmg,0,1e150);
   if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);identityCue('ABSORBED');renderHUD();return}
   s.fight.hits=0;s.fight.combo=0;
   if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
   if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
-  s.hp-=dmg;if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.freeze=Math.max(s.fight.freeze,.7);identityCue('TIME PRESSURE')}if(enemyPassive('devour'))s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+Math.min(s.enemyMaxHp*.04,dmg*2));animateEnemyAttack();floatDamage(dmg,crit,true);
+  s.hp-=dmg;
+  if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.playerFreeze=1.4;identityCue('TIME LOCKED')}
+  if(enemyPassive('devour'))s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+Math.min(s.enemyMaxHp*.04,dmg*2));
+  animateEnemyAttack();floatDamage(dmg,crit,true);
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
     else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
@@ -1631,7 +1670,7 @@ function currentResonance(){
   const tags=new Set();s.powers.forEach(id=>{const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))});
   let best=null,bestScore=0; for(const c of PF_COMBOS){const score=c.needs.filter(n=>tags.has(n)).length/c.needs.length;if(score>bestScore){bestScore=score;best=c}}
   if(best&&bestScore>=.5)return {name:'Emerging '+best.name,nod:`Your powers are ${Math.round(bestScore*100)}% aligned with ${best.name}.`,bonus:'Not fully awakened yet.'};
-  return {name:'Emerging Hero',nod:'Your power set has not settled into a clear archetype yet.',bonus:'Keep combining powers.'};
+  return {name:identityTitle(),nod:s.powers.length>=5?'Your build has awakened a distinct combat identity.':'Your power set is still forming into a distinct identity.',bonus:s.identityAwakened?'Awakened identity passive active.':'Keep combining powers.'};
 }
 
 function maybeStory(stage,force){
@@ -1765,11 +1804,17 @@ function renderHUD(force=false){
   $('comboText').textContent='COMBO x'+combo;
   $('breakText').textContent='BREAK '+breakPct+'%';
   $('breakFill').style.width=breakPct+'%';
-  const now=Date.now(),powerLeft=Math.max(0,s.activeCdUntil-now),ap=activeProfile();
+  const now=Date.now(),powerLeft=Math.max(0,s.activeCdUntil-now);
+  const ap=activeProfile();
   $('autoPowerLabel').textContent=!s.powers.length?'WAITING':powerLeft>0?Math.ceil(powerLeft/1000)+'s':ap[0];
   const canFinish=!!s.enemy&&(s.enemy.elite||s.enemy.wall)&&!s.fight.finisher&&s.enemyHp/s.enemyMaxHp<=.15;
-  $('finisherBtn').disabled=!canFinish;$('finisherBtn').classList.toggle('danger-ready',canFinish);$('finisherLabel').textContent=canFinish?'FINISH HIM':'ELITES / BOSSES';
-  $('bountyLabel').textContent=bountyStatus().count+' / 3';$('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);$('ultimateLabel').textContent=Math.floor(s.ultimateCharge||0)+'%';$('identityBadge').textContent=(s.identityAwakened||identityTitle()).toUpperCase();
+  $('finisherBtn').disabled=!canFinish;
+  $('finisherBtn').classList.toggle('danger-ready',canFinish);
+  $('finisherLabel').textContent=canFinish?'FINISH HIM':'ELITES / BOSSES';
+  $('bountyLabel').textContent=bountyStatus().count+' / 3';
+  $('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);
+  $('ultimateLabel').textContent=Math.floor(s.ultimateCharge||0)+'%';
+  $('identityBadge').textContent=(s.identityAwakened||identityTitle()).toUpperCase();
   renderEnvironment();
   updatePowerAlert(); applyHeroVisuals();
 }
@@ -1846,7 +1891,8 @@ function renderProfile(){
 function renderAscension(){
   $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=ascensionLocked||gain<1;
   const grid=$('soulTree');grid.innerHTML='';PF_CONFIG.soulTree.forEach(node=>{const rank=meta.soulTree[node.id]||0,cost=soulNodeCost(node),maxed=rank>=node.max;const b=document.createElement('button');b.type='button';b.className='tree-node';b.disabled=maxed||meta.souls<cost;b.innerHTML=`<strong>${node.icon} ${escapeHtml(node.name)} ${rank}/${node.max}</strong><small>${escapeHtml(node.desc)}</small><div class="node-cost">${maxed?'MAXED':'PHS '+cost}</div>`;b.addEventListener('click',()=>buySoulNode(node.id));grid.appendChild(b)})
-  const pathGrid=$('pathGrid'),unlocked=ascensionPathUnlocked();pathGrid.innerHTML='';$('pathHint').textContent=unlocked?'Choose your permanent archetype. Changes apply from your next run.':'Reach Stage 100 or ascend twice to unlock.';
+  const pathGrid=$('pathGrid'),unlocked=ascensionPathUnlocked();pathGrid.innerHTML='';
+  $('pathHint').textContent=unlocked?'Choose your permanent archetype. Changes apply from your next run.':'Reach Stage 100 or ascend twice to unlock.';
   for(const path of PF_ASCENSION_PATHS){const b=document.createElement('button');b.type='button';b.className='path-node'+(meta.ascensionPath===path.id?' active':'');b.disabled=!unlocked;b.innerHTML='<strong>'+escapeHtml(path.name)+'</strong><small>'+escapeHtml(path.desc)+'</small>';b.addEventListener('click',()=>setAscensionPath(path.id));pathGrid.appendChild(b)}
 }
 function renderAll(){renderHUD();renderUpgrades();renderAscension()}
@@ -1916,10 +1962,11 @@ function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.e
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
-  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
+  s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.playerFreeze=Math.max(0,(s.fight.playerFreeze||0)-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
+  if(s.enemy&&s.enemyHp>0&&enemyPassive('origin')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.008*dt);
   if(s.powers.length&&Date.now()>=s.activeCdUntil&&s.enemy&&s.enemyHp>0)useActivePower(true);
   if(shouldAutoUltimate())useUltimate();
   autoBuyElapsed+=dt;if(meta.soulTree.autobuy&&autoBuyElapsed>=1){autoBuyElapsed=0;const def=upgradeDefs().sort((a,b)=>upgradeCost(a,s.upgrades[a.id])-upgradeCost(b,s.upgrades[b.id]))[0];buyUpgrade(def.id)}
