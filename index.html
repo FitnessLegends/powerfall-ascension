@@ -332,6 +332,97 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .path-node{border:1px solid var(--line);background:#151e2b;border-radius:10px;padding:8px 5px;text-align:center;min-height:54px}
 .path-node strong{display:block;font-size:9px}.path-node small{display:block;color:var(--muted);font-size:7px;margin-top:3px}.path-node.active{border-color:#65d1ff;background:#17324a}.path-node:disabled{opacity:.42}
 @media(max-width:520px){.flow-strip{grid-template-columns:1fr 2fr}.auto-chip{padding:5px 3px}.path-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ================= POWERFALL v0.7.1: HEROIC COLOUR PASS ================= */
+:root{
+  --bg:#071322;--panel:#10243a;--panel2:#16314c;--line:#315779;
+  --text:#f7fbff;--muted:#9fb8d2;--accent:#58d8ff;--accent2:#b981ff;
+  --good:#55e59a;--bad:#ff6b82;--gold:#ffd762;--soul:#d6a2ff
+}
+.app-shell{
+  background:
+    radial-gradient(circle at 15% 8%,rgba(66,205,255,.20),transparent 28%),
+    radial-gradient(circle at 88% 14%,rgba(255,91,173,.16),transparent 26%),
+    linear-gradient(180deg,#0c2440 0%,#081626 48%,#07101c 100%)!important
+}
+.milestone-strip{
+  background:linear-gradient(105deg,rgba(22,67,103,.96),rgba(45,34,86,.96))!important;
+  border-color:rgba(104,205,255,.34)!important
+}
+.battlefield{
+  border-color:rgba(110,211,255,.42)!important;
+  box-shadow:inset 0 0 65px rgba(35,117,180,.12),0 15px 38px rgba(0,0,0,.28)!important
+}
+.battlefield.loc-backstreets{
+  background:
+    radial-gradient(circle at 78% 18%,rgba(255,174,86,.48),transparent 24%),
+    radial-gradient(circle at 22% 28%,rgba(91,201,255,.34),transparent 30%),
+    linear-gradient(180deg,#285f91 0%,#3f557f 35%,#563f67 63%,#18253b 64%,#0b1521 100%)!important
+}
+.battlefield.loc-rooftops{
+  background:
+    radial-gradient(circle at 72% 14%,rgba(255,220,135,.5),transparent 19%),
+    linear-gradient(180deg,#3379ad,#6a6ba0 44%,#b05f7b 63%,#17243a 64%)!important
+}
+.battlefield.loc-docks{
+  background:
+    radial-gradient(ellipse at 50% 94%,rgba(53,224,231,.34),transparent 48%),
+    linear-gradient(180deg,#19567c,#287892 47%,#394e71 63%,#0b1c2b 64%)!important
+}
+.battlefield.loc-neon{
+  background:
+    radial-gradient(circle at 18% 35%,rgba(255,38,160,.38),transparent 28%),
+    radial-gradient(circle at 80% 30%,rgba(26,218,255,.38),transparent 28%),
+    linear-gradient(180deg,#291d58,#40285f 50%,#153b5a 64%,#08131f 100%)!important
+}
+.battlefield.loc-lab{
+  background:
+    linear-gradient(90deg,rgba(75,239,228,.10) 1px,transparent 1px),
+    linear-gradient(rgba(75,239,228,.08) 1px,transparent 1px),
+    linear-gradient(180deg,#12475b,#17636a 58%,#102f3d 64%,#08151d)!important;
+  background-size:80px 100%,100% 50px,auto!important
+}
+.battlefield.loc-military{
+  background:radial-gradient(circle at 30% 25%,rgba(255,205,87,.20),transparent 28%),linear-gradient(180deg,#506b62,#566b53 55%,#37483c 64%,#111b17)!important
+}
+.battlefield.loc-ruins{
+  background:radial-gradient(circle at 75% 35%,rgba(255,111,52,.40),transparent 28%),linear-gradient(180deg,#7b493d,#68434c 56%,#463337 64%,#171013)!important
+}
+.battlefield.loc-orbit{
+  background:radial-gradient(circle at 70% 24%,rgba(95,181,255,.46),transparent 21%),radial-gradient(circle at 24% 68%,rgba(171,105,255,.32),transparent 27%),linear-gradient(180deg,#132953,#182e68 58%,#111b45 100%)!important
+}
+.battlefield.loc-void{
+  background:radial-gradient(circle at 50% 43%,rgba(203,94,255,.42),transparent 26%),radial-gradient(circle at 16% 28%,rgba(49,223,255,.22),transparent 22%),linear-gradient(180deg,#170d38,#281352 62%,#0a0b21)!important
+}
+.bg-city{filter:saturate(1.35) brightness(1.28)!important}
+.bg-city::after{opacity:.72!important}
+.city-lights{opacity:.58!important;filter:none!important}
+.scene-glow{opacity:1!important;filter:blur(10px)!important}
+.ground{background:linear-gradient(180deg,rgba(92,181,231,.32) 0 2px,transparent 2px),linear-gradient(#18344b,#0a1825)!important}
+.combat-hud,.flow-strip,.bottom-dock{filter:saturate(1.12)}
+.sheet-card{
+  background:linear-gradient(180deg,#11273f 0%,#0d1d31 100%)!important;
+  border-color:#3c688e!important;
+  box-shadow:0 -18px 60px rgba(0,0,0,.38)
+}
+.buy-mode-btn{background:#17304a!important;border-color:#315879!important}
+.buy-mode-btn.active{background:linear-gradient(135deg,#19547b,#1d6e95)!important;border-color:#66d7ff!important}
+.upgrade-card{
+  position:relative;overflow:hidden;background:linear-gradient(145deg,#162d45,#12243a)!important;
+  border-color:#31536f!important;transition:transform .10s ease,border-color .16s ease,box-shadow .16s ease!important
+}
+.upgrade-card[data-upgrade-id="strength"]{border-left:4px solid #ff7a72!important}
+.upgrade-card[data-upgrade-id="agility"]{border-left:4px solid #61dcff!important}
+.upgrade-card[data-upgrade-id="vitality"]{border-left:4px solid #66e49b!important}
+.upgrade-card[data-upgrade-id="perception"]{border-left:4px solid #c18cff!important}
+.upgrade-card.just-bought{animation:upgradePop .22s ease}
+@keyframes upgradePop{50%{transform:scale(.975);box-shadow:0 0 22px rgba(96,211,255,.28)}}
+.upgrade-card .level-badge{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:rgba(99,205,255,.14);color:#bdeeff;font-size:8px;vertical-align:1px}
+.upgrade-card .cost{color:#ffe07a!important}
+.pill{background:rgba(17,43,68,.92)!important;border-color:#315a7d!important}
+.dock-button{background:linear-gradient(180deg,#18334e,#10243a)!important;border-color:#315978!important}
+.dock-button.primary{background:linear-gradient(180deg,#2786b7,#1b5f89)!important;border-color:#68d9ff!important}
+@media(max-width:420px){.sheet-card{padding-left:12px;padding-right:12px}.upgrade-card{min-height:116px}}
 </style>
 </head>
 <body>
@@ -1697,7 +1788,7 @@ function buyUpgrade(id){
   const def=upgradeDefs().find(x=>x.id===id);if(!def)return;
   let count=buyMode==='max'?999:+buyMode,bought=0;
   while(count-->0&&bought<100){const lvl=s.upgrades[id];const cost=upgradeCost(def,lvl);if(s.coins<cost)break;s.coins-=cost;s.upgrades[id]++;def.apply();sanitizeRun(s);bought++}
-  if(bought){toast(`UP ${def.name} +${bought}`);updateAttackTimer();renderAll();scheduleSave()}
+  if(bought){const level=s.upgrades[id];toast(`${def.name} LV ${level}${bought>1?'  +'+bought:''}`);updateAttackTimer();renderHUD(true);renderUpgrades(id);renderAscension();scheduleSave()}
 }
 
 function soulNodeCost(node){const rank=meta.soulTree[node.id]||0;return Math.floor(node.baseCost*Math.pow(1.65,rank))}
@@ -1840,8 +1931,23 @@ function applyHeroVisuals(){
   if(s.powers.length>=6)el.classList.add('form-2');
   if(s.powers.length>=9||s.combos.length>=2)el.classList.add('form-3');
 }
-function renderUpgrades(){
-  $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
+function renderUpgrades(flashId=''){
+  $('sheetCoins').textContent=fmt(s.coins);
+  const grid=$('upgradeGrid'),defs=upgradeDefs();
+  for(const def of defs){
+    const level=s.upgrades[def.id],cost=upgradeCost(def,level);
+    let b=grid.querySelector('[data-upgrade-id="'+def.id+'"]');
+    if(!b){
+      b=document.createElement('button');b.type='button';b.className='upgrade-card';b.dataset.upgradeId=def.id;
+      b.innerHTML='<strong></strong><small></small><div class="cost"></div>';
+      grid.appendChild(b)
+    }
+    b.disabled=s.coins<cost;
+    b.querySelector('strong').innerHTML=def.icon+' '+def.name+' <span class="level-badge">LV '+level+'</span>';
+    b.querySelector('small').textContent=def.desc;
+    b.querySelector('.cost').textContent='C '+fmt(cost)+'+';
+    if(flashId===def.id){b.classList.remove('just-bought');void b.offsetWidth;b.classList.add('just-bought');setTimeout(()=>b.classList.remove('just-bought'),240)}
+  }
 }
 function renderPowerChoices(item){
   $('powerModalQueue').textContent=pendingPowerRewards().length;$('hidePowerModalBtn').disabled=false;
@@ -2021,6 +2127,7 @@ function restore(){
 }
 function bind(){
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
+  $('upgradeGrid').addEventListener('click',e=>{const b=e.target.closest('[data-upgrade-id]');if(b&&!b.disabled)buyUpgrade(b.dataset.upgradeId)});
   $('finisherBtn').addEventListener('click',useFinisher);$('gamblePowerBtn').addEventListener('click',gamblePower);
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
