@@ -1690,8 +1690,26 @@ function renderHUD(force=false){
   updatePowerAlert(); applyHeroVisuals();
 }
 function applyHeroVisuals(){
-  const el=$('heroFighter');el.className='fighter hero info-tap idle';const v=new Set(s.visual||[]);if(v.has('flight'))el.classList.add('flying');if(v.has('lightning'))el.classList.add('lightning');if(v.has('fire')||v.has('solar'))el.classList.add('fire');if(v.has('cosmic'))el.classList.add('cosmic');if(v.has('regen'))el.classList.add('regen');if(v.has('psychic'))el.classList.add('psychic');if(v.has('dark')||v.has('phase'))el.classList.add('dark');if(s.attackMs<700)el.classList.add('speedy');if(s.armor>=.15)el.classList.add('iron');
-  if(s.powers.length>=3)el.classList.add('form-1');if(s.powers.length>=6)el.classList.add('form-2');if(s.powers.length>=9||s.combos.length>=2)el.classList.add('form-3');
+  const el=$('heroFighter');
+  // Only refresh persistent appearance classes. Combat classes such as
+  // "attack" and "hit" are transient animation state and must survive HUD
+  // renders, upgrade purchases, and the 300 ms status tick.
+  const visualClasses=['flying','lightning','fire','cosmic','regen','psychic','dark','speedy','iron','form-1','form-2','form-3'];
+  el.classList.add('fighter','hero','info-tap','idle');
+  visualClasses.forEach(cls=>el.classList.remove(cls));
+  const v=new Set(s.visual||[]);
+  if(v.has('flight'))el.classList.add('flying');
+  if(v.has('lightning'))el.classList.add('lightning');
+  if(v.has('fire')||v.has('solar'))el.classList.add('fire');
+  if(v.has('cosmic'))el.classList.add('cosmic');
+  if(v.has('regen'))el.classList.add('regen');
+  if(v.has('psychic'))el.classList.add('psychic');
+  if(v.has('dark')||v.has('phase'))el.classList.add('dark');
+  if(s.attackMs<700)el.classList.add('speedy');
+  if(s.armor>=.15)el.classList.add('iron');
+  if(s.powers.length>=3)el.classList.add('form-1');
+  if(s.powers.length>=6)el.classList.add('form-2');
+  if(s.powers.length>=9||s.combos.length>=2)el.classList.add('form-3');
 }
 function renderUpgrades(){
   $('sheetCoins').textContent=fmt(s.coins);const grid=$('upgradeGrid');grid.innerHTML='';for(const def of upgradeDefs()){const level=s.upgrades[def.id],cost=upgradeCost(def,level);const b=document.createElement('button');b.type='button';b.className='upgrade-card';b.disabled=s.coins<cost;b.innerHTML=`<strong>${def.icon} ${def.name} Lv ${level}</strong><small>${def.desc}</small><div class="cost">C ${fmt(cost)}+</div>`;b.addEventListener('click',()=>buyUpgrade(def.id));grid.appendChild(b)}
