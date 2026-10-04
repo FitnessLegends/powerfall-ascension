@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.6</title>
+  <title>Powerfall: Ascension Prototype v0.7</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -318,6 +318,16 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 #upgradeSheet{z-index:150}
 .power-modal{z-index:145}
 @media(max-width:520px){.integrity-grid{grid-template-columns:1fr 1fr}}
+
+/* ================= POWERFALL v0.7: FLOW OVERHAUL ================= */
+.flow-strip{display:grid;grid-template-columns:minmax(112px,.85fr) minmax(0,2.15fr);gap:6px;align-items:stretch}
+.finisher-wide{min-height:45px;border-color:#5c3440;background:linear-gradient(180deg,#25151b,#151016)}
+.finisher-wide.danger-ready{border-color:#ff6276;background:linear-gradient(180deg,#651f30,#35131d);box-shadow:0 0 18px rgba(255,84,111,.2)}
+.auto-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.auto-chip{min-width:0;border:1px solid #26364a;background:#0f1722;border-radius:10px;padding:6px 5px;text-align:center}
+.auto-chip small{display:block;color:#8092a8;font-size:7px;letter-spacing:.08em}
+.auto-chip b{display:block;margin-top:2px;font-size:8px;color:#d8e8f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:520px){.flow-strip{grid-template-columns:1fr 2fr}.auto-chip{padding:5px 3px}}
 </style>
 </head>
 <body>
@@ -326,7 +336,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.6</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.7</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -381,7 +391,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
         <div id="damageLayer" class="damage-layer" aria-hidden="true"></div>
 
-        <div class="telegraph hidden" id="telegraph">HEAVY ATTACK - DODGE!</div>
+        <div class="telegraph hidden" id="telegraph">HEAVY ATTACK</div>
 <div class="rival-banner hidden" id="rivalBanner">RIVAL ENCOUNTER</div>
 <div class="elite-banner hidden" id="eliteBanner">ELITE CRIMINAL</div>
         <div class="boss-banner hidden" id="bossBanner">WALL BOSS</div>
@@ -403,12 +413,13 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
           <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
         </div>
       </section>
-      <section class="active-strip" aria-label="Active combat controls">
-        <button id="dodgeBtn" class="active-btn ready" type="button"><strong>DODGE</strong><small id="dodgeLabel">READY</small></button>
-        <button id="activePowerBtn" class="active-btn" type="button"><strong>POWER</strong><small id="activePowerLabel">NO POWER</small></button>
-        <button id="finisherBtn" class="active-btn" type="button" disabled><strong>FINISH</strong><small id="finisherLabel">15% HP</small></button>
-        <button id="ultimateBtn" class="active-btn ultimate-btn" type="button" disabled><strong>ULT</strong><small id="ultimateLabel">0%</small></button>
-        <button id="bountyBtn" class="active-btn" type="button"><strong>BOUNTY</strong><small id="bountyLabel">0 / 3</small></button>
+      <section class="flow-strip" aria-label="Combat flow">
+        <button id="finisherBtn" class="active-btn finisher-wide" type="button" disabled><strong>FINISH</strong><small id="finisherLabel">ELITES / BOSSES</small></button>
+        <div class="auto-status" aria-label="Automatic combat systems">
+          <div class="auto-chip"><small>AUTO POWER</small><b id="autoPowerLabel">WAITING</b></div>
+          <div class="auto-chip"><small>AUTO ULT</small><b id="ultimateLabel">0%</b></div>
+          <div class="auto-chip"><small>BOUNTIES</small><b id="bountyLabel">0 / 3</b></div>
+        </div>
       </section>
       <section class="combat-meter">
         <span><b id="comboText">COMBO x0</b><b id="breakText">BREAK 0%</b></span>
@@ -821,7 +832,7 @@ function defaultRun(){
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
-    ultimateCharge:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,
+    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -1010,18 +1021,26 @@ function tickPowerIdentity(dt){
   if(s.fight.burn>0&&s.enemyHp>0){const burn=Math.min(s.enemyHp,s.fight.burn*dt);s.enemyHp=Math.max(0,s.enemyHp-burn);s.fight.burn=Math.max(0,s.fight.burn*(1-dt*.22));if(s.enemyHp<=0)enemyDefeated()}
   if(hasPower('regeneration')&&s.hp>=s.maxHp*.98)s.fight.regenShield=Math.min(s.maxHp*.25,(s.fight.regenShield||0)+s.maxHp*.025*dt);
 }
-function chargeUltimate(amount){s.ultimateCharge=clamp((s.ultimateCharge||0)+amount,0,100)}
+function chargeUltimate(amount){
+  const before=s.ultimateCharge||0;s.ultimateCharge=clamp(before+amount,0,100);
+  if(before<100&&s.ultimateCharge>=100)s.ultimateReadyAt=Date.now()
+}
+function shouldAutoUltimate(){
+  if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return false;
+  if(s.enemy.wall||s.enemy.elite)return true;
+  return s.enemyHp/s.enemyMaxHp>=.70||Date.now()-(s.ultimateReadyAt||Date.now())>5000
+}
 function useUltimate(){
   if((s.ultimateCharge||0)<100||!s.enemy||s.enemyHp<=0||storyPaused)return;
-  s.ultimateCharge=0;const family=dominantFamily();const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),500);
-  if(family==='speed'){for(let i=0;i<6;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*2,false,true)},i*70);toast('ULTIMATE: ZERO-TIME ASSAULT')}
-  else if(family==='regen'){s.hp=s.maxHp;s.fight.regenShield=s.maxHp*.4;dealDamageToEnemy(totalDamage()*8,true,true);toast('ULTIMATE: REBIRTH')}
-  else if(family==='psychic'||family==='gravity'){s.fight.freeze=5;s.fight.break=0;dealDamageToEnemy(totalDamage()*16,true,true);toast('ULTIMATE: SINGULARITY')}
-  else if(family==='lightning'){dealDamageToEnemy(totalDamage()*(evolution('chain_lightning')==='stormcaller'?22:16),true,true);s.fight.freeze=3;toast('ULTIMATE: STORMFRONT')}
-  else if(family==='fire'){s.fight.burn=(s.fight.burn||0)+totalDamage()*12;dealDamageToEnemy(totalDamage()*10,true,true);toast('ULTIMATE: INFERNO')}
-  else if(family==='phase'){s.fight.freeze=4;dealDamageToEnemy(totalDamage()*14,true,true);toast('ULTIMATE: REALITY CUT')}
-  else {dealDamageToEnemy(totalDamage()*18,true,true);s.fight.break=0;toast('ULTIMATE: WORLD IMPACT')}
-  scheduleSave()
+  s.ultimateCharge=0;s.ultimateReadyAt=0;const family=dominantFamily();let name='WORLD IMPACT';const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),500);
+  if(family==='speed'){name='ZERO-TIME ASSAULT';for(let i=0;i<6;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*2,false,true)},i*70)}
+  else if(family==='regen'){name='REBIRTH';s.hp=s.maxHp;s.fight.regenShield=s.maxHp*.4;dealDamageToEnemy(totalDamage()*8,true,true)}
+  else if(family==='psychic'||family==='gravity'){name='SINGULARITY';s.fight.freeze=5;s.fight.break=0;dealDamageToEnemy(totalDamage()*16,true,true)}
+  else if(family==='lightning'){name='STORMFRONT';dealDamageToEnemy(totalDamage()*(evolution('chain_lightning')==='stormcaller'?22:16),true,true);s.fight.freeze=3}
+  else if(family==='fire'){name='INFERNO';s.fight.burn=(s.fight.burn||0)+totalDamage()*12;dealDamageToEnemy(totalDamage()*10,true,true)}
+  else if(family==='phase'){name='REALITY CUT';s.fight.freeze=4;dealDamageToEnemy(totalDamage()*14,true,true)}
+  else {dealDamageToEnemy(totalDamage()*18,true,true);s.fight.break=0}
+  toast('ULTIMATE: '+name);scheduleSave()
 }
 function checkBossPhase(){
   if(!s.enemy?.wall)return;
@@ -1052,10 +1071,18 @@ function bountyStatus(){const c=[s.kills>=25,s.critsLanded>=10,s.elitesBeaten>=3
 function checkBounties(){const defs=[['kills',s.kills>=25,Math.max(150,s.stage*14),'25 criminals'],['crits',s.critsLanded>=10,Math.max(180,s.stage*16),'10 critical hits'],['elites',s.elitesBeaten>=3,Math.max(240,s.stage*20),'3 elite criminals']];for(const [id,done,reward,label] of defs){if(done&&!s.bountyClaimed[id]){s.bountyClaimed[id]=1;s.coins+=reward;toast('BOUNTY COMPLETE: '+label+' +'+fmt(reward)+' C')}}}
 function showBounties(){const b=bountyStatus();openInfo('Run Bounties','Optional objectives reward active play without blocking idle progress.',[['Criminals',Math.min(25,s.kills)+' / 25'],['Critical hits',Math.min(10,s.critsLanded)+' / 10'],['Elites',Math.min(3,s.elitesBeaten)+' / 3'],['Completed',b.count+' / 3'],['Modifier',s.modifier||'None']])}
 function activeProfile(){const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));if(tags.has('time'))return ['TIME LOCK'];if(tags.has('regen'))return ['REGEN SURGE'];if(tags.has('psychic')||tags.has('gravity'))return ['PSIONIC CRUSH'];if(tags.has('lightning')||tags.has('energy')||tags.has('fire'))return ['POWER BLAST'];if(tags.has('speed'))return ['OVERDRIVE'];if(tags.has('strength'))return ['HEAVY SMASH'];return s.powers.length?['POWER BURST']:['NO POWER']}
-function useActivePower(){if(!s.powers.length||Date.now()<s.activeCdUntil||storyPaused||!s.enemy||s.enemyHp<=0)return;s.activeCdUntil=Date.now()+12000;const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),350);if(tags.has('time')){s.fight.freeze=Math.max(s.fight.freeze,3);floatText('TIME LOCK',false)}else if(tags.has('regen')){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.35);floatText('HEAL',false)}else if(tags.has('speed')){for(let i=0;i<3;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*1.35,false,true)},i*90)}else{const mult=tags.has('strength')?6:tags.has('psychic')||tags.has('gravity')?4.5:5;s.fight.break=Math.min(100,s.fight.break+(tags.has('strength')||tags.has('gravity')?45:25));dealDamageToEnemy(totalDamage()*mult,true,true)}toast(activeProfile()[0]);renderHUD();scheduleSave()}
-function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');$('dodgeBtn').classList.add('danger-ready');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');resolveHeavyAttack()},900)}
-function resolveHeavyAttack(){if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
-function dodgeAction(){const now=Date.now();if(now<s.dodgeCdUntil)return;s.dodgeCdUntil=now+4000;s.fight.dodgeWindow=.5;if(s.fight.telegraph){clearTimeout(timers.telegraph);s.fight.telegraph=0;$('telegraph').classList.add('hidden');$('dodgeBtn').classList.remove('danger-ready');floatText('PERFECT DODGE',true);s.fight.combo+=3;chargeUltimate(12);if(hasPower('phase_shift'))s.fight.phaseCharge=1;if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;s.coins+=Math.max(4,Math.floor(s.stage*.6));setTimeout(()=>playerAttack(true),70)}else floatText('DODGE READY',true);renderHUD()}
+function useActivePower(auto=false){if(!s.powers.length||Date.now()<s.activeCdUntil||storyPaused||!s.enemy||s.enemyHp<=0)return;s.activeCdUntil=Date.now()+12000*(s.autoPowerRate||1);const tags=new Set();s.powers.forEach(id=>byId(id)?.tags?.forEach(t=>tags.add(t)));const field=$('battlefield');field.classList.add('power-active-flash');setTimeout(()=>field.classList.remove('power-active-flash'),350);if(tags.has('time')){s.fight.freeze=Math.max(s.fight.freeze,3);floatText('TIME LOCK',false)}else if(tags.has('regen')){s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.35);floatText('HEAL',false)}else if(tags.has('speed')){for(let i=0;i<3;i++)setTimeout(()=>{if(s.enemyHp>0)dealDamageToEnemy(totalDamage()*1.35,false,true)},i*90)}else{const mult=tags.has('strength')?6:tags.has('psychic')||tags.has('gravity')?4.5:5;s.fight.break=Math.min(100,s.fight.break+(tags.has('strength')||tags.has('gravity')?45:25));dealDamageToEnemy(totalDamage()*mult,true,true)}if(auto)identityCue(activeProfile()[0]);else toast(activeProfile()[0]);renderHUD();scheduleSave()}
+function autoDodgeHeavy(){
+  const chance=clamp(.18+dodgeChance()*.92+(hasPower('precognition')?.10:0)+(hasPower('perfect_reflex')?.08:0),.18,.92);
+  if(Math.random()>=chance)return false;
+  floatText('AUTO DODGE',true);s.fight.combo+=3;chargeUltimate(10);
+  if(hasPower('phase_shift'))s.fight.phaseCharge=1;
+  if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;
+  return true
+}
+function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
+function resolveHeavyAttack(){if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
+function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(){
   repairPowerState('gamble');
@@ -1351,7 +1378,7 @@ function repairPowerState(reason='runtime',legacyQueue=null){
   powerRepairStats.recovered+=recovered;
   powerRepairStats.lastPending=pending;
   powerRepairStats.lastResolved=resolvedPowerRewardCount();
-  console.info('[Powerfall v0.6] power state repair',reason,{pending,resolved:powerRepairStats.lastResolved,removed,recovered});
+  console.info('[Powerfall v0.7] power state repair',reason,{pending,resolved:powerRepairStats.lastResolved,removed,recovered});
   return {pending,resolved:powerRepairStats.lastResolved,removed,recovered}
 }
 function powerSystemReport(){
@@ -1670,22 +1697,16 @@ function renderHUD(force=false){
   $('comboText').textContent='COMBO x'+combo;
   $('breakText').textContent='BREAK '+breakPct+'%';
   $('breakFill').style.width=breakPct+'%';
-  const now=Date.now(),dodgeLeft=Math.max(0,s.dodgeCdUntil-now),powerLeft=Math.max(0,s.activeCdUntil-now);
-  $('dodgeBtn').disabled=dodgeLeft>0;
-  $('dodgeLabel').textContent=dodgeLeft>0?(dodgeLeft/1000).toFixed(1)+'s':'READY';
+  const now=Date.now(),powerLeft=Math.max(0,s.activeCdUntil-now);
   const ap=activeProfile();
-  $('activePowerBtn').disabled=!s.powers.length||powerLeft>0;
-  $('activePowerBtn').classList.toggle('ready',s.powers.length&&powerLeft<=0);
-  $('activePowerLabel').textContent=powerLeft>0?(powerLeft/1000).toFixed(1)+'s':ap[0];
+  $('autoPowerLabel').textContent=!s.powers.length?'WAITING':powerLeft>0?Math.ceil(powerLeft/1000)+'s':ap[0];
   const canFinish=!!s.enemy&&(s.enemy.elite||s.enemy.wall)&&!s.fight.finisher&&s.enemyHp/s.enemyMaxHp<=.15;
   $('finisherBtn').disabled=!canFinish;
   $('finisherBtn').classList.toggle('danger-ready',canFinish);
-  $('finisherLabel').textContent=canFinish?'NOW':'15% HP';
+  $('finisherLabel').textContent=canFinish?'FINISH HIM':'ELITES / BOSSES';
   $('bountyLabel').textContent=bountyStatus().count+' / 3';
   $('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);
   $('ultimateLabel').textContent=Math.floor(s.ultimateCharge||0)+'%';
-  $('ultimateBtn').disabled=(s.ultimateCharge||0)<100;
-  $('ultimateBtn').classList.toggle('ready',(s.ultimateCharge||0)>=100);
   renderEnvironment();
   updatePowerAlert(); applyHeroVisuals();
 }
@@ -1739,7 +1760,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.6</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.7</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -1834,6 +1855,8 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
+  if(s.powers.length&&Date.now()>=s.activeCdUntil&&s.enemy&&s.enemyHp>0)useActivePower(true);
+  if(shouldAutoUltimate())useUltimate();
   autoBuyElapsed+=dt;if(meta.soulTree.autobuy&&autoBuyElapsed>=1){autoBuyElapsed=0;const def=upgradeDefs().sort((a,b)=>upgradeCost(a,s.upgrades[a.id])-upgradeCost(b,s.upgrades[b.id]))[0];buyUpgrade(def.id)}
   renderHUD();
 },300)}
@@ -1886,7 +1909,7 @@ function restore(){
 }
 function bind(){
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
-  $('dodgeBtn').addEventListener('click',dodgeAction);$('activePowerBtn').addEventListener('click',useActivePower);$('finisherBtn').addEventListener('click',useFinisher);$('ultimateBtn').addEventListener('click',useUltimate);$('bountyBtn').addEventListener('click',showBounties);$('gamblePowerBtn').addEventListener('click',gamblePower);
+  $('finisherBtn').addEventListener('click',useFinisher);$('gamblePowerBtn').addEventListener('click',gamblePower);
   $('burstBtn').addEventListener('click',()=>playerAttack(true));$('upgradeBtn').addEventListener('click',openUpgrades);$('closeUpgradeBtn').addEventListener('click',closeUpgrades);$('profileBtn').addEventListener('click',openProfile);$('closeProfileBtn').addEventListener('click',closeProfile);
   $('closeInfoBtn').addEventListener('click',closeInfo);$('infoCloseBottom').addEventListener('click',closeInfo);$('infoModal').addEventListener('click',e=>{if(e.target===$('infoModal'))closeInfo()});
   $('coinsInfoBtn').addEventListener('click',()=>openInfo('Coins','Run currency earned from defeating enemies. Coins are spent on temporary run upgrades and reset when you ascend.',[['Current coins',fmt(s.coins)]]));
@@ -1915,8 +1938,8 @@ function init(){
     if(!meta.seenStories.includes('awakening'))maybeStory(1,true)
   }
   const selfTest=runPowerSelfTest();
-  if(!selfTest.pass)console.error('[Powerfall v0.6] SELF TEST FAILED',selfTest);
-  else console.info('[Powerfall v0.6] self test PASS',selfTest);
+  if(!selfTest.pass)console.error('[Powerfall v0.7] SELF TEST FAILED',selfTest);
+  else console.info('[Powerfall v0.7] self test PASS',selfTest);
   startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000)
 }
 init();
