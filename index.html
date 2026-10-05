@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.0</title>
+  <title>Powerfall: Ascension Prototype v1.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -513,6 +513,17 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .hero.identity-gravity{filter:drop-shadow(0 0 15px rgba(161,91,255,.85))}
 .hero[class*="identity-"] .body,.hero[class*="identity-"] .head{box-shadow:0 0 10px currentColor}
 .power-card .mastery-tag{display:inline-flex;padding:2px 6px;border-radius:999px;background:rgba(185,129,255,.15);border:1px solid rgba(185,129,255,.28);font-size:8px}
+
+/* ================= POWERFALL v1.1: ROGUES & NEMESES ================= */
+.fighter.enemy.nemesis{filter:drop-shadow(0 0 13px rgba(255,65,103,.9)) saturate(1.45);transform:scale(1.09)}
+.fighter.enemy.nemesis .head,.fighter.enemy.nemesis .body{box-shadow:0 0 12px rgba(255,52,92,.9),inset 0 0 8px rgba(255,180,190,.25)!important}
+.fighter.enemy.counter-enemy{filter:drop-shadow(0 0 10px rgba(255,174,71,.72)) saturate(1.25)}
+.battlefield:has(.enemy.nemesis){box-shadow:inset 0 0 90px rgba(118,0,28,.25),0 12px 36px rgba(0,0,0,.38)!important}
+.battlefield:has(.enemy.nemesis) .scene-glow{background:radial-gradient(circle,rgba(255,34,82,.20),transparent 64%)!important}
+.battlefield.boss-phase-2 .scene-art{filter:saturate(1.2) contrast(1.08)}
+.battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
+.fighter.enemy.wall{transition:filter .25s,transform .25s}
+.battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
 </style>
 </head>
 <body>
@@ -521,7 +532,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.0</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.1</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1057,6 +1068,7 @@ const byId=id=>PF_POWERS.find(p=>p.id===id);
 
 function defaultMeta(){return {
   souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,rivalAdaptation:'',ascensionPath:'',
+  nemesis:null,nemesisVictories:0,nemesisEscapes:0,
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
   discoveries:[],storyFlags:[],seenStories:[]
 }}
@@ -1090,7 +1102,7 @@ function defaultRun(){
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
-    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,
+    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,nemesisSeenThisRun:false,lastCounterStage:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -1138,7 +1150,7 @@ function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target
 function resistance(target=s){return defence(target)}
 function blockChance(target=s){return clamp(.02+.16*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.08:0)+(target.kineticStorage?.04:0),.02,.32)}
 function blockPower(target=s){return clamp(.35+.25*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.10:0),.35,.72)}
-function regenRate(target=s){const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5);return enemyPassive('void')?base*.45:base}
+function regenRate(target=s){if(target===s&&s.fight?.regenLockUntil>Date.now())return 0;const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5);return enemyPassive('void')?base*.45:base}
 function critChance(target=s){return clamp(target.crit+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
 function critEffect(target=s){return clamp(target.critMultiplier+.6*(1-10/Math.max(10,target.attributes.perception)),1,10)}
 function playerAccuracy(target=s){return clamp(hitChance(target.attributes.perception,target.enemy?.attributes?.agility||10,!target.powerNullification&&target.enemy?.passive==='evasion'?.12:0)+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.08:0)-(enemyPassive('reality')?.10:0),.45,.98)}
@@ -1434,9 +1446,33 @@ function useUltimate(){
 }
 function checkBossPhase(){
   if(!s.enemy?.wall)return;
-  const ratio=s.enemyHp/s.enemyMaxHp;
-  if(ratio<=.5&&(s.fight.bossPhase||1)<2){s.fight.bossPhase=2;s.enemy.damage*=1.28;s.enemy.attackMs*=.86;toast('BOSS PHASE II');renderEnvironment()}
-  if(ratio<=.15&&(s.fight.bossPhase||1)<3){s.fight.bossPhase=3;s.enemy.damage*=1.35;s.enemy.attackMs*=.80;s.fight.freeze=0;toast('BOSS DESPERATION');renderEnvironment()}
+  const ratio=s.enemyHp/s.enemyMaxHp,stage=s.stage;
+  if(ratio<=.66&&(s.fight.bossPhase||1)<2){
+    s.fight.bossPhase=2;
+    if(stage===75){s.fight.freeze=1.2;s.activeCdUntil=Date.now()+3500;toast('NULL WARDEN: POWER LOCK')}
+    else if(stage===100){s.enemy.damage*=1.35;s.enemy.passive='rage';toast('ATLAS BREAKER: GROUND FRACTURE')}
+    else if(stage===150){s.enemy.attackMs*=.68;s.fight.playerFreeze=1;toast('CHRONARCH: TIME ACCELERATES')}
+    else if(stage===200){s.enemy.passive='adaptive';s.fight.adapt=.12;toast('LIVING ENGINE: ARMOUR LEARNS')}
+    else if(stage===300){s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.12);s.enemy.passive='devour';toast('WORLD-EATER: DEVOUR')}
+    else if(stage===500){s.enemy.passive='reality';s.incomingMult*=1.08;toast('PALE STAR: REALITY COLLAPSE')}
+    else if(stage===750){s.enemy.passive='void';s.enemy.attackMs*=.78;toast('CROWN OF NOTHING: VOID TIDE')}
+    else if(stage===1000){s.enemy.passive='origin';s.enemy.damage*=1.25;s.enemy.attackMs*=.82;toast('FIRST POWER: ORIGIN UNSEALED')}
+    else{s.enemy.damage*=1.28;s.enemy.attackMs*=.86;toast('BOSS PHASE II')}
+    renderEnvironment()
+  }
+  if(ratio<=.25&&(s.fight.bossPhase||1)<3){
+    s.fight.bossPhase=3;s.fight.freeze=0;
+    if(stage===75){s.enemy.damage*=1.5;s.enemy.attackMs*=.78;toast('NULL WARDEN: TOTAL SUPPRESSION')}
+    else if(stage===100){s.enemy.damage*=1.55;s.enemy.maxHp*=1.08;toast('ATLAS BREAKER: LAST STAND')}
+    else if(stage===150){s.enemy.attackMs*=.62;s.fight.playerFreeze=1.3;toast('CHRONARCH: ZERO HOUR')}
+    else if(stage===200){s.enemy.damage*=1.32;s.fight.adapt=.30;toast('LIVING ENGINE: PERFECT ADAPTATION')}
+    else if(stage===300){s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.16);s.enemy.damage*=1.25;toast('WORLD-EATER: SECOND FEAST')}
+    else if(stage===500){s.incomingMult*=1.12;s.enemy.damage*=1.3;toast('PALE STAR: EVENT COLLAPSE')}
+    else if(stage===750){s.enemy.attackMs*=.68;s.enemy.damage*=1.38;toast('CROWN OF NOTHING: ERASE')}
+    else if(stage===1000){s.enemy.damage*=1.5;s.enemy.attackMs*=.68;s.fight.playerFreeze=.8;toast('FIRST POWER: FINAL FORM')}
+    else{s.enemy.damage*=1.35;s.enemy.attackMs*=.80;toast('BOSS DESPERATION')}
+    renderEnvironment()
+  }
 }
 function eventEligible(stage){
   const now=Date.now();
@@ -1528,6 +1564,49 @@ function showRandomEncounter(stage){
   for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
   $('eventModal').classList.remove('hidden')
 }
+
+const PF_NEMESIS_FIRST=['Grave','Hex','Ruin','Vex','Ash','Knell','Razor','Null','Wraith','Morrow'];
+const PF_NEMESIS_LAST=['Breaker','Crown','Hound','Warden','Fang','Ghost','Engine','Reaver','Viper','Shade'];
+function ensureNemesis(){
+  if(meta.nemesis&&typeof meta.nemesis==='object')return meta.nemesis;
+  const seed=(meta.runNumber+meta.bestStage+meta.bossesBeaten)%PF_NEMESIS_FIRST.length;
+  meta.nemesis={name:PF_NEMESIS_FIRST[seed]+' '+PF_NEMESIS_LAST[(seed*3+2)%PF_NEMESIS_LAST.length],level:1,grudge:'',trait:'adaptive',escapes:0,defeats:0,nextStage:120};
+  return meta.nemesis
+}
+function maybeSetupNemesis(){
+  if(!s.enemy||s.enemy.wall||s.enemy.rival||s.stage<120)return;
+  const n=ensureNemesis();if(s.nemesisSeenThisRun||s.stage!==n.nextStage)return;
+  s.nemesisSeenThisRun=true;s.enemy.nemesis=true;s.enemy.elite=true;s.enemy.name='NEMESIS // '+n.name+' LV '+n.level;
+  const mult=1+(n.level-1)*.28;s.enemy.maxHp*=3.1*mult;s.enemy.damage*=1.55*mult;s.enemy.attackMs*=.90;s.enemy.faction='PERSONAL THREAT';
+  s.enemy.nemesisAdaptation=n.grudge||'';s.enemy.modifier='NEMESIS';
+  if(n.grudge)toast(n.name.toUpperCase()+' REMEMBERS YOUR '+n.grudge.toUpperCase())
+}
+function maybeCounterBuild(){
+  if(!s.enemy||s.enemy.wall||s.enemy.nemesis||s.enemy.rival||s.stage<90||s.stage-(s.lastCounterStage||0)<35)return;
+  if(s.stage%35!==5)return;
+  const family=dominantFamily();s.lastCounterStage=s.stage;s.enemy.counterFamily=family;
+  const map={
+    speed:['PREDICTIVE','precision','Predictive targeting'],
+    strength:['BRACED','armour','Impact-dispersal armour'],
+    regen:['CAUTERIZING','precision','Anti-regeneration payload'],
+    fire:['THERMAL WARD','armour','Thermal shielding'],
+    lightning:['GROUNDED','armour','Grounding lattice'],
+    psychic:['MINDLESS','rage','Neural dead-zone'],
+    gravity:['ANCHOR','armour','Gravitic anchor'],
+    phase:['PHASE HUNTER','precision','Phase-tracking optics'],
+    cosmic:['NULL-FIELD','suppression','Cosmic suppression'],
+    tech:['EMP','suppression','Disruption field'],
+    ice:['HEATED','rage','Thermal overdrive']
+  };
+  const spec=map[family]||['HUNTER','precision','Adaptive hunter'];s.enemy.name+=' // '+spec[0];s.enemy.passive=spec[1];s.enemy.counterText=spec[2];s.enemy.maxHp*=1.28;s.enemy.damage*=1.12;
+  toast('COUNTER-ENEMY: '+spec[2].toUpperCase())
+}
+function nemesisEscapeCheck(){
+  if(!s.enemy?.nemesis)return false;
+  const n=ensureNemesis();
+  if(n.escapes<2&&s.enemyHp/s.enemyMaxHp<=.22){n.escapes++;meta.nemesisEscapes++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,s.stage+80+n.level*20);toast(n.name.toUpperCase()+' ESCAPED - IT WILL RETURN');s.stage++;spawnEnemy();scheduleSave();return true}
+  return false
+}
 function setupRival(){
   if(!s.enemy||s.enemy.wall||s.stage<80||s.stage%80!==0)return;
   s.enemy.rival=true;s.enemy.elite=true;s.enemy.name='RIVAL // VANTA '+(meta.rivalLevel+1);
@@ -1557,7 +1636,7 @@ function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*
 function spawnEnemy(){
   s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0};
   s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
-if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
+if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();maybeSetupNemesis();maybeCounterBuild();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
   if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
 showRandomEncounter(s.stage);
@@ -1594,6 +1673,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);identityCue('STAGGERED')}
   if([10,25,50,75].includes(s.fight.combo)){identityCue(s.fight.combo+' HIT COMBO');chargeUltimate(s.fight.combo>=50?8:4);const field=$('battlefield');field.classList.add('combo-surge');setTimeout(()=>field.classList.remove('combo-surge'),260)}
   checkBossPhase();
+  if(s.enemy?.nemesis&&s.enemyHp>0&&s.enemyHp/s.enemyMaxHp<=.22&&nemesisEscapeCheck()){renderHUD();return}
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function enemyAttack(){
@@ -1606,6 +1686,8 @@ function enemyAttack(){
   let dmg=rawDmg-resisted;if(blocked)dmg*=1-blockPower();
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
+  if(s.enemy?.nemesis&&s.enemy.nemesisAdaptation===dominantFamily())dmg*=1.22;
+  if(s.enemy?.counterFamily==='regen'&&s.regen>0)s.fight.regenLockUntil=Date.now()+2200;
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
   if(enemyPassive('origin'))dmg*=1.25;
   dmg=clamp(dmg,0,1e150);
@@ -1635,6 +1717,7 @@ function enemyDefeated(){
   const paid=Math.floor(reward);s.coins=clamp(s.coins+paid,0,1e150);showCoinBurst(paid);
   if(s.enemy.elite){s.elitesBeaten++;if(Math.random()<.18)grantArtifact();checkBounties()}
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
+  if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);reward*=2.5;grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
   if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
   s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
   checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();
@@ -2095,11 +2178,11 @@ function renderHUD(force=false){
   $('coins').textContent=fmt(s.coins);$('souls').textContent=fmt(meta.souls);$('stageLabel').textContent=`Stage ${s.stage}`;$('worldLabel').textContent=worldFor(s.stage).name;
   const next=nextMilestone(s.stage+1);$('nextMilestoneIcon').textContent=next.icon;$('nextMilestoneText').textContent=`${next.type==='boss'?'Wall Boss':'Power'} at ${next.stage} â€¢ ${Math.max(0,next.stage-s.stage)} to go`;
   $('enemyName').textContent=s.enemy?.name||'Enemy';
-  $('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.elite?'ELITE CRIMINAL':'CRIMINAL';
+  $('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.nemesis?'NEMESIS':s.enemy?.elite?'ELITE CRIMINAL':'CRIMINAL';
   $('bossBanner').classList.toggle('hidden',!s.enemy?.wall);
   $('eliteBanner').classList.toggle('hidden',!s.enemy?.elite||s.enemy?.wall);
   const slot=((s.stage-1)%10)+1;
-  $('encounterChip').textContent=s.enemy?.wall?'MILESTONE BOSS':s.enemy?.elite?'ELITE â€¢ 10 / 10':`CRIMINAL ${slot} / 10`;
+  $('encounterChip').textContent=s.enemy?.wall?'MILESTONE BOSS':s.enemy?.nemesis?'PERSONAL NEMESIS':s.enemy?.elite?'ELITE â€¢ 10 / 10':`CRIMINAL ${slot} / 10`;
   $('factionChip').textContent=s.enemy?.faction||PF_ENEMIES.factionFor(s.stage);
   $('hpText').textContent=`${fmt(s.hp)} / ${fmt(s.maxHp)}`;$('enemyHpText').textContent=`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`;
   $('hpBar').style.width=`${clamp(s.hp/s.maxHp*100,0,100)}%`;$('enemyHpBar').style.width=`${clamp(s.enemyHp/s.enemyMaxHp*100,0,100)}%`;
@@ -2115,6 +2198,8 @@ function renderHUD(force=false){
   enemy.className='fighter enemy info-tap idle';
   if(s.enemy?.elite)enemy.classList.add('elite');
   if(s.enemy?.wall)enemy.classList.add('wall');
+  if(s.enemy?.nemesis)enemy.classList.add('nemesis');
+  if(s.enemy?.counterFamily)enemy.classList.add('counter-enemy');
   const type=(s.enemy?.trait||'').toLowerCase();
   for(const cls of ['brawler','speed','tech','tank','psychic','phase','energy','regen'])if(type.includes(cls))enemy.classList.add(cls);
 
@@ -2205,7 +2290,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2214,7 +2299,7 @@ function renderProfile(){
   const elapsed=Math.max(0,Date.now()-(s.runStartedAt||Date.now())),mins=Math.floor(elapsed/60000),masteries=Object.values(s.powerMastery||{}).reduce((a,b)=>a+(Number(b)||0),0);
   $('runSummaryList').innerHTML=[
     ['Stage',s.stage],['Run time',mins+' min'],['Power family',dominantFamily()],['Powers',s.powers.length],
-    ['Masteries',masteries],['Evolutions',Object.keys(s.powerEvolutions||{}).length],['Elites',s.elitesBeaten],['Bosses',s.runBosses]
+    ['Masteries',masteries],['Evolutions',Object.keys(s.powerEvolutions||{}).length],['Elites',s.elitesBeaten],['Bosses',s.runBosses],['Nemesis wins',meta.nemesisVictories||0]
   ].map(([a,b])=>`<div class="integrity-item"><small>${escapeHtml(a)}</small><strong>${escapeHtml(String(b))}</strong></div>`).join('');
   const sys=powerSystemReport();
   $('systemIntegrityList').innerHTML=[
