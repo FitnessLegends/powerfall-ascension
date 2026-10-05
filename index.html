@@ -524,7 +524,15 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.6.6 iPhone battlefield HUD containment */
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.6.7 Mobile dock recovery */
+@media(max-width:520px){
+ #gameScreen{padding-bottom:8px!important}
+ .bottom-dock{position:relative!important;z-index:35!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;margin-top:5px!important;padding:5px!important;min-height:64px!important;overflow:visible!important}
+ .dock-button{display:grid!important;visibility:visible!important;min-width:0!important;min-height:54px!important;padding:5px 2px!important}
+ #burstBtn{display:grid!important;visibility:visible!important;opacity:1!important}
+ .combat-hud{bottom:72px!important}
+}
+/* v1.6.6 iPhone battlefield HUD containment */
 @media(max-width:520px){
  .battlefield{min-height:318px!important}
  .fighter{bottom:38px!important;height:190px!important}
