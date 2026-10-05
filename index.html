@@ -630,7 +630,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .tree-node.branch-core{color:#7ed8ff!important}.tree-node.branch-mutation{color:#d68cff!important}.tree-node.branch-momentum{color:#ffbd73!important}.tree-node.branch-automation{color:#7ff0c3!important}.tree-node.branch-transcendence{color:#ff7fa8!important}
 .tree-node:disabled{opacity:.5}.tree-node:disabled .node-cost{color:#8d849d!important}
 @media(max-width:520px){#soulTree.tree-grid{grid-template-columns:1fr!important}.tree-node{min-height:74px!important}.soul-branch-title{margin-top:5px}.tree-copy small{font-size:9px!important}}
-/* v1.9.1 deep rank scaling */.tree-node strong em{white-space:nowrap}.tree-node[data-deep="1"] .tree-icon{box-shadow:0 0 14px currentColor}/* v1.10 mastery + emergent evolution */.archive-power small{line-height:1.3}.mastery-badge{font-size:8px;font-weight:1000;color:#ffd778}</style>
+/* v1.9.1 deep rank scaling */.tree-node strong em{white-space:nowrap}.tree-node[data-deep="1"] .tree-icon{box-shadow:0 0 14px currentColor}/* v1.10 mastery + emergent evolution */.archive-power small{line-height:1.3}.mastery-badge{font-size:8px;font-weight:1000;color:#ffd778}/* v1.11 Operations */.milestone-next{flex-wrap:wrap;justify-content:flex-end}.operation-btn{border:1px solid #ffbd63;background:linear-gradient(135deg,#6b2d18,#a64b1e);color:#fff3d6;border-radius:9px;padding:7px 9px;font-size:8px;font-weight:1000;letter-spacing:.09em;box-shadow:0 0 16px rgba(255,138,55,.28);animation:operationPulse 1.5s ease-in-out infinite}@keyframes operationPulse{50%{box-shadow:0 0 24px rgba(255,138,55,.55);transform:translateY(-1px)}}@media(max-width:520px){.operation-btn{padding:6px 7px;font-size:7px}.milestone-next{gap:4px}}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -651,10 +651,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
           <strong id="stageLabel">Stage 1</strong>
           <span id="worldLabel">City</span>
         </div>
-        <div class="milestone-next">
-          <span id="nextMilestoneIcon">PWR</span>
-          <span id="nextMilestoneText">Power at 10</span>
-        </div>
+        <div class="milestone-next"><span id="nextMilestoneIcon">PWR</span><span id="nextMilestoneText">Power at 10</span><button type="button" id="operationBtn" class="operation-btn hidden">ENTER OPERATION</button></div>
       </section>
 
       <section class="battlefield" id="battlefield">
@@ -1253,7 +1250,7 @@ function defaultRun(){
     runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,bloodFuel:0,blockCharge:0,critHasteUntil:0},
-    stage:1,patrolXP:0,patrolClears:0,coins:Math.floor((meta.bestStage||1)*(t.soul_echo||0)*2),overkillCarry:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,challengeMode:'',
+    stage:1,patrolXP:0,patrolClears:0,operationReady:false,operationStage:0,inOperation:false,operationWins:0,coins:Math.floor((meta.bestStage||1)*(t.soul_echo||0)*2),overkillCarry:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,challengeMode:'',
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+(1-PF_CONFIG.startingStats.crit)*(1-Math.exp(-(t.instinct||0)*.0017)),regen:0,regenEfficiency:1,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,spikes:0,retaliationPower:0,firstStrike:false,powerConstant:false,powerTheft:false,overhealBarrier:0,overhealShield:0,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
@@ -1809,15 +1806,17 @@ function enemyHasPower(id){return !!s.enemy?.powers?.includes(id)}
 function stealablePlayerPowers(){const protectedSet=new Set((meta.permanentPowers||[]).slice(0,meta.soulTree.power_memory||0));return s.powers.filter(id=>!protectedSet.has(id))}
 function maybeEnemyStealPower(){if(!enemyHasPower('power_theft')||s.powerConstant||Math.random()>=.01)return;const pool=stealablePlayerPowers();if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)];s.powers=s.powers.filter(x=>x!==id);toast('POWER STOLEN: '+(byId(id)?.name||id).toUpperCase());identityCue('POWER LOST')}
 function maybePlayerStealPower(){if(!s.powerTheft||Math.random()>=.01)return;const pool=(s.enemy?.powers||[]).filter(id=>byId(id)&&!s.powers.includes(id));if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)],p=byId(id);s.powers.push(id);applyEffect(s,p.effect);toast('POWER THEFT: '+p.name.toUpperCase());identityCue('POWER STOLEN')}
+function operationBossStage(){return PF_ENEMIES.isWallBoss(s.stage)?s.stage:0}
+function enterOperation(){if(!s.operationReady||s.inOperation||!operationBossStage())return;s.inOperation=true;s.operationReady=false;s.operationStage=s.stage;spawnEnemy();showMajorBanner('OPERATION '+s.stage,s.enemy?.name||'MAJOR THREAT','Three-phase superboss · '+(s.enemy?.powers?.length||0)+' hostile powers',3000);saveNow()}
 function spawnEnemy(){
   s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0,bloodFuel:0,blockCharge:0,critHasteUntil:0};
-  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);assignEnemyPowers();if(s.challengeMode==='mimic_protocol'&&s.powers.length){const copied=s.powers.slice(-Math.min(8,Math.max(1,Math.ceil(s.stage/100))));s.enemy.powers=Array.from(new Set([...(s.enemy.powers||[]),...copied]));const pressure=1+copied.length*.10;s.enemy.maxHp*=pressure;s.enemy.damage*=1+copied.length*.07;s.enemy.mimicked=copied.length} s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+  let baseEnemy=PF_ENEMIES.get(s.stage);if(PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation){const proxyStage=Math.max(1,s.stage-1);baseEnemy=PF_ENEMIES.get(proxyStage);baseEnemy.name='OPERATION PERIMETER · '+baseEnemy.name;baseEnemy.wall=false;baseEnemy.boss=false;baseEnemy.elite=true;baseEnemy.maxHp*=1.35;baseEnemy.damage*=1.18}s.enemy=enemyProfile(baseEnemy,s.stage);assignEnemyPowers();if(s.inOperation&&s.enemy.wall){const extra=Math.min(12,2+Math.floor(s.stage/250)),pool=PF_POWERS.filter(p=>p.id!=='power_constant'&&!s.enemy.powers.includes(p.id));for(let i=0;i<extra&&pool.length;i++){const ix=Math.floor(Math.random()*pool.length);s.enemy.powers.push(pool.splice(ix,1)[0].id)}s.enemy.maxHp*=1.8;s.enemy.damage*=1.22;s.enemy.attackMs=Math.max(380,s.enemy.attackMs*.9)}if(s.challengeMode==='mimic_protocol'&&s.powers.length){const copied=s.powers.slice(-Math.min(8,Math.max(1,Math.ceil(s.stage/100))));s.enemy.powers=Array.from(new Set([...(s.enemy.powers||[]),...copied]));const pressure=1+copied.length*.10;s.enemy.maxHp*=pressure;s.enemy.damage*=1+copied.length*.07;s.enemy.mimicked=copied.length} s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();maybeSetupNemesis();maybeCounterBuild();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
   if(s.overkillCarry>0&&s.enemyHp>0){const carry=Math.min(s.enemyHp,s.overkillCarry);s.enemyHp-=carry;s.overkillCarry=0;if(carry>0)setTimeout(()=>floatDamage(carry,false,false),30);if(s.enemyHp<=0){setTimeout(()=>enemyDefeated(),45);return}}
   if(s.firstStrike)setTimeout(()=>{if(s.enemy&&s.enemyHp>0&&!storyPaused&&!powerDecisionPaused)playerAttack(false)},80);
-  if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
-if((s.patrolXP||0)===0||s.enemy?.wall)showRandomEncounter(s.stage);
+  if(s.inOperation&&PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
+if(!s.inOperation&&((s.patrolXP||0)===0||s.enemy?.wall))showRandomEncounter(s.stage);
   renderAll();
 }
 
@@ -1897,8 +1896,8 @@ function enemyDefeated(){
   if(s.enemy.elite){s.elitesBeaten++;earnReputation(s.enemy.nemesis?10:3,'elite');if(Math.random()<.18)grantArtifact();checkBounties()}
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
   if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);const nemesisBonus=Math.floor(reward*1.5);s.coins=clamp(s.coins+nemesisBonus,0,1e150);showCoinBurst(nemesisBonus);grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
-  if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
-  if(wasWall){s.stage=Math.min(10000,s.stage+1);s.patrolXP=0}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
+  if(wasWall&&s.inOperation&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
+  if(wasWall&&s.inOperation){s.operationWins=(s.operationWins||0)+1;s.inOperation=false;s.operationReady=false;s.operationStage=0;s.stage=Math.min(10000,s.stage+1);s.patrolXP=0;identityCue('OPERATION COMPLETE')}else if(PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation){const threatGoal=Math.max(2,5-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=threatGoal){s.patrolXP=threatGoal;s.operationReady=true;identityCue('OPERATION READY')}}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
   checkPowerMilestone(s.stage);checkCombos();checkEmergentEvolutions();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused)setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible)showPowerModal()},180);
 }
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
@@ -2405,13 +2404,13 @@ function updatePowerAlert(){
 function renderHUD(force=false){
   const hudNow=performance.now();if(!force&&hudNow-lastHudRender<110)return;lastHudRender=hudNow;
   $('coins').textContent=fmt(s.coins);$('souls').textContent=fmt(meta.souls);$('stageLabel').textContent=`Stage ${s.stage}`;$('worldLabel').textContent=worldFor(s.stage).name;
-  const next=nextMilestone(s.stage+1);$('nextMilestoneIcon').textContent=next.icon;$('nextMilestoneText').textContent=`${next.type==='boss'?'Wall Boss':'Power'} at ${next.stage} â€¢ ${Math.max(0,next.stage-s.stage)} to go`;
+  const next=nextMilestone(s.stage+1),opBtn=$('operationBtn');$('nextMilestoneIcon').textContent=s.operationReady?'OPS':next.icon;$('nextMilestoneText').textContent=s.operationReady?('OPERATION '+s.stage+' READY'):((next.type==='boss'?'Operation':'Power')+' at '+next.stage+' · '+Math.max(0,next.stage-s.stage)+' to go');opBtn.classList.toggle('hidden',!s.operationReady||s.inOperation);
   $('enemyName').textContent=s.enemy?.name||'Enemy';
   $('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.nemesis?'NEMESIS':s.enemy?.elite?'ELITE CRIMINAL':'CRIMINAL';
   $('bossBanner').classList.toggle('hidden',!s.enemy?.wall);if(s.enemy?.wall&&$('bossBanner').dataset.stage!==String(s.stage)){$('bossBanner').dataset.stage=String(s.stage);showMajorBanner('OPERATION ACTIVE',s.enemy.name||'WALL BOSS','Major threat engaged. Your build is being tested.',2600)}
   $('eliteBanner').classList.toggle('hidden',!s.enemy?.elite||s.enemy?.wall);
   const slot=((s.stage-1)%10)+1;
-  const patrolGoal=s.stage<25?2:s.stage<100?3:4;$('encounterChip').textContent=s.enemy?.wall?'BOSS OPERATION':s.enemy?.nemesis?'PERSONAL NEMESIS':s.enemy?.elite?'ELITE THREAT':`PATROL ${Math.min(patrolGoal,(s.patrolXP||0)+1)} / ${patrolGoal}`;
+  const patrolGoal=PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation?Math.max(2,5-(meta.soulTree.patrol_compression||0)):s.stage<25?2:s.stage<100?3:4;$('encounterChip').textContent=s.inOperation&&s.enemy?.wall?'BOSS OPERATION':s.operationReady?'OPERATION READY':s.enemy?.nemesis?'PERSONAL NEMESIS':s.enemy?.elite?'ELITE THREAT':`PATROL ${Math.min(patrolGoal,(s.patrolXP||0)+1)} / ${patrolGoal}`;
   $('factionChip').textContent=s.enemy?.faction||PF_ENEMIES.factionFor(s.stage);
   $('hpText').textContent=`${fmt(s.hp)} / ${fmt(s.maxHp)}`;$('enemyHpText').textContent=`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`;
   $('hpBar').style.width=`${clamp(s.hp/s.maxHp*100,0,100)}%`;$('enemyHpBar').style.width=`${clamp(s.enemyHp/s.enemyMaxHp*100,0,100)}%`;
@@ -2719,7 +2718,8 @@ function bind(){
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});$('operationBtn').addEventListener('click',enterOperation);
+window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
 }
 
 function init(){
