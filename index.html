@@ -630,7 +630,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .tree-node.branch-core{color:#7ed8ff!important}.tree-node.branch-mutation{color:#d68cff!important}.tree-node.branch-momentum{color:#ffbd73!important}.tree-node.branch-automation{color:#7ff0c3!important}.tree-node.branch-transcendence{color:#ff7fa8!important}
 .tree-node:disabled{opacity:.5}.tree-node:disabled .node-cost{color:#8d849d!important}
 @media(max-width:520px){#soulTree.tree-grid{grid-template-columns:1fr!important}.tree-node{min-height:74px!important}.soul-branch-title{margin-top:5px}.tree-copy small{font-size:9px!important}}
-/* v1.9.1 deep rank scaling */.tree-node strong em{white-space:nowrap}.tree-node[data-deep="1"] .tree-icon{box-shadow:0 0 14px currentColor}</style>
+/* v1.9.1 deep rank scaling */.tree-node strong em{white-space:nowrap}.tree-node[data-deep="1"] .tree-icon{box-shadow:0 0 14px currentColor}/* v1.10 mastery + emergent evolution */.archive-power small{line-height:1.3}.mastery-badge{font-size:8px;font-weight:1000;color:#ffd778}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -941,6 +941,8 @@ window.PF_CONFIG = {
     {id:'choice',name:'Expanded Awakening',icon:'DNA',branch:'MUTATION',desc:'+1 power offered at every awakening per rank',baseCost:14,max:4},
     {id:'reroll',name:'Mutation Rerolls',icon:'RNG',branch:'MUTATION',desc:'+1 reroll available for every awakening per rank',baseCost:18,max:4},
     {id:'starting_choice',name:'Genesis Selection',icon:'GEN',branch:'MUTATION',desc:'Begin each normal run with a free power awakening. Higher ranks improve its minimum rarity.',baseCost:45,max:3},
+    {id:'mastery_training',name:'Mastery Training',icon:'MST',branch:'MUTATION',desc:'Unlock permanent Power Mastery. Rank 1 trains one-power runs; later ranks let up to 5 powers train together.',baseCost:40,max:5},
+    {id:'mastery_potency',name:'Mastery Potency',icon:'AMP',branch:'TRANSCENDENCE',desc:'Small near-infinite multiplier to bonuses granted by permanent Power Mastery.',baseCost:18,max:9999},
     {id:'power_memory',name:'Power Memory',icon:'MEM',branch:'MUTATION',desc:'Permanent power slot. The cost becomes vicious at high ranks.',baseCost:30,max:999},
     {id:'patrol_compression',name:'Threat Compression',icon:'XP',branch:'MOMENTUM',desc:'Reduces patrol enemies required to advance a stage.',baseCost:20,max:3},
     {id:'overkill',name:'Overkill Transfer',icon:'OVR',branch:'MOMENTUM',desc:'Excess damage carries into the next enemy. Each rank increases the amount preserved.',baseCost:28,max:8},
@@ -1200,7 +1202,7 @@ function defaultMeta(){return {
   souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,rivalAdaptation:'',ascensionPath:'',
   nemesis:null,nemesisVictories:0,nemesisEscapes:0,reputation:0,cityState:'UNKNOWN',legacyMarks:0,legacyChoice:'',
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
-  discoveries:[],storyFlags:[],seenStories:[],permanentPowers:[],powerUnlocks:[],achievements:[],challengeWins:[]
+  discoveries:[],storyFlags:[],seenStories:[],permanentPowers:[],powerUnlocks:[],achievements:[],challengeWins:[],powerMasteryPermanent:{},masteryTotal:0
 }}
 const meta=defaultMeta();
 let s={};
@@ -1223,7 +1225,27 @@ let lastHudRender=0,lastCombatFx=0,damageAggregate=0,damageAggregateTimer=null;
 let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending:0,lastResolved:0};
 
 function permanentSlotCount(){return Math.min(PF_POWERS.length,meta.soulTree.power_memory||0)}
-function applyPermanentPowers(){const slots=permanentSlotCount();for(const id of (meta.permanentPowers||[]).slice(0,slots)){const p=byId(id);if(p&&!s.powers.includes(id)){s.powers.push(id);applyEffect(s,p.effect)}}}
+function masteryTier(id){return Math.floor((meta.powerMasteryPermanent?.[id]||0)/100)}
+function masteryTrainingLimit(){return meta.soulTree.mastery_training||0}
+function masteryPotency(){return 1+(meta.soulTree.mastery_potency||0)*.01}
+function applyPermanentMastery(power){
+  const tier=masteryTier(power.id);if(!tier)return;
+  const k=tier*.0125*masteryPotency(),tags=power.tags||[];
+  s.damageMult*=1+k;
+  if(tags.includes('strength'))PF_ATTRIBUTE(s,'strength',1+tier*.004*masteryPotency());
+  if(tags.includes('speed'))s.attackMs=Math.max(120,s.attackMs/(1+tier*.003*masteryPotency()));
+  if(tags.includes('regen'))s.regen=Math.min(.5,s.regen+tier*.0006*masteryPotency());
+  if(tags.includes('phase')||tags.includes('reflex'))s.dodge+=tier*.001*masteryPotency();
+  if(tags.includes('psychic')||tags.includes('vision'))s.crit+=tier*.0008*masteryPotency();
+}
+function updatePermanentMastery(stage){
+  const limit=masteryTrainingLimit();if(!limit||s.challengeMode||!s.powers.length||s.powers.length>limit)return;
+  meta.powerMasteryPermanent=meta.powerMasteryPermanent&&typeof meta.powerMasteryPermanent==='object'?meta.powerMasteryPermanent:{};
+  let changed=false;
+  for(const id of s.powers){const old=meta.powerMasteryPermanent[id]||0;if(stage>old){meta.powerMasteryPermanent[id]=stage;changed=true;if(Math.floor(stage/100)>Math.floor(old/100))toast('POWER MASTERY: '+(byId(id)?.name||id).toUpperCase()+' TIER '+Math.floor(stage/100))}}
+  if(changed)meta.masteryTotal=Object.values(meta.powerMasteryPermanent).reduce((a,v)=>a+Math.floor((Number(v)||0)/100),0);
+}
+function applyPermanentPowers(){const slots=permanentSlotCount();for(const id of (meta.permanentPowers||[]).slice(0,slots)){const p=byId(id);if(p&&!s.powers.includes(id)){s.powers.push(id);applyEffect(s,p.effect);applyPermanentMastery(p)}}}
 function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*Math.pow(1.015,t.survival||0);
@@ -1235,7 +1257,7 @@ function defaultRun(){
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+(1-PF_CONFIG.startingStats.crit)*(1-Math.exp(-(t.instinct||0)*.0017)),regen:0,regenEfficiency:1,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,spikes:0,retaliationPower:0,firstStrike:false,powerConstant:false,powerTheft:false,overhealBarrier:0,overhealShield:0,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
-    powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
+    powers:[],combos:[],emergentEvolutions:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
     ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,nemesisSeenThisRun:false,lastCounterStage:0,cityRepEarned:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
@@ -1773,7 +1795,7 @@ function freshRun(){
 }
 function dynamicAgility(target=s){return target.attributes.agility+(target.hpAgility||0)*target.hp+(target.missingHpAgility||0)*Math.max(0,target.maxHp-target.hp)}
 function totalDamage(){
-  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(meta.soulTree.deep_build)d*=1+Math.floor(s.powers.length/5)*.005*meta.soulTree.deep_build;if(meta.soulTree.mastery_amp)d*=1+Object.values(s.powerMastery||{}).reduce((a,v)=>a+Math.max(0,v),0)*.006*meta.soulTree.mastery_amp;if(s.absoluteZero&&s.fight?.absoluteZeroStacks)d*=1+s.fight.absoluteZeroStacks*.2;if(s.cosmicForce)d*=1+s.powers.length*.05;if(s.powerMimicry&&s.enemy?.powers?.length)d*=1+Math.min(.7,s.enemy.powers.length*.035);if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
+  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(s.infiniteMomentumForm)d*=1+Math.min(3,(s.fight?.combo||0)*.035);if(s.bloodStar)d*=1+Math.max(0,1-s.hp/Math.max(1,s.maxHp))*2.2;if(s.livingSingularity&&s.enemy)d*=1+Math.min(3,(s.enemy.powers?.length||0)*.08+s.enemyMaxHp/Math.max(1,s.maxHp)*.015);if(s.psionicOvermind)d*=1+Math.min(1.5,(s.attributes.perception||10)/250);if(meta.soulTree.deep_build)d*=1+Math.floor(s.powers.length/5)*.005*meta.soulTree.deep_build;if(meta.soulTree.mastery_amp)d*=1+Object.values(s.powerMastery||{}).reduce((a,v)=>a+Math.max(0,v),0)*.006*meta.soulTree.mastery_amp;if(s.absoluteZero&&s.fight?.absoluteZeroStacks)d*=1+s.fight.absoluteZeroStacks*.2;if(s.cosmicForce)d*=1+s.powers.length*.05;if(s.powerMimicry&&s.enemy?.powers?.length)d*=1+Math.min(.7,s.enemy.powers.length*.035);if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
   if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
@@ -1837,7 +1859,7 @@ function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
-  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(s.negativeMass)s.attackMs=Math.max(120,s.attackMs*.985);if(s.flightMomentum)s.fight.flightCharge=Math.min(2,(s.fight.flightCharge||0)+.35);if(s.phaseCounter)s.fight.phaseCharge=1;if(s.shadowForm)s.fight.shadowStacks=Math.min(4,(s.fight.shadowStacks||0)+1);if(s.realityFlicker){s.fight.realityDodges=(s.fight.realityDodges||0)+1;if(s.fight.realityDodges%3===0)s.fight.realityShield=1}if(now-lastCombatFx>160)floatText('MISS',true);return}
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(s.negativeMass)s.attackMs=Math.max(120,s.attackMs*.985);if(s.ghostEngine)s.attackMs=Math.max(120,s.attackMs*.992);if(s.flightMomentum)s.fight.flightCharge=Math.min(2,(s.fight.flightCharge||0)+.35);if(s.phaseCounter)s.fight.phaseCharge=1;if(s.shadowForm)s.fight.shadowStacks=Math.min(4,(s.fight.shadowStacks||0)+1);if(s.realityFlicker){s.fight.realityDodges=(s.fight.realityDodges||0)+1;if(s.fight.realityDodges%3===0)s.fight.realityShield=1}if(now-lastCombatFx>160)floatText('MISS',true);return}
   let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;if(enemyHasPower('super_strength'))rawDmg*=2;if(enemyHasPower('hyper_speed'))rawDmg*=1.25;if(enemyHasPower('berserker')&&s.enemyHp/s.enemyMaxHp<.4)rawDmg*=2.5;
   const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
   let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85);if(s.conservationViolence)s.fight.blockCharge=Math.min(totalDamage()*12,(s.fight.blockCharge||0)+prevented)}
@@ -1876,8 +1898,8 @@ function enemyDefeated(){
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
   if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);const nemesisBonus=Math.floor(reward*1.5);s.coins=clamp(s.coins+nemesisBonus,0,1e150);showCoinBurst(nemesisBonus);grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
   if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
-  if(wasWall){s.stage=Math.min(10000,s.stage+1);s.patrolXP=0}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
-  checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused)setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible)showPowerModal()},180);
+  if(wasWall){s.stage=Math.min(10000,s.stage+1);s.patrolXP=0}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
+  checkPowerMilestone(s.stage);checkCombos();checkEmergentEvolutions();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused)setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible)showPowerModal()},180);
 }
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
 function legacyRewardKey(source,stage){return s.runId+':'+source+':'+Math.floor(stage)}
@@ -2188,7 +2210,7 @@ function choosePower(id,choiceId){
     s.powers.push(id);
     meta.totalPowersFound++;
     meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),id]));
-    applyEffect(s,power.effect)
+    applyEffect(s,power.effect);applyPermanentMastery(power)
   }
 
   reward.status='resolved';
@@ -2196,7 +2218,7 @@ function choosePower(id,choiceId){
   s.resolvedPowerChoices[legacyRewardKey(reward.source,reward.stage)]=id;
   if(!s.consumedChoices.includes(reward.key))s.consumedChoices.push(reward.key);
 
-  checkCombos();checkIdentityAwakening();
+  checkCombos();checkEmergentEvolutions();checkIdentityAwakening();
   updateAttackTimer();
   updateEnemyTimer();
 
@@ -2230,6 +2252,29 @@ function updateGambleButton(){
   $('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked
 }
 
+const PF_EMERGENT_EVOLUTIONS=[
+{id:'phoenix_physiology',name:'PHOENIX PHYSIOLOGY',needs:['fire','regen'],mastery:2,desc:'Fire feeds regeneration; revival detonates a rebirth nova.',apply:()=>{s.phoenixPhysiology=true;s.revives+=1;s.regen+=.025;s.visual.push('fire','regen')}},
+{id:'infinite_momentum_form',name:'INFINITE MOMENTUM',needs:['speed','combat'],mastery:3,desc:'Long combos convert excess speed into escalating strike damage.',apply:()=>{s.infiniteMomentumForm=true;s.visual.push('speed')}},
+{id:'unstoppable_object',name:'UNSTOPPABLE OBJECT',needs:['strength','durability'],mastery:3,desc:'Blocked damage and raw Strength reinforce each other.',apply:()=>{s.unstoppableObject=true;s.armor+=.08}},
+{id:'ghost_engine',name:'GHOST ENGINE',needs:['phase','speed'],mastery:2,desc:'Dodges permanently accelerate the current fight and charge phase counters.',apply:()=>{s.ghostEngine=true;s.dodge+=.05;s.visual.push('phase')}},
+{id:'blood_star',name:'BLOOD STAR',needs:['fire','rage'],mastery:4,desc:'Missing health superheats attacks; kills restore a sliver of life.',apply:()=>{s.bloodStar=true;s.visual.push('fire','rage')}},
+{id:'living_singularity',name:'LIVING SINGULARITY',needs:['gravity','cosmic'],mastery:4,desc:'Enemy power count and Max HP are converted into crushing damage.',apply:()=>{s.livingSingularity=true;s.visual.push('cosmic')}},
+{id:'perfect_predator',name:'PERFECT PREDATOR',needs:['mutation','combat'],mastery:5,desc:'Boss kills permanently intensify adaptation during this run.',apply:()=>{s.perfectPredator=true}},
+{id:'immortal_machine',name:'IMMORTAL MACHINE',needs:['tech','regen'],mastery:4,desc:'Healing builds armour charge; armour converts back into regeneration.',apply:()=>{s.immortalMachine=true;s.regen+=.02;s.armor+=.05}},
+{id:'event_horizon_body',name:'EVENT HORIZON BODY',needs:['cosmic','durability'],mastery:5,desc:'The lower your HP falls, the slower enemies attack.',apply:()=>{s.eventHorizonBody=true;s.maxHp*=1.35;s.hp*=1.35}},
+{id:'storm_avatar',name:'STORM AVATAR',needs:['lightning','speed'],mastery:3,desc:'Critical hits and dodges feed stored lightning into rapid attacks.',apply:()=>{s.stormAvatar=true;s.crit+=.05;s.visual.push('lightning')}},
+{id:'psionic_overmind',name:'PSIONIC OVERMIND',needs:['psychic','vision'],mastery:4,desc:'Perception turns into crit pressure and Break.',apply:()=>{s.psionicOvermind=true}},
+{id:'deathless_rage',name:'DEATHLESS RAGE',needs:['rage','regen'],mastery:5,desc:'Healing is suppressed at high HP; missing HP massively amplifies damage.',apply:()=>{s.deathlessRage=true}},
+{id:'quantum_predator',name:'QUANTUM PREDATOR',needs:['phase','psychic'],mastery:5,desc:'Dodges predict the next strike, guaranteeing periodic critical counters.',apply:()=>{s.quantumPredator=true}},
+{id:'solar_colossus',name:'SOLAR COLOSSUS',needs:['solar','strength'],mastery:4,desc:'Overhealing becomes stored solar force for heavy attacks.',apply:()=>{s.solarColossus=true;s.maxHp*=1.2;s.hp*=1.2}},
+{id:'world_engine',name:'WORLD ENGINE',needs:['tech','cosmic'],mastery:6,desc:'Every five powers strengthen all active mastery bonuses.',apply:()=>{s.worldEngine=true}}
+];
+function evolutionMasteryScore(ev){const matching=s.powers.map(byId).filter(Boolean).filter(p=>ev.needs.some(t=>p.tags?.includes(t)));return matching.length?Math.max(...matching.map(p=>masteryTier(p.id))):0}
+function checkEmergentEvolutions(){
+  s.emergentEvolutions=Array.isArray(s.emergentEvolutions)?s.emergentEvolutions:[];
+  const tags=new Set();s.powers.forEach(id=>{const p=byId(id);p?.tags?.forEach(t=>tags.add(t))});
+  for(const ev of PF_EMERGENT_EVOLUTIONS){if(s.emergentEvolutions.includes(ev.id)||!ev.needs.every(t=>tags.has(t))||evolutionMasteryScore(ev)<ev.mastery)continue;s.emergentEvolutions.push(ev.id);meta.discoveries=Array.from(new Set([...(meta.discoveries||[]),ev.id]));ev.apply();identityCue(ev.name);toast('TRANSCENDENT EVOLUTION: '+ev.name)}
+}
 function checkCombos(){
   const tags=new Set(); for(const id of s.powers){const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))}
   for(const combo of PF_COMBOS){
@@ -2509,7 +2554,7 @@ function renderProfile(){
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
 }
 function setPermanentPower(slot,id){const slots=permanentSlotCount();if(slot>=slots)return;meta.permanentPowers=Array.isArray(meta.permanentPowers)?meta.permanentPowers:[];if(!id){meta.permanentPowers.splice(slot,1)}else{meta.permanentPowers=meta.permanentPowers.filter(x=>x!==id);meta.permanentPowers.splice(slot,0,id);meta.permanentPowers=meta.permanentPowers.slice(0,slots)}saveNow();renderAscension()}
-function renderPowerArchive(){const slots=permanentSlotCount(),known=new Set([...(meta.powerUnlocks||[]),...s.powers,...(meta.permanentPowers||[])]),slotBox=$('permanentPowerSlots'),grid=$('powerArchiveGrid');slotBox.innerHTML='';if(!slots)slotBox.innerHTML='<div class="archive-empty">No permanent slots yet. Power Memory begins in Ascension.</div>';for(let i=0;i<slots;i++){const id=(meta.permanentPowers||[])[i],p=byId(id),b=document.createElement('button');b.type='button';b.className='permanent-slot';b.innerHTML=(p?powerSymbol(p,'archive-symbol'):'')+'<span><strong>'+(p?escapeHtml(p.name):'EMPTY SLOT '+(i+1))+'</strong><small>'+(p?'Tap to clear':'Choose an unlocked power below')+'</small></span>';b.classList.toggle('has-power',!!p);if(p)b.addEventListener('click',()=>setPermanentPower(i,''));slotBox.appendChild(b)}const secretIds=new Set(['power_theft']);grid.innerHTML=PF_POWERS.map(p=>{const unlocked=powerUnlocked(p),secret=secretIds.has(p.id)&&!unlocked;return '<button type="button" class="archive-power '+powerTone(p)+' '+p.rarity+' '+(!unlocked?'locked ':'')+(secret?'secret ':'')+((meta.permanentPowers||[]).includes(p.id)?'permanent':'')+'" data-archive-power="'+p.id+'" '+(!unlocked?'disabled':'')+'>'+powerSymbol(p,'archive-symbol')+'<span class="archive-copy"><strong>'+escapeHtml(secret?'SECRET POWER':p.name)+'</strong><small>'+escapeHtml(secret?'??? · Hidden unlock condition':(!unlocked?'LOCKED · '+unlockSummary(p):p.rarity.toUpperCase()+' · '+p.desc))+'</small></span></button>'}).join('');grid.querySelectorAll('[data-archive-power]').forEach(b=>b.addEventListener('click',()=>{const p=byId(b.dataset.archivePower);if(!p)return;if(slots>0&&!(meta.permanentPowers||[]).includes(p.id)&&(meta.permanentPowers||[]).length<slots){setPermanentPower((meta.permanentPowers||[]).length,p.id);toast('PERMANENT POWER: '+p.name.toUpperCase())}else showPowerInfo(p.id)}));$('powerArchiveHint').textContent=slots?unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · '+slots+' permanent slots · protected from Power Theft':unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · Power Memory begins in Ascension.'}
+function renderPowerArchive(){const slots=permanentSlotCount(),known=new Set([...(meta.powerUnlocks||[]),...s.powers,...(meta.permanentPowers||[])]),slotBox=$('permanentPowerSlots'),grid=$('powerArchiveGrid');slotBox.innerHTML='';if(!slots)slotBox.innerHTML='<div class="archive-empty">No permanent slots yet. Power Memory begins in Ascension.</div>';for(let i=0;i<slots;i++){const id=(meta.permanentPowers||[])[i],p=byId(id),b=document.createElement('button');b.type='button';b.className='permanent-slot';b.innerHTML=(p?powerSymbol(p,'archive-symbol'):'')+'<span><strong>'+(p?escapeHtml(p.name):'EMPTY SLOT '+(i+1))+'</strong><small>'+(p?'Tap to clear':'Choose an unlocked power below')+'</small></span>';b.classList.toggle('has-power',!!p);if(p)b.addEventListener('click',()=>setPermanentPower(i,''));slotBox.appendChild(b)}const secretIds=new Set(['power_theft']);grid.innerHTML=PF_POWERS.map(p=>{const unlocked=powerUnlocked(p),secret=secretIds.has(p.id)&&!unlocked;return '<button type="button" class="archive-power '+powerTone(p)+' '+p.rarity+' '+(!unlocked?'locked ':'')+(secret?'secret ':'')+((meta.permanentPowers||[]).includes(p.id)?'permanent':'')+'" data-archive-power="'+p.id+'" '+(!unlocked?'disabled':'')+'>'+powerSymbol(p,'archive-symbol')+'<span class="archive-copy"><strong>'+escapeHtml(secret?'SECRET POWER':p.name)+'</strong><small>'+escapeHtml(secret?'??? · Hidden unlock condition':(!unlocked?'LOCKED · '+unlockSummary(p):p.rarity.toUpperCase()+' · M'+masteryTier(p.id)+' · '+p.desc))+'</small></span></button>'}).join('');grid.querySelectorAll('[data-archive-power]').forEach(b=>b.addEventListener('click',()=>{const p=byId(b.dataset.archivePower);if(!p)return;if(slots>0&&!(meta.permanentPowers||[]).includes(p.id)&&(meta.permanentPowers||[]).length<slots){setPermanentPower((meta.permanentPowers||[]).length,p.id);toast('PERMANENT POWER: '+p.name.toUpperCase())}else showPowerInfo(p.id)}));$('powerArchiveHint').textContent=slots?unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · '+slots+' permanent slots · protected from Power Theft':unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · Power Memory begins in Ascension.'}
 
 const PF_CHALLENGES=[
 {id:'constant_protocol',name:'PACIFIST PROTOCOL',goal:75,unlock:'Power Constant',desc:'Normal attacks and Burst are disabled. Begin with Spikes. Defeat the Stage 75 threat.'},
@@ -2565,7 +2610,7 @@ function openInfo(title,body,facts=[]){
 function closeInfo(){$('infoModal').classList.add('hidden')}
 function showPowerInfo(id){
   const p=byId(id);if(!p)return;
-  const facts=[['Rarity',p.rarity.toUpperCase()],['Effect',p.desc]];
+  const facts=[['Rarity',p.rarity.toUpperCase()],['Effect',p.desc],['Permanent Mastery','Tier '+masteryTier(p.id)+' · Best solo/training stage '+(meta.powerMasteryPermanent?.[p.id]||0)]];
   if(p.tradeoff)facts.push(['Drawback',p.tradeoff]);
   if(p.tags?.length)facts.push(['Power families',p.tags.join(', ')]);
   PF_COMBOS.filter(c=>meta.discoveries.includes(c.id)&&c.needs.some(tag=>p.tags.includes(tag))).forEach(c=>facts.push(['Discovered evolution',c.name+' — '+c.bonus]));
