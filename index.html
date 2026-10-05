@@ -899,7 +899,8 @@ window.PF_CONFIG = {
     {id:'reroll',name:'Mutation Reroll',icon:'RNG',desc:'Unlocks one reroll per awakening',baseCost:18,max:1},
     {id:'autobuy',name:'Combat Automation',icon:'TEC',desc:'Automatically buys the cheapest affordable attribute each second',baseCost:25,max:1},
     {id:'foundation',name:'Hero Foundation',icon:'ATR',desc:'+3 to all starting attributes per rank',baseCost:10,max:5},
-    {id:'bossbane',name:'Bossbane',icon:'BOS',desc:'+20% damage to bosses per rank',baseCost:8,max:8}
+    {id:'bossbane',name:'Bossbane',icon:'BOS',desc:'+20% damage to bosses per rank',baseCost:8,max:8},
+    {id:'power_memory',name:'Power Memory',icon:'MEM',desc:'Permanent power slot. Choose an unlocked power to carry into every new run.',baseCost:30,max:3}
   ]
 };
 
@@ -959,6 +960,13 @@ window.PF_CONFIG = {
   ];
 
   PF_POWERS.push(
+    p('spikes','Spikes','SPK','common','Enemies take 28% of damage they deal to you.',s=>{s.spikes=.28},['durability','retaliation']),
+    p('retaliation','Retaliation','RET','rare','When hit, deal damage equal to 35% of your missing HP.',s=>{s.retaliationPower=.35},['retaliation','vitality']),
+    p('first_strike','First Strike','1ST','common','You always attack first when a new fight begins.',s=>{s.firstStrike=true},['combat','speed']),
+    p('power_constant','Power Constant','LOCK','legendary','Your powers cannot be stolen, removed or permanently disabled.',s=>{s.powerConstant=true},['power','defence']),
+    p('power_theft','Power Theft','THF','cosmic','1% chance after defeating a powered enemy to steal one of its powers for this run.',s=>{s.powerTheft=true},['power','mutation']),
+    p('overheal_barrier','Overheal Barrier','OVR','epic','Excess healing becomes a temporary shield up to 35% of Max HP.',s=>{s.overhealBarrier=.35},['regen','durability']),
+    p('kinetic_release','Kinetic Release','KIN','epic','Blocked damage is stored; critical hits release the stored damage.',s=>{s.kineticStorage=true},['durability','energy','combat']),
     p('titanic_physique','Titanic Physique','HP4','rare','MAX HP ×4. Healing per second stays roughly where it was.',s=>{s.maxHp*=4;s.hp*=4;s.regenEfficiency=(s.regenEfficiency??1)*.25},['durability','vitality'],'Your health pool quadruples without quadrupling healing throughput'),
     p('vital_engine','Vital Engine','VIT','epic','MAX HP ×2 while regeneration scales with the larger pool.',s=>{s.maxHp*=2;s.hp*=2},['vitality','regen'],'Health and healing throughput grow together'),
     p('adrenal_metabolism','Adrenal Metabolism','ADR','epic','Current HP becomes Agility: +0.1 AGI per HP.',s=>{s.hpAgility=.1},['vitality','speed'],'Losing health strips bonus Agility'),
@@ -1024,7 +1032,8 @@ window.PF_CONFIG = {
     300:{name:'World-Eater Spawn',icon:'W',hp:55,damage:4.4,speed:.76,trait:'Cosmic hunger'},
     500:{name:'The Pale Star',icon:'STAR',hp:90,damage:5.3,speed:.70,trait:'Reality pressure'},
     750:{name:'Crown of Nothing',icon:'VOID',hp:145,damage:6.2,speed:.64,trait:'Void sovereignty'},
-    1000:{name:'THE FIRST POWER',icon:'ORIGIN',hp:240,damage:7.5,speed:.58,trait:'Origin-class entity'}
+    1000:{name:'THE FIRST POWER',icon:'ORIGIN',hp:240,damage:7.5,speed:.58,trait:'Origin-class entity'},
+    1200:{name:'THE POWER THIEF',icon:'THIEF',hp:330,damage:8.4,speed:.55,trait:'Power theft'}
   };
   const factions=[
     {min:1,name:'Dockside Crew'},
@@ -1135,7 +1144,7 @@ function defaultMeta(){return {
   souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,rivalAdaptation:'',ascensionPath:'',
   nemesis:null,nemesisVictories:0,nemesisEscapes:0,reputation:0,cityState:'UNKNOWN',legacyMarks:0,legacyChoice:'',
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
-  discoveries:[],storyFlags:[],seenStories:[]
+  discoveries:[],storyFlags:[],seenStories:[],permanentPowers:[],powerUnlocks:[],achievements:[],challengeWins:[]
 }}
 const meta=defaultMeta();
 let s={};
@@ -1157,6 +1166,7 @@ let autoBuyElapsed=0;
 let lastHudRender=0,lastCombatFx=0,damageAggregate=0,damageAggregateTimer=null;
 let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending:0,lastResolved:0};
 
+function applyPermanentPowers(){const slots=Math.min(3,meta.soulTree.power_memory||0);for(const id of (meta.permanentPowers||[]).slice(0,slots)){const p=byId(id);if(p&&!s.powers.includes(id)){s.powers.push(id);applyEffect(s,p.effect)}}}
 function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*(1+t.survival*.12);
@@ -1166,7 +1176,7 @@ function defaultRun(){
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,bloodFuel:0,blockCharge:0,critHasteUntil:0},
     stage:1,patrolXP:0,patrolClears:0,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
     attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,regenEfficiency:1,armor:0,dodge:0,
-    lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
+    lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,spikes:0,retaliationPower:0,firstStrike:false,powerConstant:false,powerTheft:false,overhealBarrier:0,overhealShield:0,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
     ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,nemesisSeenThisRun:false,lastCounterStage:0,cityRepEarned:0,
@@ -1226,7 +1236,7 @@ function enemyPassive(passive){return !s.powerNullification&&s.enemy?.passive===
 function enemyProfile(enemy,stage){
   const base=10*Math.pow(1.018,Math.min(stage-1,4000));
   const profiles={brawler:[1.3,.8,1.1,.9,'rage'],speed:[.8,3,.7,1,'haste'],tech:[1,1,1.2,1.3,'armour'],tank:[1.5,.55,1.7,.8,'armour'],psychic:[.9,1,1,2.8,'precision'],phase:[.9,2, .8,1.5,'evasion'],energy:[1.1,1,1,1.5,'precision'],regen:[.9,.8,1.3,1,'regen']};
-  const bossTypes={75:'tech',100:'tank',150:'speed',200:'tank',300:'regen',500:'psychic',750:'phase',1000:'energy'};
+  const bossTypes={75:'tech',100:'tank',150:'speed',200:'tank',300:'regen',500:'psychic',750:'phase',1000:'energy',1200:'phase'};
   const type=bossTypes[stage]||enemy.trait,profile=profiles[type]||profiles.brawler;
   enemy.attributes={strength:base*profile[0],agility:base*profile[1],vitality:base*profile[2],perception:base*profile[3]};
   const progressionPressure=Math.pow(1.0105,Math.min(stage,900))*(1+Math.floor(stage/100)*.18);
@@ -1234,7 +1244,7 @@ function enemyProfile(enemy,stage){
   enemy.maxHp=clamp(enemy.maxHp*profile[2]*progressionPressure*(enemy.elite&&!enemy.wall?1.28:1)*(enemy.wall?1.65:1),1,1e150);
   enemy.damage=clamp(enemy.damage*profile[0]*threatDamage*(enemy.wall?1.18:1),1,1e150);
   enemy.attackMs=clamp(enemy.attackMs/(type==='speed'?1.35:1),380,5000);
-  const bossPassive={75:'suppression',100:'rage',150:'time_lock',200:'adaptive',300:'devour',500:'reality',750:'void',1000:'origin'}[stage];
+  const bossPassive={75:'suppression',100:'rage',150:'time_lock',200:'adaptive',300:'devour',500:'reality',750:'void',1000:'origin',1200:'power_theft'}[stage];
   enemy.passive=bossPassive||profile[4];
   if(enemy.elite&&!enemy.wall){
     const mods=[
@@ -1714,11 +1724,18 @@ function totalDamage(){
 }
 function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
+function enemyPowerCount(stage,wall=false){if(stage<100)return wall?2:0;return Math.min(20,Math.floor(stage/100)+(wall?3:0))}
+function assignEnemyPowers(){if(!s.enemy)return;const count=enemyPowerCount(s.stage,!!s.enemy.wall),eligible=PF_POWERS.filter(p=>p.id!=='power_constant'),picked=[],used=new Set();while(picked.length<count&&used.size<eligible.length){const p=eligible[Math.floor(Math.random()*eligible.length)];if(!used.has(p.id)){used.add(p.id);picked.push(p.id)}}if(s.enemy.wall&&s.stage>=1200&&!picked.includes('power_theft')){if(picked.length>=count)picked[picked.length-1]='power_theft';else picked.push('power_theft')}s.enemy.powers=picked}
+function enemyHasPower(id){return !!s.enemy?.powers?.includes(id)}
+function stealablePlayerPowers(){const protectedSet=new Set((meta.permanentPowers||[]).slice(0,meta.soulTree.power_memory||0));return s.powers.filter(id=>!protectedSet.has(id))}
+function maybeEnemyStealPower(){if(!enemyHasPower('power_theft')||s.powerConstant||Math.random()>=.01)return;const pool=stealablePlayerPowers();if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)];s.powers=s.powers.filter(x=>x!==id);toast('POWER STOLEN: '+(byId(id)?.name||id).toUpperCase());identityCue('POWER LOST')}
+function maybePlayerStealPower(){if(!s.powerTheft||Math.random()>=.01)return;const pool=(s.enemy?.powers||[]).filter(id=>byId(id)&&!s.powers.includes(id));if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)],p=byId(id);s.powers.push(id);applyEffect(s,p.effect);toast('POWER THEFT: '+p.name.toUpperCase());identityCue('POWER STOLEN')}
 function spawnEnemy(){
   s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0,bloodFuel:0,blockCharge:0,critHasteUntil:0};
-  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);assignEnemyPowers(); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();maybeSetupNemesis();maybeCounterBuild();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
+  if(s.firstStrike)setTimeout(()=>{if(s.enemy&&s.enemyHp>0&&!storyPaused&&!powerDecisionPaused)playerAttack(false)},80);
   if(PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
 if((s.patrolXP||0)===0||s.enemy?.wall)showRandomEncounter(s.stage);
   renderAll();
@@ -1762,7 +1779,7 @@ function enemyAttack(){
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
   if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
-  let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;
+  let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;if(enemyHasPower('super_strength'))rawDmg*=2;if(enemyHasPower('hyper_speed'))rawDmg*=1.25;if(enemyHasPower('berserker')&&s.enemyHp/s.enemyMaxHp<.4)rawDmg*=2.5;
   const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
   let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85)}
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
@@ -1777,7 +1794,7 @@ function enemyAttack(){
   if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
   if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*(s.impactEngine?7:4),s.fight.kinetic+dmg*(s.impactEngine?1:.6));
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
-  s.hp-=dmg;
+  s.hp-=dmg;if(s.spikes>0&&dmg>0&&s.enemyHp>0){const reflected=dmg*s.spikes;s.enemyHp=Math.max(0,s.enemyHp-reflected);floatDamage(reflected,false,false)}if(s.retaliationPower>0&&dmg>0&&s.enemyHp>0){const retaliate=Math.max(0,s.maxHp-s.hp)*s.retaliationPower;s.enemyHp=Math.max(0,s.enemyHp-retaliate);if(retaliate>0)floatDamage(retaliate,false,false)}maybeEnemyStealPower();
   if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.playerFreeze=1.4;identityCue('TIME LOCKED')}
   if(enemyPassive('devour'))s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+Math.min(s.enemyMaxHp*.04,dmg*2));
   animateEnemyAttack();floatDamage(dmg,crit,true);
@@ -1790,7 +1807,7 @@ function enemyAttack(){
   renderHUD();
 }
 function enemyDefeated(){
-  const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;
+  const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;maybePlayerStealPower();
   s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);if(s.combatDarwinism&&s.kills%30===0){s.damageMult*=1.03;toast('COMBAT DARWINISM +3% DAMAGE')}
   if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,s.apexGenome?1.45:1.3);toast('EVOLUTION: '+key.toUpperCase()+(s.apexGenome?' +45%':' +30%'))}
   let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult()*cityRewardMult();
