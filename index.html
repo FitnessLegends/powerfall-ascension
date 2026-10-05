@@ -524,7 +524,10 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.6.9 Restore combat stat HUD after control cleanup */
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.6.10 Structural HUD repair: combat HUD now lives inside battlefield */
+.battlefield>.combat-hud{display:block!important;position:absolute!important;left:7px!important;right:7px!important;bottom:7px!important;z-index:40!important;margin:0!important;width:auto!important;box-sizing:border-box!important}
+@media(max-width:520px){.battlefield>.combat-hud{left:5px!important;right:5px!important;bottom:5px!important}.battlefield{padding-bottom:58px!important}}
+/* v1.6.9 Restore combat stat HUD after control cleanup */
 .combat-hud{display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;left:7px!important;right:7px!important;bottom:7px!important;z-index:31!important;padding:5px 6px!important;border:1px solid #35526b99!important;border-radius:10px!important;background:linear-gradient(180deg,#07111ae8,#07101af7)!important;backdrop-filter:blur(5px)}
 .combat-hud .bar-row,.combat-hud .mini-stats{display:grid!important;visibility:visible!important;opacity:1!important}.combat-hud .bar-row{grid-template-columns:1fr!important}.combat-hud .mini-stats{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 .battle-burst{bottom:82px!important}.combat-system-status{top:39px!important}
@@ -713,25 +716,26 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 <div class="rival-banner hidden" id="rivalBanner">RIVAL ENCOUNTER</div>
 <div class="elite-banner hidden" id="eliteBanner">ELITE CRIMINAL</div>
         <div class="boss-banner hidden" id="bossBanner">WALL BOSS</div>
+        <section class="combat-hud">
+          <div class="bar-row">
+            <div class="bar-label"><span>YOU</span><span id="hpText">100 / 100</span></div>
+            <div class="bar"><div id="hpBar" class="bar-fill hp"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span id="enemyHpLabel">ENEMY</span><span id="enemyHpText">50 / 50</span></div>
+            <div class="bar"><div id="enemyHpBar" class="bar-fill enemy"></div></div>
+          </div>
+          <div class="mini-stats">
+            <button class="mini-stat-btn info-tap" id="damageInfoBtn" type="button">DMG <b id="damageStat">8</b></button>
+            <button class="mini-stat-btn info-tap" id="speedInfoBtn" type="button">SPD <b id="apsStat">1.0</b>/s</button>
+            <button class="mini-stat-btn info-tap" id="regenInfoBtn" type="button">REG <b id="regenStat">0%</b></button>
+            <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
+            <button class="mini-stat-btn info-tap resistance-stat" id="resistInfoBtn" type="button">RES <b id="resistStat">0%</b></button>
+          </div>
+        </section>
       </section>
 
-      <section class="combat-hud">
-        <div class="bar-row">
-          <div class="bar-label"><span>YOU</span><span id="hpText">100 / 100</span></div>
-          <div class="bar"><div id="hpBar" class="bar-fill hp"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span id="enemyHpLabel">ENEMY</span><span id="enemyHpText">50 / 50</span></div>
-          <div class="bar"><div id="enemyHpBar" class="bar-fill enemy"></div></div>
-        </div>
-        <div class="mini-stats">
-          <button class="mini-stat-btn info-tap" id="damageInfoBtn" type="button">DMG <b id="damageStat">8</b></button>
-          <button class="mini-stat-btn info-tap" id="speedInfoBtn" type="button">SPD <b id="apsStat">1.0</b>/s</button>
-          <button class="mini-stat-btn info-tap" id="regenInfoBtn" type="button">REG <b id="regenStat">0%</b></button>
-          <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
-          <button class="mini-stat-btn info-tap resistance-stat" id="resistInfoBtn" type="button">RES <b id="resistStat">0%</b></button>
-        </div>
-      </section>
+
       <section class="power-rack" aria-label="Current superpowers"><button id="loadoutStrip" class="loadout-strip" type="button" aria-label="Open Power Deck"><span class="loadout-title"><small>ACTIVE POWERS</small><b id="loadoutIdentity">EMERGING</b></span><span id="loadoutMore" class="loadout-more">OPEN DECK</span></button><div id="loadoutIcons" class="loadout-icons"><i class="loadout-empty">Powers you awaken will appear here</i></div></section>
       <div class="combat-system-status" aria-label="Automatic combat systems">
         <span><small>PWR</small><b id="autoPowerLabel">WAITING</b></span>
