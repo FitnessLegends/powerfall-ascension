@@ -617,7 +617,10 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
  .archive-power .power-symbol{width:40px;height:40px}.archive-power .power-symbol .glyph{font-size:18px}
  .archive-power strong{font-size:11px!important}.archive-power small{font-size:8.5px!important}
 }
-/* v1.7.3 progression gates */.archive-power.locked{position:relative;opacity:.58!important}.archive-power.locked::before{content:"LOCKED";position:absolute;right:7px;top:6px;font-size:7px;font-weight:1000;letter-spacing:.13em;color:#ffcb7c;z-index:3}.archive-power.secret::before{content:"???"}</style>
+/* v1.7.3 progression gates */.archive-power.locked{position:relative;opacity:.58!important}.archive-power.locked::before{content:"LOCKED";position:absolute;right:7px;top:6px;font-size:7px;font-weight:1000;letter-spacing:.13em;color:#ffcb7c;z-index:3}.archive-power.secret::before{content:"???"}
+/* v1.8 protocol expansion */
+.challenge-node{position:relative;overflow:hidden}.challenge-node::after{content:"PROTOCOL";position:absolute;right:8px;top:7px;font-size:7px;font-weight:1000;letter-spacing:.16em;color:#8bcfff;opacity:.55}.challenge-node.won::after{content:"CLEARED";color:#82ffc0;opacity:.9}.challenge-node strong{padding-right:58px}.challenge-node em{color:#7ddcff!important;font-weight:900!important}
+</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -1260,7 +1263,7 @@ function hitChance(perception,agility,dodge=0){
   const p=clamp(perception,.1,1e100),a=clamp(agility,.1,1e100);
   return clamp((.93+.12*Math.log2(p/a))*(1-clamp(dodge,0,.65)),.45,.98);
 }
-function dodgeChance(target=s){return clamp(target.dodge+.18*(1-10/Math.max(10,dynamicAgility(target))),0,.65)}
+function dodgeChance(target=s){if(target===s&&s.challengeMode==='heavy_protocol')return 0;return clamp(target.dodge+.18*(1-10/Math.max(10,dynamicAgility(target))),0,.65)}
 function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target.attributes.strength))+(target.lastStand&&target.hp/target.maxHp<.3?.3:0)+(target.adaptiveArmour||mirrored('adaptive',target)?Math.min(.36,target.fight.adapt):0)+(mirrored('armour',target)?.15:0),0,.8)}
 function resistance(target=s){return defence(target)}
 function blockChance(target=s){return clamp(.02+.16*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.08:0)+(target.kineticStorage?.04:0),.02,.32)}
@@ -1770,7 +1773,7 @@ function maybeEnemyStealPower(){if(!enemyHasPower('power_theft')||s.powerConstan
 function maybePlayerStealPower(){if(!s.powerTheft||Math.random()>=.01)return;const pool=(s.enemy?.powers||[]).filter(id=>byId(id)&&!s.powers.includes(id));if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)],p=byId(id);s.powers.push(id);applyEffect(s,p.effect);toast('POWER THEFT: '+p.name.toUpperCase());identityCue('POWER STOLEN')}
 function spawnEnemy(){
   s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0,bloodFuel:0,blockCharge:0,critHasteUntil:0};
-  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);assignEnemyPowers(); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
+  s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage);assignEnemyPowers();if(s.challengeMode==='mimic_protocol'&&s.powers.length){const copied=s.powers.slice(-Math.min(8,Math.max(1,Math.ceil(s.stage/100))));s.enemy.powers=Array.from(new Set([...(s.enemy.powers||[]),...copied]));const pressure=1+copied.length*.10;s.enemy.maxHp*=pressure;s.enemy.damage*=1+copied.length*.07;s.enemy.mimicked=copied.length} s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();maybeSetupNemesis();maybeCounterBuild();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
   if(s.firstStrike)setTimeout(()=>{if(s.enemy&&s.enemyHp>0&&!storyPaused&&!powerDecisionPaused)playerAttack(false)},80);
@@ -2042,7 +2045,7 @@ function checkPowerMilestone(stage){
     queuePower({source:'milestone',stage,minRarity:stage>=350?'epic':stage>=125?'rare':'common'});
   }
 }
-function queuePower(item){
+function queuePower(item){if(s.challengeMode==='null_protocol')return null;
   const reward=ensurePowerReward(item,'pending');
   if(reward.status==='resolved')return;
   syncPowerQueue();
@@ -2062,12 +2065,14 @@ negative_mass:{label:'Ascend 6 times',check:()=>meta.ascensions>=6},
 hemomancy:{label:'Complete GLASS PROTOCOL',check:()=> (meta.challengeWins||[]).includes('glass_protocol')},
 black_hole_core:{label:'Reach Stage 600',check:()=>meta.bestStage>=600},
 reality_flicker:{label:'Ascend 3 times',check:()=>meta.ascensions>=3},
-power_mimicry:{label:'Defeat 25 bosses',check:()=>meta.bossesBeaten>=25},
+power_mimicry:{label:'Complete MIMIC PROTOCOL',check:()=> (meta.challengeWins||[]).includes('mimic_protocol')},
 worldbreaker:{label:'Reach Stage 400',check:()=>meta.bestStage>=400},
-cellular_rebirth:{label:'Discover 20 powers',check:()=> (meta.powerUnlocks||[]).length>=20},
+cellular_rebirth:{label:'Complete DECAY PROTOCOL',check:()=> (meta.challengeWins||[]).includes('decay_protocol')},
 temporal_speed:{label:'Ascend twice',check:()=>meta.ascensions>=2},
 apex_metabolism:{label:'Discover 25 powers',check:()=> (meta.powerUnlocks||[]).length>=25},
-kinetic_release:{label:'Reach Stage 300',check:()=>meta.bestStage>=300}
+kinetic_release:{label:'Reach Stage 300',check:()=>meta.bestStage>=300},
+juggernaut:{label:'Complete HEAVY PROTOCOL',check:()=> (meta.challengeWins||[]).includes('heavy_protocol')},
+power_nullification:{label:'Complete NULL PROTOCOL',check:()=> (meta.challengeWins||[]).includes('null_protocol')}
 };
 function unlockRule(p){return PF_UNLOCKS[p.id]||null}
 function powerUnlocked(p){const r=unlockRule(p);return !r||r.check()}
@@ -2490,15 +2495,19 @@ function setPermanentPower(slot,id){const slots=permanentSlotCount();if(slot>=sl
 function renderPowerArchive(){const slots=permanentSlotCount(),known=new Set([...(meta.powerUnlocks||[]),...s.powers,...(meta.permanentPowers||[])]),slotBox=$('permanentPowerSlots'),grid=$('powerArchiveGrid');slotBox.innerHTML='';if(!slots)slotBox.innerHTML='<div class="archive-empty">No permanent slots yet. Power Memory begins in Ascension.</div>';for(let i=0;i<slots;i++){const id=(meta.permanentPowers||[])[i],p=byId(id),b=document.createElement('button');b.type='button';b.className='permanent-slot';b.innerHTML=(p?powerSymbol(p,'archive-symbol'):'')+'<span><strong>'+(p?escapeHtml(p.name):'EMPTY SLOT '+(i+1))+'</strong><small>'+(p?'Tap to clear':'Choose an unlocked power below')+'</small></span>';b.classList.toggle('has-power',!!p);if(p)b.addEventListener('click',()=>setPermanentPower(i,''));slotBox.appendChild(b)}const secretIds=new Set(['power_theft']);grid.innerHTML=PF_POWERS.map(p=>{const unlocked=powerUnlocked(p),secret=secretIds.has(p.id)&&!unlocked;return '<button type="button" class="archive-power '+powerTone(p)+' '+p.rarity+' '+(!unlocked?'locked ':'')+(secret?'secret ':'')+((meta.permanentPowers||[]).includes(p.id)?'permanent':'')+'" data-archive-power="'+p.id+'" '+(!unlocked?'disabled':'')+'>'+powerSymbol(p,'archive-symbol')+'<span class="archive-copy"><strong>'+escapeHtml(secret?'SECRET POWER':p.name)+'</strong><small>'+escapeHtml(secret?'??? · Hidden unlock condition':(!unlocked?'LOCKED · '+unlockSummary(p):p.rarity.toUpperCase()+' · '+p.desc))+'</small></span></button>'}).join('');grid.querySelectorAll('[data-archive-power]').forEach(b=>b.addEventListener('click',()=>{const p=byId(b.dataset.archivePower);if(!p)return;if(slots>0&&!(meta.permanentPowers||[]).includes(p.id)&&(meta.permanentPowers||[]).length<slots){setPermanentPower((meta.permanentPowers||[]).length,p.id);toast('PERMANENT POWER: '+p.name.toUpperCase())}else showPowerInfo(p.id)}));$('powerArchiveHint').textContent=slots?unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · '+slots+' permanent slots · protected from Power Theft':unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · Power Memory begins in Ascension.'}
 
 const PF_CHALLENGES=[
-{id:'constant_protocol',name:'PACIFIST PROTOCOL',goal:75,unlock:'Power Constant',desc:'Normal attacks and Burst are disabled. Begin with Spikes. Survive until the Null Warden falls.'},
-{id:'glass_protocol',name:'GLASS PROTOCOL',goal:150,unlock:'Hemomancy',desc:'Max HP is locked to 1. Damage is massively amplified. Reach Stage 150.'},
+{id:'constant_protocol',name:'PACIFIST PROTOCOL',goal:75,unlock:'Power Constant',desc:'Normal attacks and Burst are disabled. Begin with Spikes. Defeat the Stage 75 threat.'},
+{id:'glass_protocol',name:'GLASS PROTOCOL',goal:150,unlock:'Hemomancy',desc:'Max HP is locked to 1. Damage is massively amplified. Defeat Stage 150.'},
+{id:'heavy_protocol',name:'HEAVY PROTOCOL',goal:200,unlock:'Juggernaut',desc:'Dodge is disabled, Max HP ×3 and attack speed is reduced. Become the wall and defeat Stage 200.'},
+{id:'decay_protocol',name:'DECAY PROTOCOL',goal:300,unlock:'Cellular Rebirth',desc:'Regeneration damages you instead of healing you. Build around survival, lifesteal and revives to defeat Stage 300.'},
+{id:'mimic_protocol',name:'MIMIC PROTOCOL',goal:500,unlock:'Power Mimicry',desc:'Every enemy copies part of your current power stack and grows stronger from it. Defeat Stage 500.'},
+{id:'null_protocol',name:'NULL PROTOCOL',goal:100,unlock:'Power Nullification',desc:'No new powers can be awakened during the run. Upgrades, fundamentals and permanent knowledge must carry you to Stage 100.'},
 {id:'thief_protocol',name:'THIEF PROTOCOL',goal:1200,unlock:'Power Theft',desc:'Unlocked after reaching Stage 1000. No permanent powers. Defeat The Power Thief at Stage 1200.'}
 ];
 function challengeDef(id){return PF_CHALLENGES.find(x=>x.id===id)}
-function challengeAvailable(x){return x.id!=='thief_protocol'||meta.bestStage>=1000||(meta.challengeWins||[]).includes(x.id)}
-function startChallenge(id){const x=challengeDef(id);if(!x||!challengeAvailable(x)||s.challengeMode)return;if(!window.confirm('Start '+x.name+'? Your current run will be replaced. Permanent progression is kept, but this challenge starts without permanent powers.'))return;s=defaultRun();s.challengeMode=id;s.maxHp=100;s.hp=100;s.crit=.05;s.attributes={strength:10,agility:10,vitality:10,perception:10};if(id==='constant_protocol'){s.powers=['spikes'];applyEffect(s,byId('spikes').effect)}if(id==='glass_protocol'){s.maxHp=1;s.hp=1;s.damageMult*=8}powerQueue=[];spawnEnemy();startCombatTimers();showScreen('gameScreen');renderAll();saveNow();toast(x.name+' STARTED')}
-function completeChallenge(id){const x=challengeDef(id);if(!x)return;meta.challengeWins=Array.from(new Set([...(meta.challengeWins||[]),id]));if(id==='constant_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_constant']));if(id==='thief_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_theft']));if(id==='glass_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'hemomancy']));s.challengeMode='';saveNow();toast('CHALLENGE COMPLETE · '+x.unlock.toUpperCase());showMajorBanner('CHALLENGE COMPLETE',x.name,x.unlock+' unlocked')}
-function renderChallenges(){const grid=$('challengeGrid');grid.innerHTML=PF_CHALLENGES.map(x=>{const won=(meta.challengeWins||[]).includes(x.id),available=challengeAvailable(x);return '<button type="button" class="challenge-node '+(won?'won':'')+'" data-challenge="'+x.id+'" '+(!available||s.challengeMode?'disabled':'')+'><strong>'+escapeHtml(x.name)+(won?' ✓':'')+'</strong><small>'+escapeHtml(available?x.desc:'Reach Stage 1000 to reveal this protocol.')+'</small><em>'+(won?'COMPLETED · ': 'UNLOCK · ')+escapeHtml(x.unlock)+'</em></button>'}).join('');grid.querySelectorAll('[data-challenge]').forEach(b=>b.addEventListener('click',()=>startChallenge(b.dataset.challenge)))}
+function challengeAvailable(x){if(x.id==='thief_protocol')return meta.bestStage>=1000||(meta.challengeWins||[]).includes(x.id);if(x.id==='mimic_protocol')return meta.bestStage>=200||(meta.challengeWins||[]).includes(x.id);if(x.id==='decay_protocol')return meta.bestStage>=150||(meta.challengeWins||[]).includes(x.id);return true}
+function startChallenge(id){const x=challengeDef(id);if(!x||!challengeAvailable(x)||s.challengeMode)return;if(!window.confirm('Start '+x.name+'? Your current run will be replaced. Permanent progression is kept, but this challenge starts without permanent powers.'))return;s=defaultRun();s.challengeMode=id;s.maxHp=100;s.hp=100;s.crit=.05;s.attributes={strength:10,agility:10,vitality:10,perception:10};if(id==='constant_protocol'){s.powers=['spikes'];applyEffect(s,byId('spikes').effect)}if(id==='glass_protocol'){s.maxHp=1;s.hp=1;s.damageMult*=8}if(id==='heavy_protocol'){s.maxHp*=3;s.hp=s.maxHp;s.attackMs*=1.35}if(id==='null_protocol'){s.nullChallenge=true;s.damageMult*=1.35}if(id==='decay_protocol'){s.decayChallenge=true;s.revives+=1}if(id==='mimic_protocol'){s.mimicChallenge=true}powerQueue=[];spawnEnemy();startCombatTimers();showScreen('gameScreen');renderAll();saveNow();toast(x.name+' STARTED')}
+function completeChallenge(id){const x=challengeDef(id);if(!x)return;meta.challengeWins=Array.from(new Set([...(meta.challengeWins||[]),id]));if(id==='constant_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_constant']));if(id==='thief_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_theft']));if(id==='glass_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'hemomancy']));const challengeUnlocks={heavy_protocol:'juggernaut',decay_protocol:'cellular_rebirth',mimic_protocol:'power_mimicry',null_protocol:'power_nullification'};if(challengeUnlocks[id])meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),challengeUnlocks[id]]));s.challengeMode='';saveNow();toast('CHALLENGE COMPLETE · '+x.unlock.toUpperCase());showMajorBanner('CHALLENGE COMPLETE',x.name,x.unlock+' unlocked')}
+function renderChallenges(){const grid=$('challengeGrid');grid.innerHTML=PF_CHALLENGES.map(x=>{const won=(meta.challengeWins||[]).includes(x.id),available=challengeAvailable(x);return '<button type="button" class="challenge-node '+(won?'won':'')+'" data-challenge="'+x.id+'" '+(!available||s.challengeMode?'disabled':'')+'><strong>'+escapeHtml(x.name)+(won?' ✓':'')+'</strong><small>'+escapeHtml(available?x.desc:'Push further to reveal this protocol.')+'</small><em>'+(won?'COMPLETED · ': 'UNLOCK · ')+escapeHtml(x.unlock)+'</em></button>'}).join('');grid.querySelectorAll('[data-challenge]').forEach(b=>b.addEventListener('click',()=>startChallenge(b.dataset.challenge)))}
 function renderAscension(){
   $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=ascensionLocked||gain<1;
   const grid=$('soulTree');grid.innerHTML='';PF_CONFIG.soulTree.forEach(node=>{const rank=meta.soulTree[node.id]||0,cost=soulNodeCost(node),maxed=rank>=node.max;const b=document.createElement('button');b.type='button';b.className='tree-node';b.disabled=maxed||meta.souls<cost;b.innerHTML=`<strong>${node.icon} ${escapeHtml(node.name)} ${rank}/${node.max}</strong><small>${escapeHtml(node.desc)}</small><div class="node-cost">${maxed?'MAXED':'PHS '+cost}</div>`;b.addEventListener('click',()=>buySoulNode(node.id));grid.appendChild(b)})
@@ -2574,7 +2583,7 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
   s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.playerFreeze=Math.max(0,(s.fight.playerFreeze||0)-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
-  s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
+  const regenTick=s.maxHp*regenRate()*dt;if(s.challengeMode==='decay_protocol')s.hp=clamp(s.hp-Math.max(s.maxHp*.0025*dt,regenTick),0,s.maxHp);else s.hp=clamp(s.hp+regenTick,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('origin')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.008*dt);
   if(s.powers.length&&Date.now()>=s.activeCdUntil&&s.enemy&&s.enemyHp>0)useActivePower(true);
