@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.3</title>
+  <title>Powerfall: Ascension Prototype v1.4</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -524,7 +524,13 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.3 */.power-tags{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0}.power-tag{font-size:9px;font-weight:800;letter-spacing:.08em;padding:3px 6px;border:1px solid rgba(130,190,255,.25);border-radius:999px;color:#9fcfff}.power-preview{display:block;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08)}.tradeoff b{color:#ff8fa6}.power-choice{min-height:142px}.power-choice p{line-height:1.35}</style>
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.4 Visual Identity */
+.loadout-strip{width:100%;display:flex;align-items:center;gap:9px;border:1px solid #284866;background:linear-gradient(90deg,#101b2b,#17243a);border-radius:12px;padding:7px 9px;color:#eaf7ff;text-align:left}.loadout-title{min-width:74px}.loadout-title small{display:block;font-size:8px;letter-spacing:.14em;color:#7fa1ba}.loadout-title b{font-size:9px}.loadout-icons{display:flex;gap:5px;flex:1;min-width:0}.loadout-power{width:31px;height:31px;flex:0 0 31px;border-radius:9px;display:grid;place-items:center;position:relative;border:1px solid #42617b;background:#162438}.loadout-power b{font-size:9px}.loadout-power i{position:absolute;inset:auto 4px 3px;height:2px;border-radius:2px;background:#789}.loadout-power.bio i{background:#45d483}.loadout-power.fire i{background:#ff714d}.loadout-power.speed i{background:#54dfff}.loadout-power.psi i{background:#c178ff}.loadout-power.tech i{background:#52e0ca}.loadout-power.dark i{background:#e05086}.loadout-power.cosmic i{background:#9f83ff}.loadout-power.legendary{box-shadow:inset 0 0 0 1px #e6b84d}.loadout-power.cosmic{box-shadow:inset 0 0 0 1px #b388ff}.loadout-more{font-size:9px;font-weight:900;color:#80d8ff}.loadout-empty{font-size:10px;color:#71879a;font-style:normal}
+.deck-modal{align-items:flex-start;padding:calc(env(safe-area-inset-top) + 14px) 10px 14px}.deck-card{width:min(680px,100%);max-height:calc(100dvh - 30px);overflow:auto;background:#09111d;border:1px solid #34516e;border-radius:18px;padding:14px}.deck-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.deck-head small{letter-spacing:.16em;color:#72cfff}.deck-head h2{margin:3px 0}.deck-head p{margin:0;color:#91a7bb;font-size:12px}.deck-synergy{margin:12px 0;padding:10px;border-left:3px solid #ae72ff;background:#171328;color:#d9c7ff;font-size:11px;font-weight:800}.deck-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.deck-power{display:flex;gap:10px;text-align:left;padding:10px;border:1px solid #263b50;border-radius:12px;background:#101a27;color:#e9f5ff;min-width:0}.deck-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:10px;background:#192a3c;font-size:10px;font-weight:900}.deck-power span:last-child{min-width:0}.deck-power strong,.deck-power small,.deck-power em,.deck-power i{display:block}.deck-power small{font-size:8px;color:#7f9bb2;margin:2px 0 6px}.deck-power em{font-size:10px;font-style:normal;color:#bfd0dd;line-height:1.35}.deck-power i{font-size:9px;color:#ff8fa6;margin-top:6px}.deck-power.bio{border-left:3px solid #45d483}.deck-power.fire{border-left:3px solid #ff714d}.deck-power.speed{border-left:3px solid #54dfff}.deck-power.psi{border-left:3px solid #c178ff}.deck-power.tech{border-left:3px solid #52e0ca}.deck-power.dark{border-left:3px solid #e05086}.deck-power.cosmic{border-left:3px solid #9f83ff}
+.major-banner{position:fixed;z-index:90;left:50%;top:16%;transform:translateX(-50%);width:min(92vw,520px);padding:14px 18px;text-align:center;border:1px solid #d7ad4d;border-radius:14px;background:linear-gradient(135deg,#231b0b,#0c1420);box-shadow:0 12px 40px #000b;animation:majorIn .3s ease}.major-banner small,.major-banner strong,.major-banner span{display:block}.major-banner small{font-size:9px;letter-spacing:.2em;color:#f4ca63}.major-banner strong{font-size:18px;margin:4px 0}.major-banner span{font-size:11px;color:#c9d4df}.major-banner.power{border-color:#a86cff}.major-banner.operation{border-color:#ff5d5d;background:linear-gradient(135deg,#321010,#111923)}.identity-reveal{position:fixed;z-index:110;inset:18% 5% auto;text-align:center;padding:28px 16px;border:1px solid #d7b7ff;border-radius:18px;background:radial-gradient(circle at 50% 20%,#3b1f62,#080b14 68%);box-shadow:0 0 70px #9e55ff55;animation:identityIn .55s ease}.identity-reveal small,.identity-reveal strong,.identity-reveal span{display:block}.identity-reveal small{letter-spacing:.3em;color:#d3a9ff}.identity-reveal strong{font-size:clamp(25px,7vw,42px);margin:9px 0;color:#fff}.identity-reveal span{color:#d4c8df}.power-modal:not(.hidden) .power-card{animation:awakeningIn .45s cubic-bezier(.2,.8,.2,1)}.power-modal[data-rarity="epic"]{background:radial-gradient(circle,#7b3cb733,#020611dd 65%)}.power-modal[data-rarity="legendary"]{background:radial-gradient(circle,#d48b2438,#020611e8 65%)}.power-modal[data-rarity="cosmic"]{background:radial-gradient(circle,#7b4cff55,#01020aee 65%)}.evolution-event .event-card{border-color:#c467ff;background:linear-gradient(145deg,#22132d,#0c1320)}.story-modal.cinematic{background:linear-gradient(#000c,#020712f2)}.story-modal.cinematic .story-card{border-color:#65778a;background:#080d14}.story-modal.cinematic .story-portrait{transform:scale(1.08)}
+@keyframes majorIn{from{opacity:0;transform:translate(-50%,-15px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes identityIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}@keyframes awakeningIn{from{opacity:.2;transform:translateY(25px) scale(.96)}to{opacity:1;transform:none}}
+@media(max-width:520px){.deck-grid{grid-template-columns:1fr}.loadout-power{width:29px;height:29px;flex-basis:29px}.loadout-icons{gap:4px}.loadout-strip{padding:6px}.deck-card{max-height:calc(100dvh - 26px)}}
+/* v1.3 */.power-tags{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0}.power-tag{font-size:9px;font-weight:800;letter-spacing:.08em;padding:3px 6px;border:1px solid rgba(130,190,255,.25);border-radius:999px;color:#9fcfff}.power-preview{display:block;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08)}.tradeoff b{color:#ff8fa6}.power-choice{min-height:142px}.power-choice p{line-height:1.35}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -532,7 +538,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.3</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.4</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -678,6 +684,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
           <button class="mini-stat-btn info-tap resistance-stat" id="resistInfoBtn" type="button">RES <b id="resistStat">0%</b></button>
         </div>
       </section>
+      <button id="loadoutStrip" class="loadout-strip" type="button" aria-label="Open Power Deck"><span class="loadout-title"><small>YOUR BUILD</small><b id="loadoutIdentity">EMERGING</b></span><span id="loadoutIcons" class="loadout-icons"><i class="loadout-empty">No powers yet</i></span><span id="loadoutMore" class="loadout-more">DECK</span></button>
       <section class="flow-strip" aria-label="Combat flow">
         <button id="finisherBtn" class="active-btn finisher-wide" type="button" disabled><strong>FINISH</strong><small id="finisherLabel">ELITES / BOSSES</small></button>
         <div class="auto-status" aria-label="Automatic combat systems">
@@ -762,6 +769,10 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <div class="power-actions"><button id="gamblePowerBtn" class="close-btn subtle gamble-btn" type="button">Risk Mutation</button><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button></div>
       </div>
     </div>
+
+    <div id="powerDeckModal" class="overlay deck-modal hidden" role="dialog" aria-modal="true" aria-label="Power Deck"><div class="deck-card"><div class="deck-head"><div><small>POWER DECK</small><h2 id="deckIdentity">Emerging Hero</h2><p id="deckSummary">Your build is still forming.</p></div><button id="closePowerDeckBtn" class="icon-btn" type="button">X</button></div><div id="deckSynergy" class="deck-synergy"></div><div id="deckGrid" class="deck-grid"></div></div></div>
+    <div id="majorBanner" class="major-banner hidden" aria-live="assertive"><small id="majorBannerType">DISCOVERY</small><strong id="majorBannerTitle">Artifact acquired</strong><span id="majorBannerText"></span></div>
+    <div id="identityReveal" class="identity-reveal hidden" aria-live="assertive"><small>IDENTITY FORMED</small><strong id="identityRevealName">UNKNOWN</strong><span id="identityRevealPassive"></span></div>
 
     <div id="storyModal" class="overlay story-modal hidden" role="dialog" aria-modal="true" aria-label="Story choice">
       <div class="story-card">
@@ -1345,10 +1356,11 @@ function identityProfile(){
 }
 function identityTitle(){return identityProfile().name}
 function identityPassive(){return identityProfile().passive}
+function showIdentityReveal(profile){$('identityRevealName').textContent=profile.name;$('identityRevealPassive').textContent=profile.passive||'A new combat identity has formed.';$('identityReveal').classList.remove('hidden');clearTimeout($('identityReveal')._to);$('identityReveal')._to=setTimeout(()=>$('identityReveal').classList.add('hidden'),4200)}
 function checkIdentityAwakening(){
   if(s.identityAwakened||s.powers.length<5)return;
   const profile=identityProfile();profile.apply();s.identityAwakened=profile.name;
-  toast('IDENTITY AWAKENED: '+profile.name);scheduleSave()
+  showIdentityReveal(profile);scheduleSave()
 }
 function locationFor(stage){return PF_LOCATIONS.find(x=>stage>=x.min&&stage<=x.max)||PF_LOCATIONS[PF_LOCATIONS.length-1]}
 function reputationTier(){const r=(meta.reputation||0)+(s.alignment||0)*3;if(r>=180)return{id:'legend',name:'LIVING LEGEND',bonus:1.14};if(r>=80)return{id:'guardian',name:'CITY GUARDIAN',bonus:1.08};if(r>=25)return{id:'protector',name:'PROTECTOR',bonus:1.04};if(r<=-120)return{id:'dread',name:'PUBLIC MENACE',bonus:1.12};if(r<=-40)return{id:'vigilante',name:'FEARED VIGILANTE',bonus:1.07};return{id:'unknown',name:'UNKNOWN POWER',bonus:1}}
@@ -1396,10 +1408,10 @@ function maybePowerEvolution(){
   if(!candidates.length)return;
   const powerId=candidates[Math.floor(Math.random()*candidates.length)],base=byId(powerId),opts=PF_EVOLUTIONS[powerId];
   s.lastEvolutionStage=s.stage;storyPaused=true;clearCombatTimers();
-  $('eventTitle').textContent=(base?.name||'Power')+' EVOLUTION';
-  $('eventText').textContent='This power has been used enough to branch into a new form. This choice changes how it behaves for the rest of the run.';
+  $('eventModal').classList.add('evolution-event');$('eventTitle').textContent=(base?.name||'Power')+' // EVOLUTION';
+  $('eventText').textContent='MUTATION THRESHOLD REACHED. Choose what this power becomes. The change is permanent for this run.';
   $('eventOptions').innerHTML='';
-  for(const evo of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+evo.name+'</strong><small>'+evo.desc+'</small>';b.addEventListener('click',()=>{s.powerEvolutions[powerId]=evo.id;evo.apply();$('eventModal').classList.add('hidden');storyPaused=false;startCombatTimers();toast('EVOLVED: '+evo.name);renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
+  for(const evo of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+evo.name+'</strong><small>'+evo.desc+'</small>';b.addEventListener('click',()=>{s.powerEvolutions[powerId]=evo.id;evo.apply();$('eventModal').classList.add('hidden');$('eventModal').classList.remove('evolution-event');storyPaused=false;startCombatTimers();showMajorBanner('POWER EVOLVED',evo.name,evo.desc,3200);renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
   $('eventModal').classList.remove('hidden');
 }
 function identityDamage(damage,manual){
@@ -1511,7 +1523,8 @@ const PF_ARTIFACTS=[
 {id:'living_ember',name:'Living Ember',desc:'+18% damage, +1.5% regen/sec',apply:()=>{s.damageMult*=1.18;s.regen+=.015;s.visual.push('fire')}},
 {id:'glass_reactor',name:'Glass Reactor',desc:'+65% damage, -30% max HP',apply:()=>{s.damageMult*=1.65;s.maxHp*=.70;s.hp=Math.min(s.hp,s.maxHp)}}
 ];
-function grantArtifact(){const pool=PF_ARTIFACTS.filter(a=>!s.artifacts.includes(a.id));const a=(pool.length?pool:PF_ARTIFACTS)[Math.floor(Math.random()*(pool.length||PF_ARTIFACTS.length))];if(a&&!s.artifacts.includes(a.id)){s.artifacts.push(a.id);a.apply();toast('ARTIFACT: '+a.name);scheduleSave()}}
+function showMajorBanner(type,title,text='',ms=2600){const el=$('majorBanner');el.className='major-banner '+String(type||'discovery').toLowerCase();$('majorBannerType').textContent=type;$('majorBannerTitle').textContent=title;$('majorBannerText').textContent=text;el.classList.remove('hidden');clearTimeout(el._to);el._to=setTimeout(()=>el.classList.add('hidden'),ms)}
+function grantArtifact(){const pool=PF_ARTIFACTS.filter(a=>!s.artifacts.includes(a.id));const a=(pool.length?pool:PF_ARTIFACTS)[Math.floor(Math.random()*(pool.length||PF_ARTIFACTS.length))];if(a&&!s.artifacts.includes(a.id)){s.artifacts.push(a.id);a.apply();showMajorBanner('ARTIFACT ACQUIRED',a.name,a.desc,3000);scheduleSave()}}
 function modifierCoinMult(){return s.modifier==='bounty_hunter'?1.35:s.modifier==='fortified'?.85:1}
 function applyModifier(id){if(s.modifier)return;s.modifier=id;if(id==='adrenaline'){s.attackMs*=.76;s.incomingMult*=1.22;updateAttackTimer()}if(id==='fortified'){s.maxHp*=1.4;s.hp=s.maxHp}$('modifierModal').classList.add('hidden');toast('RUN MODIFIER: '+id.replace('_',' ').toUpperCase());renderAll();scheduleSave()}
 function showModifierModal(){if(s.modifier||storyPaused||s.stage>2)return;const opts=[['bounty_hunter','Bounty Hunter','+35% coins. Elites gain +20% health.'],['adrenaline','Adrenaline','Attack 24% faster. Take 22% more damage.'],['fortified','Fortified','+40% max HP. Earn 15% fewer coins.']];$('modifierOptions').innerHTML='';for(const [id,name,desc] of opts){const b=document.createElement('button');b.className='event-choice';b.type='button';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>applyModifier(id));$('modifierOptions').appendChild(b)}$('modifierModal').classList.remove('hidden')}
@@ -1984,7 +1997,7 @@ function showPowerModal(){
   if(!item||choiceLocked){updatePowerAlert();return}
   powerQueue=pendingPowerRewards();
   powerDecisionPaused=true;powerModalVisible=true;
-  $('powerModal').classList.remove('hidden');
+  $('powerModal').dataset.rarity=(activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common'));$('powerModal').classList.remove('hidden');
   if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
   activePowerChoices=item.options.map(byId).filter(Boolean);
   renderPowerChoices(item);
@@ -2085,7 +2098,7 @@ function maybeStory(stage,force){
   const storyRunId=s.runId;storyPaused=true; clearCombatTimers();
   $('storySpeaker').textContent=scene.speaker;$('storyPortrait').textContent=scene.portrait;$('storyText').textContent=reactiveStoryText(scene.text);
   $('storyChoices').innerHTML=''; scene.choices.forEach(ch=>{const b=document.createElement('button');b.className='story-choice';b.type='button';b.innerHTML=`${escapeHtml(ch.text)}<small>${escapeHtml(ch.sub||'')}</small>`;b.addEventListener('click',()=>{if(!storyPaused||s.runId!==storyRunId)return;if(!meta.seenStories.includes(scene.id))meta.seenStories.push(scene.id);meta.storyFlags.push(ch.flag);applyEffect(s,ch.effect);$('storyModal').classList.add('hidden');storyPaused=false;startCombatTimers();renderAll();scheduleSave();if(scene.id==='awakening')setTimeout(showModifierModal,120)});$('storyChoices').appendChild(b)});
-  $('storyModal').classList.remove('hidden');
+  $('storyModal').classList.add('cinematic');$('storyModal').classList.remove('hidden');
 }
 function reactiveStoryText(base){
   const r=currentResonance(); if(s.powers.length>=3&&!r.name.startsWith('Emerging'))return base+` “And that ${r.name} pattern you’re developing? It’s getting harder to ignore.”`;
@@ -2197,7 +2210,7 @@ function renderHUD(force=false){
   const next=nextMilestone(s.stage+1);$('nextMilestoneIcon').textContent=next.icon;$('nextMilestoneText').textContent=`${next.type==='boss'?'Wall Boss':'Power'} at ${next.stage} â€¢ ${Math.max(0,next.stage-s.stage)} to go`;
   $('enemyName').textContent=s.enemy?.name||'Enemy';
   $('enemyHpLabel').textContent=s.enemy?.wall?'WALL BOSS':s.enemy?.nemesis?'NEMESIS':s.enemy?.elite?'ELITE CRIMINAL':'CRIMINAL';
-  $('bossBanner').classList.toggle('hidden',!s.enemy?.wall);
+  $('bossBanner').classList.toggle('hidden',!s.enemy?.wall);if(s.enemy?.wall&&$('bossBanner').dataset.stage!==String(s.stage)){$('bossBanner').dataset.stage=String(s.stage);showMajorBanner('OPERATION ACTIVE',s.enemy.name||'WALL BOSS','Major threat engaged. Your build is being tested.',2600)}
   $('eliteBanner').classList.toggle('hidden',!s.enemy?.elite||s.enemy?.wall);
   const slot=((s.stage-1)%10)+1;
   const patrolGoal=s.stage<25?2:s.stage<100?3:4;$('encounterChip').textContent=s.enemy?.wall?'BOSS OPERATION':s.enemy?.nemesis?'PERSONAL NEMESIS':s.enemy?.elite?'ELITE THREAT':`PATROL ${Math.min(patrolGoal,(s.patrolXP||0)+1)} / ${patrolGoal}`;
@@ -2236,6 +2249,7 @@ function renderHUD(force=false){
   $('rivalBanner').classList.toggle('hidden',!s.enemy?.rival);
   $('ultimateLabel').textContent=Math.floor(s.ultimateCharge||0)+'%';
   $('identityBadge').textContent=(s.identityAwakened||identityTitle()).toUpperCase();
+  renderLoadout();
   renderEnvironment();
   updatePowerAlert(); applyHeroVisuals();
 }
@@ -2306,9 +2320,16 @@ function powerPreview(power){
   return Object.keys(before).filter(k=>before[k]!==after[k]).slice(0,3).map(k=>k+' '+before[k]+' → '+after[k]).join(' · ');
 }
 
+function powerTone(p){const t=new Set(p?.tags||[]);if(t.has('fire'))return'fire';if(t.has('regen')||t.has('vitality'))return'bio';if(t.has('speed')||t.has('lightning'))return'speed';if(t.has('tech'))return'tech';if(t.has('psychic')||t.has('gravity')||t.has('phase'))return'psi';if(t.has('dark')||t.has('rage'))return'dark';if(t.has('cosmic'))return'cosmic';return'strength'}
+function renderLoadout(){const icons=$('loadoutIcons'),powers=s.powers.map(byId).filter(Boolean);$('loadoutIdentity').textContent=(s.identityAwakened||identityTitle()).toUpperCase();icons.innerHTML=powers.length?powers.slice(-6).map(p=>'<span class="loadout-power '+powerTone(p)+' '+p.rarity+'" title="'+escapeHtml(p.name)+'"><b>'+escapeHtml(p.icon)+'</b><i></i></span>').join(''):'<i class="loadout-empty">No powers yet</i>';$('loadoutMore').textContent=powers.length>6?'+'+(powers.length-6):'DECK'}
+function buildSynergyText(){const r=currentResonance();if(s.combos.length)return 'ACTIVE SYNERGY · '+r.name+' · '+(r.bonus||'Build interaction active');const fam=dominantFamily();return s.powers.length?'DOMINANT FAMILY · '+fam.toUpperCase()+' · '+r.name:'Choose powers to begin forming a build.'}
+function renderPowerDeck(){const r=currentResonance(),grid=$('deckGrid');$('deckIdentity').textContent=s.identityAwakened||r.name;$('deckSummary').textContent=r.nod||'Your power set is still forming.';$('deckSynergy').textContent=buildSynergyText();grid.innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id),e=s.powerEvolutions?.[id]&&Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===s.powerEvolutions[id]);return p?'<button type="button" class="deck-power '+powerTone(p)+' '+p.rarity+'" data-deck-power="'+p.id+'"><span class="deck-icon">'+escapeHtml(p.icon)+'</span><span><strong>'+escapeHtml(e?.name||p.name)+'</strong><small>'+escapeHtml(e?'EVOLVED FROM '+p.name:p.rarity.toUpperCase()+' · '+(p.tags||[]).slice(0,2).join(' / ').toUpperCase())+'</small><em>'+escapeHtml(e?.desc||p.desc)+'</em>'+(p.tradeoff?'<i>RISK · '+escapeHtml(p.tradeoff)+'</i>':'')+'</span></button>':''}).join(''):'<div class="deck-empty">Your first Power Awakening will appear here.</div>';grid.querySelectorAll('[data-deck-power]').forEach(b=>b.addEventListener('click',()=>showPowerInfo(b.dataset.deckPower)))}
+function openPowerDeck(){renderPowerDeck();$('powerDeckModal').classList.remove('hidden')}
+function closePowerDeck(){$('powerDeckModal').classList.add('hidden')}
+
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.3</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.4</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2462,6 +2483,7 @@ function restore(){
   return true
 }
 function bind(){
+  $('loadoutStrip').addEventListener('click',openPowerDeck);$('closePowerDeckBtn').addEventListener('click',closePowerDeck);$('powerDeckModal').addEventListener('click',e=>{if(e.target===$('powerDeckModal'))closePowerDeck()});
   $('resetRunBtn').addEventListener('click',()=>requestReset(false));$('fullResetBtn').addEventListener('click',()=>requestReset(true));
   $('upgradeGrid').addEventListener('click',e=>{const b=e.target.closest('[data-upgrade-id]');if(b&&!b.disabled)buyUpgrade(b.dataset.upgradeId,b)});
   $('finisherBtn').addEventListener('click',useFinisher);$('gamblePowerBtn').addEventListener('click',gamblePower);
