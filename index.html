@@ -971,6 +971,14 @@ window.PF_CONFIG = {
     p('power_theft','Power Theft','THF','cosmic','1% chance after defeating a powered enemy to steal one of its powers for this run.',s=>{s.powerTheft=true},['power','mutation']),
     p('overheal_barrier','Overheal Barrier','OVR','epic','Excess healing becomes a temporary shield up to 35% of Max HP.',s=>{s.overhealBarrier=.35},['regen','durability']),
     p('kinetic_release','Kinetic Release','KIN','epic','Blocked damage is stored; critical hits release the stored damage.',s=>{s.kineticStorage=true},['durability','energy','combat']),
+    p('hemomancy','Hemomancy','HEM','legendary','Attacks gain ×3 damage but consume 0.35% current HP.',s=>{s.hemomancy=true},['dark','rage','energy'],'Attacking consumes health'),
+    p('negative_mass','Negative Mass','NEG','legendary','Dodge +35%. Every successful dodge accelerates this fight.',s=>{s.negativeMass=true;s.dodge+=.35},['gravity','speed','phase']),
+    p('probability_collapse','Probability Collapse','777','cosmic','Excess critical chance converts into additional critical damage.',s=>{s.probabilityCollapse=true;s.crit+=.28},['reality','psychic','combat']),
+    p('conservation_violence','Conservation of Violence','CV','cosmic','Blocked damage becomes stored offensive energy.',s=>{s.conservationViolence=true},['durability','energy','cosmic']),
+    p('event_horizon','Event Horizon','EVT','cosmic','Enemy attacks slow as their health falls.',s=>{s.eventHorizon=true;s.visual.add('cosmic')},['gravity','cosmic','time']),
+    p('apex_metabolism','Apex Metabolism','APX','legendary','Regeneration also increases attack speed.',s=>{s.regenEngine=true},['regen','speed','mutation']),
+    p('pain_dividend','Pain Dividend','PDV','epic','Every 10% Max HP lost adds +12% damage until the fight ends.',s=>{s.painDividend=true},['rage','vitality','combat']),
+    p('immortal_paradox','Immortal Paradox','PAR','cosmic','Gain two revives. Each revive doubles damage for the rest of the run.',s=>{s.revives+=2;s.immortalParadox=true},['regen','reality','cosmic']),
     p('titanic_physique','Titanic Physique','HP4','rare','MAX HP ×4. Healing per second stays roughly where it was.',s=>{s.maxHp*=4;s.hp*=4;s.regenEfficiency=(s.regenEfficiency??1)*.25},['durability','vitality'],'Your health pool quadruples without quadrupling healing throughput'),
     p('vital_engine','Vital Engine','VIT','epic','MAX HP ×2 while regeneration scales with the larger pool.',s=>{s.maxHp*=2;s.hp*=2},['vitality','regen'],'Health and healing throughput grow together'),
     p('adrenal_metabolism','Adrenal Metabolism','ADR','epic','Current HP becomes Agility: +0.1 AGI per HP.',s=>{s.hpAgility=.1},['vitality','speed'],'Losing health strips bonus Agility'),
@@ -1720,16 +1728,16 @@ function freshRun(){
 }
 function dynamicAgility(target=s){return target.attributes.agility+(target.hpAgility||0)*target.hp+(target.missingHpAgility||0)*Math.max(0,target.maxHp-target.hp)}
 function totalDamage(){
-  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;
+  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
   if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
   return clamp(d,0,1e150);
 }
-function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
+function effectiveEnemyAttackMs(){let ms=(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1);if(s.eventHorizon&&s.enemyMaxHp>0)ms*=1+Math.max(0,1-s.enemyHp/s.enemyMaxHp)*1.6;return Math.max(380,ms)}
 
 function enemyPowerCount(stage,wall=false){if(stage<100)return wall?2:0;return Math.min(20,Math.floor(stage/100)+(wall?3:0))}
-function assignEnemyPowers(){if(!s.enemy)return;const count=enemyPowerCount(s.stage,!!s.enemy.wall),eligible=PF_POWERS.filter(p=>p.id!=='power_constant'),picked=[],used=new Set();while(picked.length<count&&used.size<eligible.length){const p=eligible[Math.floor(Math.random()*eligible.length)];if(!used.has(p.id)){used.add(p.id);picked.push(p.id)}}if(s.enemy.wall&&s.stage>=1200&&!picked.includes('power_theft')){if(picked.length>=count)picked[picked.length-1]='power_theft';else picked.push('power_theft')}s.enemy.powers=picked}
+function assignEnemyPowers(){if(!s.enemy)return;const count=enemyPowerCount(s.stage,!!s.enemy.wall),eligible=PF_POWERS.filter(p=>p.id!=='power_constant'),picked=[],used=new Set();while(picked.length<count&&used.size<eligible.length){const p=eligible[Math.floor(Math.random()*eligible.length)];if(!used.has(p.id)){used.add(p.id);picked.push(p.id)}}if(s.enemy.wall&&s.stage>=1200&&!picked.includes('power_theft')){if(picked.length>=count)picked[picked.length-1]='power_theft';else picked.push('power_theft')}s.enemy.powers=picked;for(const id of picked){const p=byId(id),tags=new Set(p?.tags||[]);if(tags.has('strength')||tags.has('rage'))s.enemy.damage*=1.08;if(tags.has('durability')||tags.has('vitality'))s.enemy.maxHp*=1.09;if(tags.has('speed')||tags.has('time'))s.enemy.attackMs*=.96;if(tags.has('psychic')||tags.has('vision'))s.enemy.attributes.perception*=1.07;if(tags.has('phase')||tags.has('reflex'))s.enemy.attributes.agility*=1.07;if(tags.has('cosmic')){s.enemy.maxHp*=1.04;s.enemy.damage*=1.04}}}
 function enemyHasPower(id){return !!s.enemy?.powers?.includes(id)}
 function stealablePlayerPowers(){const protectedSet=new Set((meta.permanentPowers||[]).slice(0,meta.soulTree.power_memory||0));return s.powers.filter(id=>!protectedSet.has(id))}
 function maybeEnemyStealPower(){if(!enemyHasPower('power_theft')||s.powerConstant||Math.random()>=.01)return;const pool=stealablePlayerPowers();if(!pool.length)return;const id=pool[Math.floor(Math.random()*pool.length)];s.powers=s.powers.filter(x=>x!==id);toast('POWER STOLEN: '+(byId(id)?.name||id).toUpperCase());identityCue('POWER LOST')}
@@ -1751,12 +1759,12 @@ function playerAttack(manual=false,echo=false){
   if(manual&&!echo){const field=$('battlefield');field.classList.remove('burst-flash');void field.offsetWidth;field.classList.add('burst-flash');setTimeout(()=>field.classList.remove('burst-flash'),300)}
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,effectivePlayerAttackMs()*.65)))return;if(!echo)lastAttackMs=now;
   if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;if(now-lastCombatFx>150)floatText('MISS',false);renderHUD();return}
-  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);
+  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);if(s.hemomancy){damage*=3;s.hp=Math.max(1,s.hp-s.hp*.0035)}
   if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
   if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}if(s.fight.blockCharge){damage+=s.fight.blockCharge;s.fight.blockCharge=0;identityCue('CAPACITOR RELEASE')}
   damage=identityDamage(damage,manual);
-  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6;if(s.critVelocity)s.fight.critHasteUntil=Date.now()+1800}
+  const cc=critChance(),crit=Math.random()<cc;if(crit){damage*=critEffect()*(s.probabilityCollapse?1+Math.max(0,(s.crit||0)-.9)*4:1);s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6;if(s.critVelocity)s.fight.critHasteUntil=Date.now()+1800}
   else chargeUltimate(manual?3:1.5);
   s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
@@ -1783,10 +1791,10 @@ function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
-  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(s.negativeMass)s.attackMs=Math.max(120,s.attackMs*.985);if(now-lastCombatFx>160)floatText('MISS',true);return}
   let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;if(enemyHasPower('super_strength'))rawDmg*=2;if(enemyHasPower('hyper_speed'))rawDmg*=1.25;if(enemyHasPower('berserker')&&s.enemyHp/s.enemyMaxHp<.4)rawDmg*=2.5;
   const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
-  let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85)}
+  let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85);if(s.conservationViolence)s.fight.blockCharge=Math.min(totalDamage()*12,(s.fight.blockCharge||0)+prevented)}
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   if(s.enemy?.nemesis&&s.enemy.nemesisAdaptation===dominantFamily())dmg*=1.22;
@@ -1806,7 +1814,7 @@ function enemyAttack(){
   if(blocked)floatText('BLOCK '+Math.round(blockPower()*100)+'%',true);
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
-    else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
+    else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;if(s.immortalParadox){s.damageMult*=2;toast('IMMORTAL PARADOX · DAMAGE DOUBLED')}else toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
     else{s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?7:3));s.coins=Math.floor(s.coins*.9);toast('KNOCKED BACK '+(old-s.stage)+' STAGES');spawnEnemy();saveNow()}
   }
   renderHUD();
@@ -2500,7 +2508,7 @@ function showComboInfo(id){
 }
 function showEnemyInfo(){
   const e=s.enemy;if(!e)return;
-  openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType]]);
+  openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType],['Powers',e.powers?.length?e.powers.map(id=>byId(id)?.name||id).join(', '):'None']]);
 }
 function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension()}
 function openUpgrades(){
