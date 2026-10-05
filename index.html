@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.1</title>
+  <title>Powerfall: Ascension Prototype v1.2</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -524,7 +524,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-</style>
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -532,7 +532,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.1</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.2</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -723,8 +723,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       </section>
       <section class="card">
         <div class="section-title"><div><h2>Ascension Path</h2><p id="pathHint">Reach Stage 100 or ascend twice to choose a permanent archetype.</p></div></div>
-        <div id="pathGrid" class="path-grid"></div>
-      </section>
+        <div id="pathGrid" class="path-grid"></div></section><section class="card"><div class="section-title"><div><h2>Legacy</h2><p id="legacyHint">Ascend three times to forge how the world remembers you.</p></div></div><div id="legacyGrid" class="path-grid"></div></section>
       <button id="ascendNowBtn" class="ascend-button" type="button">ASCEND FOR <span id="ascendButtonSouls">0</span> SOULS</button>
       <p class="ascend-note">Ascension is voluntary. Death does not award souls.</p>
       <section class="card reset-section" aria-labelledby="resetTitle">
@@ -1068,7 +1067,7 @@ const byId=id=>PF_POWERS.find(p=>p.id===id);
 
 function defaultMeta(){return {
   souls:0,bestStage:1,bossesBeaten:0,totalPowersFound:0,ascensions:0,runNumber:1,rivalLevel:0,rivalAdaptation:'',ascensionPath:'',
-  nemesis:null,nemesisVictories:0,nemesisEscapes:0,
+  nemesis:null,nemesisVictories:0,nemesisEscapes:0,reputation:0,cityState:'UNKNOWN',legacyMarks:0,legacyChoice:'',
   soulTree:Object.fromEntries(PF_CONFIG.soulTree.map(node=>[node.id,0])),
   discoveries:[],storyFlags:[],seenStories:[]
 }}
@@ -1102,7 +1101,7 @@ function defaultRun(){
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
-    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,nemesisSeenThisRun:false,lastCounterStage:0,
+    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,nemesisSeenThisRun:false,lastCounterStage:0,cityRepEarned:0,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -1341,6 +1340,11 @@ function checkIdentityAwakening(){
   toast('IDENTITY AWAKENED: '+profile.name);scheduleSave()
 }
 function locationFor(stage){return PF_LOCATIONS.find(x=>stage>=x.min&&stage<=x.max)||PF_LOCATIONS[PF_LOCATIONS.length-1]}
+function reputationTier(){const r=(meta.reputation||0)+(s.alignment||0)*3;if(r>=180)return{id:'legend',name:'LIVING LEGEND',bonus:1.14};if(r>=80)return{id:'guardian',name:'CITY GUARDIAN',bonus:1.08};if(r>=25)return{id:'protector',name:'PROTECTOR',bonus:1.04};if(r<=-120)return{id:'dread',name:'PUBLIC MENACE',bonus:1.12};if(r<=-40)return{id:'vigilante',name:'FEARED VIGILANTE',bonus:1.07};return{id:'unknown',name:'UNKNOWN POWER',bonus:1}}
+function updateCityState(){const tier=reputationTier();meta.cityState=tier.name;return tier} function cityRewardMult(){return updateCityState().bonus}
+function earnReputation(amount,reason=''){const before=reputationTier().id;meta.reputation=clamp((meta.reputation||0)+amount,-500,500);s.cityRepEarned=(s.cityRepEarned||0)+amount;const after=updateCityState();if(before!==after.id)toast('CITY STATUS: '+after.name);if(reason&&Math.abs(amount)>=5)identityCue((amount>0?'+':'')+amount+' REP')}
+function worldEra(){if(s.stage>=751)return'origin';if(s.stage>=501)return'cosmic';if(s.stage>=301)return'invasion';if(s.stage>=201)return'crisis';if(s.stage>=101)return'global';return'city'}
+const PF_LEGACIES=[{id:'symbol',name:'Symbol',desc:'Future runs gain +10% damage.',apply:()=>{s.damageMult*=1.10}},{id:'sentinel',name:'Sentinel',desc:'Future runs gain +8% resistance and +10% HP.',apply:()=>{s.armor+=.08;s.maxHp*=1.10;s.hp*=1.10}},{id:'hunter',name:'Hunter',desc:'Future runs gain +4% crit and +8% rewards.',apply:()=>{s.crit+=.04;s.storyCoinBonus*=1.08}},{id:'anomaly',name:'Anomaly',desc:'Future runs gain +10% damage and +4% dodge.',apply:()=>{s.damageMult*=1.10;s.dodge+=.04}}];function applyLegacy(){const x=PF_LEGACIES.find(x=>x.id===meta.legacyChoice);if(x)x.apply()}
 const PF_ASCENSION_PATHS=[
   {id:'titan',name:'Titan',desc:'STR +25% / VIT +25%',apply:()=>{PF_ATTRIBUTE(s,'strength',1.25);PF_ATTRIBUTE(s,'vitality',1.25)}},
   {id:'speedster',name:'Speedster',desc:'AGI +35% / attack +8%',apply:()=>{PF_ATTRIBUTE(s,'agility',1.35);s.attackMs*=.92}},
@@ -1362,14 +1366,14 @@ function setAscensionPath(id){
 function renderEnvironment(){
   const field=$('battlefield'),loc=locationFor(s.stage);
   for(const x of PF_LOCATIONS)field.classList.remove(x.cls,x.weather);
-  field.classList.remove('weather-rain','weather-embers','weather-storm','power-fire-world','power-lightning-world','boss-phase-2','boss-phase-3');
-  field.classList.add(loc.cls);if(loc.weather)field.classList.add(loc.weather);
+  field.classList.remove('weather-rain','weather-embers','weather-storm','power-fire-world','power-lightning-world','boss-phase-2','boss-phase-3','era-city','era-global','era-crisis','era-invasion','era-cosmic','era-origin','rep-hero','rep-feared');
+  field.classList.add(loc.cls,'era-'+worldEra());if(loc.weather)field.classList.add(loc.weather);const rt=reputationTier();if(['protector','guardian','legend'].includes(rt.id))field.classList.add('rep-hero');if(['vigilante','dread'].includes(rt.id))field.classList.add('rep-feared');
   const tags=powerTags();
   if(tags.has('fire')&&loc.cls!=='loc-orbit'&&loc.cls!=='loc-void')field.classList.add('weather-embers');
   if(tags.has('lightning'))field.classList.add('weather-storm');
   if(s.enemy?.wall&&s.fight.bossPhase>=2)field.classList.add('boss-phase-2');
   if(s.enemy?.wall&&s.fight.bossPhase>=3)field.classList.add('boss-phase-3');
-  $('locationChip').textContent=loc.name;
+  $('locationChip').textContent=loc.name+' • '+reputationTier().name;
 }
 function evolutionLabel(){
   const vals=Object.values(s.powerEvolutions||{});
@@ -1561,7 +1565,7 @@ function showRandomEncounter(stage){
       ['HUNT THEIR ATTACKER','Next elite pays double',()=>{s.nextEliteDouble=1}]]]
   ];
   const [title,text,opts]=events[type];$('eventTitle').textContent=title;$('eventText').textContent=text;$('eventOptions').innerHTML='';
-  for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{fn();$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
+  for(const [name,desc,fn] of opts){const b=document.createElement('button');b.type='button';b.className='event-choice';b.innerHTML='<strong>'+name+'</strong><small>'+desc+'</small>';b.addEventListener('click',()=>{const before=s.alignment||0;fn();const delta=(s.alignment||0)-before;if(delta)earnReputation(delta*4,'choice');$('eventModal').classList.add('hidden');renderAll();scheduleSave()},{once:true});$('eventOptions').appendChild(b)}
   $('eventModal').classList.remove('hidden')
 }
 
@@ -1618,7 +1622,7 @@ function checkChallenge(){if(!s.challenge)return;if(Date.now()>s.challenge.deadl
 function freshRun(){
   clearTimeout(choiceTimer);choiceLocked=false;
   $('powerModal').classList.add('hidden');powerModalVisible=false;
-  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();applyLegacy();
   powerQueue=[];activePowerChoices=[];storyPaused=false;
   repairPowerState('fresh-run',[]);
   spawnEnemy();maybeStory(1,true);renderAll();scheduleSave();
@@ -1712,13 +1716,13 @@ function enemyDefeated(){
   const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;
   s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);if(s.combatDarwinism&&s.kills%30===0){s.damageMult*=1.03;toast('COMBAT DARWINISM +3% DAMAGE')}
   if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,s.apexGenome?1.45:1.3);toast('EVOLUTION: '+key.toUpperCase()+(s.apexGenome?' +45%':' +30%'))}
-  let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult();
+  let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult()*cityRewardMult();
   if(s.enemy.elite)reward*=3.2;if(s.nextEliteDouble&&s.enemy.elite){reward*=2;s.nextEliteDouble=0}if(s.fight.finisher)reward*=1.25;if(wasWall)reward*=10;
   const paid=Math.floor(reward);s.coins=clamp(s.coins+paid,0,1e150);showCoinBurst(paid);
-  if(s.enemy.elite){s.elitesBeaten++;if(Math.random()<.18)grantArtifact();checkBounties()}
+  if(s.enemy.elite){s.elitesBeaten++;earnReputation(s.enemy.nemesis?10:3,'elite');if(Math.random()<.18)grantArtifact();checkBounties()}
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
   if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);reward*=2.5;grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
-  if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
+  if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
   s.stage=Math.min(10000,s.stage+1);s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
   checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();
 }
@@ -2107,9 +2111,9 @@ function doAscend(){
   const gain=ascensionGain();if(gain<1)return;
   ascensionLocked=true;$('ascendNowBtn').disabled=true;
   const previous=snapshot();
-  s.consumed=true;meta.souls=clamp(meta.souls+gain,0,1e150);meta.ascensions++;meta.runNumber++;
+  s.consumed=true;meta.souls=clamp(meta.souls+gain,0,1e150);meta.ascensions++;meta.runNumber++;if(meta.ascensions>=3)meta.legacyMarks=(meta.legacyMarks||0)+1;
   // A single localStorage replacement commits both currency and the new, empty run.
-  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();powerQueue=[];
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();applyLegacy();powerQueue=[];
   clearTimeout(timers.save);
   if(!PF_SAVE.write(snapshot())){Object.assign(meta,previous.meta);s=previous.run;powerQueue=previous.powerQueue;ascensionLocked=false;renderAll();toast('ASCENSION NOT SAVED — please free browser storage and retry');return}
   clearTimeout(choiceTimer);choiceLocked=false;activePowerChoices=[];hidePowerModal();storyPaused=false;
@@ -2134,7 +2138,7 @@ function requestReset(full){
 function resetGame(full){
   const previous=snapshot(),previousRun=s,previousQueue=powerQueue;
   if(full){for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,defaultMeta())}
-  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();
+  s=defaultRun();for(const key of Object.keys(s.attributes))PF_ATTRIBUTE(s,key,1+(meta.soulTree.foundation||0)*.3);applyAscensionPath();applyLegacy();
   powerQueue=[];s.enemy=enemyProfile(PF_ENEMIES.get(1),1);s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   // Replace the entire old save in one atomic write. Never delete first: a storage
   // failure must leave the player's original save and live session intact.
@@ -2290,7 +2294,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.2</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2316,6 +2320,7 @@ function renderAscension(){
   const pathGrid=$('pathGrid'),unlocked=ascensionPathUnlocked();pathGrid.innerHTML='';
   $('pathHint').textContent=unlocked?'Choose your permanent archetype. Changes apply from your next run.':'Reach Stage 100 or ascend twice to unlock.';
   for(const path of PF_ASCENSION_PATHS){const b=document.createElement('button');b.type='button';b.className='path-node'+(meta.ascensionPath===path.id?' active':'');b.disabled=!unlocked;b.innerHTML='<strong>'+escapeHtml(path.name)+'</strong><small>'+escapeHtml(path.desc)+'</small>';b.addEventListener('click',()=>setAscensionPath(path.id));pathGrid.appendChild(b)}
+  const lg=$('legacyGrid'),lu=meta.ascensions>=3||meta.bestStage>=300;lg.innerHTML='';$('legacyHint').textContent=lu?'Choose the permanent legend carried into future runs.':'Ascend three times or reach Stage 300 to unlock.';for(const x of PF_LEGACIES){const b=document.createElement('button');b.type='button';b.className='path-node'+(meta.legacyChoice===x.id?' active':'');b.disabled=!lu;b.innerHTML='<strong>'+escapeHtml(x.name)+'</strong><small>'+escapeHtml(x.desc)+'</small>';b.addEventListener('click',()=>{meta.legacyChoice=x.id;saveNow();renderAscension();toast('LEGACY FORGED: '+x.name.toUpperCase()+' — NEXT RUN')});lg.appendChild(b)}
 }
 function renderAll(){renderHUD();renderUpgrades();renderAscension()}
 
