@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.9</title>
+  <title>Powerfall: Ascension Prototype v1.0</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -500,6 +500,19 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 @keyframes pfComboSurge{50%{box-shadow:inset 0 0 75px rgba(88,216,255,.22),0 0 26px rgba(88,216,255,.14)}}
 .damage-number.crit{font-size:15px!important;text-shadow:0 0 12px rgba(255,215,98,.8)!important;transform:scale(1.12)}
 @media(max-width:420px){.mini-stat-btn{padding-left:3px!important;padding-right:3px!important;font-size:8px!important}.mini-stat-btn b{font-size:9px!important}}
+
+/* ================= POWERFALL v1.0: IDENTITY AWAKENING ================= */
+.hero.identity-storm{filter:drop-shadow(0 0 9px rgba(93,220,255,.9)) brightness(1.12)}
+.hero.identity-storm::after{box-shadow:0 0 18px #6fe5ff,0 0 38px rgba(88,216,255,.45)!important}
+.hero.identity-fire{filter:drop-shadow(0 0 12px rgba(255,105,54,.85)) saturate(1.35)}
+.hero.identity-titan{filter:drop-shadow(0 0 10px rgba(255,205,99,.65)) contrast(1.18);transform:scale(1.06)}
+.hero.identity-void{filter:drop-shadow(0 0 14px rgba(186,91,255,.9)) hue-rotate(22deg)}
+.hero.identity-blood{filter:drop-shadow(0 0 12px rgba(255,65,91,.75)) saturate(1.3)}
+.hero.identity-tech{filter:drop-shadow(0 0 11px rgba(82,255,218,.75))}
+.hero.identity-phase{filter:drop-shadow(7px 0 7px rgba(102,213,255,.55));opacity:.92}
+.hero.identity-gravity{filter:drop-shadow(0 0 15px rgba(161,91,255,.85))}
+.hero[class*="identity-"] .body,.hero[class*="identity-"] .head{box-shadow:0 0 10px currentColor}
+.power-card .mastery-tag{display:inline-flex;padding:2px 6px;border-radius:999px;background:rgba(185,129,255,.15);border:1px solid rgba(185,129,255,.28);font-size:8px}
 </style>
 </head>
 <body>
@@ -508,7 +521,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.9</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.0</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1077,7 +1090,7 @@ function defaultRun(){
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
-    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',pathApplied:false,
+    ultimateCharge:0,ultimateReadyAt:0,lastEventStage:0,lastEventAt:0,lastEvolutionStage:0,alignment:0,masteryBreak:0,identityAwakened:'',identityKey:'',identityStrikes:0,pathApplied:false,
     upgrades:{strength:0,agility:0,vitality:0,perception:0},
     enemy:null,enemyHp:0,enemyMaxHp:0,
     triggeredMilestones:[],bossRewards:[]
@@ -1246,6 +1259,22 @@ const PF_EVOLUTIONS={
   vampirism:[
     {id:'blood_lord',name:'Blood Lord',desc:'Lifesteal +12% and low-health damage rises sharply.',apply:()=>{s.lifesteal+=.12;s.berserk=true}},
     {id:'night_immortal',name:'Night Immortal',desc:'Gain a revive and stronger regeneration.',apply:()=>{s.revives++;s.regen+=.025}}
+  ],
+  adaptive_evolution:[
+    {id:'apex_genome',name:'Apex Genome',desc:'Boss victories evolve harder: +45% random attribute instead of +30%.',apply:()=>{s.apexGenome=true}},
+    {id:'combat_darwinism',name:'Combat Darwinism',desc:'Every 30 kills permanently adds +3% run damage.',apply:()=>{s.combatDarwinism=true}}
+  ],
+  kinetic_absorption:[
+    {id:'impact_engine',name:'Impact Engine',desc:'Blocked damage stores kinetic force for your next attacks.',apply:()=>{s.impactEngine=true}},
+    {id:'inertia_breaker',name:'Inertia Breaker',desc:'Burst consumes stored force for huge Break pressure.',apply:()=>{s.inertiaBreaker=true}}
+  ],
+  probability_warp:[
+    {id:'loaded_reality',name:'Loaded Reality',desc:'Misses stack crit chance twice as fast.',apply:()=>{s.loadedReality=true}},
+    {id:'impossible_luck',name:'Impossible Luck',desc:'Critical hits sometimes repeat themselves at 60% power.',apply:()=>{s.impossibleLuck=true}}
+  ],
+  energy_absorption:[
+    {id:'reactor_body',name:'Reactor Body',desc:'Absorbed elemental damage charges your Ultimate.',apply:()=>{s.reactorBody=true}},
+    {id:'overcharge_skin',name:'Overcharge Skin',desc:'After absorbing energy, gain a short damage surge.',apply:()=>{s.overchargeSkin=true}}
   ]
 };
 function hasPower(id){return s.powers.includes(id)}
@@ -1256,27 +1285,48 @@ function dominantFamily(){
   for(const id of s.powers){for(const tag of byId(id)?.tags||[]){if(tag in counts)counts[tag]++}}
   return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[1]?Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0]:'emerging';
 }
-function identityTitle(){
-  const tags=powerTags(),pairs=[
-    [['lightning','speed'],'STORMRUNNER'],[['fire','flight'],'SOLAR COMET'],[['strength','durability'],'IRON COLOSSUS'],
-    [['cosmic','psychic'],'VOID SOVEREIGN'],[['dark','regen'],'BLOOD REVENANT'],[['tech','energy'],'ARC ARCHITECT'],
-    [['phase','speed'],'GHOST VELOCITY'],[['strength','fire'],'BURNING COLOSSUS'],[['gravity','cosmic'],'EVENT HORIZON']
-  ];
-  for(const [needs,name] of pairs)if(needs.every(x=>tags.has(x)))return name;
-  const names={strength:'THE TITAN',speed:'THE BLUR',regen:'THE UNDYING',fire:'THE INFERNO',lightning:'THE TEMPEST',psychic:'THE MINDSTORM',gravity:'THE SINGULARITY',phase:'THE PHANTOM',cosmic:'THE ASCENDANT',tech:'THE MACHINE',ice:'THE WHITEOUT'};
-  return names[dominantFamily()]||'EMERGING HERO'
+const PF_IDENTITIES=[
+  {id:'stormrunner',name:'STORMRUNNER',needs:['lightning','speed'],passive:'Every 12-hit combo unleashes a free thunderstrike.',apply:()=>{s.identityKey='stormrunner';s.attackMs*=.94}},
+  {id:'solar_comet_identity',name:'SOLAR COMET',needs:['fire','flight'],passive:'Burst ignites the enemy and deals +60% damage.',apply:()=>{s.identityKey='solar_comet_identity';s.damageMult*=1.12}},
+  {id:'iron_colossus',name:'IRON COLOSSUS',needs:['strength','durability'],passive:'Blocks store force. Every fifth hit spends it in a crushing blow.',apply:()=>{s.identityKey='iron_colossus';s.armor+=.06}},
+  {id:'void_sovereign',name:'VOID SOVEREIGN',needs:['cosmic','psychic'],passive:'Critical hits add Break and every Ultimate freezes reality.',apply:()=>{s.identityKey='void_sovereign';s.crit+=.05}},
+  {id:'blood_revenant',name:'BLOOD REVENANT',needs:['dark','regen'],passive:'Below 30% HP, lifesteal and damage surge.',apply:()=>{s.identityKey='blood_revenant';s.lifesteal+=.05}},
+  {id:'arc_architect',name:'ARC ARCHITECT',needs:['tech','energy'],passive:'Automatic powers cycle faster and every 15th hit overcharges.',apply:()=>{s.identityKey='arc_architect';s.autoPowerRate=Math.min(s.autoPowerRate||1,.82)}},
+  {id:'ghost_velocity',name:'GHOST VELOCITY',needs:['phase','speed'],passive:'Automatic dodges charge a devastating phase counter.',apply:()=>{s.identityKey='ghost_velocity';s.dodge+=.05}},
+  {id:'burning_colossus',name:'BURNING COLOSSUS',needs:['strength','fire'],passive:'Seismic strikes spread your burn and hit harder.',apply:()=>{s.identityKey='burning_colossus';s.damageMult*=1.14}},
+  {id:'event_horizon_identity',name:'EVENT HORIZON',needs:['gravity','cosmic'],passive:'Burst creates enormous Break pressure and slows bosses.',apply:()=>{s.identityKey='event_horizon_identity';s.masteryBreak+=5}}
+];
+function identityProfile(){
+  const tags=powerTags();
+  const special=PF_IDENTITIES.find(x=>x.needs.every(t=>tags.has(t)));if(special)return special;
+  const family=dominantFamily();
+  const base={
+    strength:['the_titan','THE TITAN','Every fifth hit gains extra Break.'],
+    speed:['the_blur','THE BLUR','Long combos progressively amplify attack damage.'],
+    regen:['the_undying','THE UNDYING','Low health dramatically improves regeneration.'],
+    fire:['the_inferno','THE INFERNO','Burn grows stronger while a combo is active.'],
+    lightning:['the_tempest','THE TEMPEST','Arc strikes charge Ultimate faster.'],
+    psychic:['the_mindstorm','THE MINDSTORM','Critical hits tear through Break.'],
+    gravity:['the_singularity','THE SINGULARITY','Burst has extreme Break pressure.'],
+    phase:['the_phantom','THE PHANTOM','Dodges charge phase counters.'],
+    cosmic:['the_ascendant','THE ASCENDANT','Every tenth hit becomes a cosmic surge.'],
+    tech:['the_machine','THE MACHINE','Automatic power cooldowns recover faster.'],
+    ice:['the_whiteout','THE WHITEOUT','Frozen enemies take amplified damage.']
+  }[family]||['emerging','EMERGING HERO','Your identity is still forming.'];
+  return {id:base[0],name:base[1],needs:[family],passive:base[2],apply:()=>{
+    s.identityKey=base[0];
+    if(family==='strength')s.damageMult*=1.15;else if(family==='speed')s.attackMs*=.92;
+    else if(family==='regen'){s.maxHp*=1.12;s.hp*=1.12;s.regen+=.01}
+    else if(family==='psychic'||family==='gravity'){s.crit+=.07;s.damageMult*=1.08}
+    else if(family==='phase')s.dodge+=.08;else if(family==='tech')s.attackMs*=.95;else s.damageMult*=1.12
+  }}
 }
+function identityTitle(){return identityProfile().name}
+function identityPassive(){return identityProfile().passive}
 function checkIdentityAwakening(){
   if(s.identityAwakened||s.powers.length<5)return;
-  const family=dominantFamily(),title=identityTitle();
-  if(family==='strength')s.damageMult*=1.15;
-  else if(family==='speed')s.attackMs*=.92;
-  else if(family==='regen'){s.maxHp*=1.12;s.hp*=1.12;s.regen+=.01}
-  else if(family==='psychic'||family==='gravity'){s.crit+=.07;s.damageMult*=1.08}
-  else if(family==='phase')s.dodge+=.08;
-  else if(family==='tech')s.attackMs*=.95;
-  else s.damageMult*=1.12;
-  s.identityAwakened=title;toast('IDENTITY AWAKENED: '+title);scheduleSave()
+  const profile=identityProfile();profile.apply();s.identityAwakened=profile.name;
+  toast('IDENTITY AWAKENED: '+profile.name);scheduleSave()
 }
 function locationFor(stage){return PF_LOCATIONS.find(x=>stage>=x.min&&stage<=x.max)||PF_LOCATIONS[PF_LOCATIONS.length-1]}
 const PF_ASCENSION_PATHS=[
@@ -1339,6 +1389,18 @@ function identityDamage(damage,manual){
   if(s.fight.phaseCharge){damage*=evolution('phase_shift')==='quantum_phase'?5:3;s.fight.phaseCharge=0;identityCue('PHASE COUNTER')}
   if(s.fight.retaliation){damage*=1+Math.min(3,s.fight.retaliation)*.35;s.fight.retaliation=0}
   if(s.enemy?.rival&&meta.rivalAdaptation&&dominantFamily()===meta.rivalAdaptation)damage*=.72;
+  const ik=s.identityKey||'';
+  if(ik==='stormrunner'&&hit%12===0){damage*=3.2;chargeUltimate(8);identityCue('THUNDERSTRIKE')}
+  if(ik==='solar_comet_identity'&&manual){damage*=1.6;s.fight.burn=(s.fight.burn||0)+damage*.35;identityCue('SOLAR DIVE')}
+  if(ik==='iron_colossus'&&hit%5===0&&s.fight.kinetic>0){damage+=s.fight.kinetic;s.fight.kinetic=0;identityCue('COLOSSUS IMPACT')}
+  if(ik==='void_sovereign'&&Math.random()<critChance()){s.fight.break=Math.min(100,s.fight.break+12)}
+  if(ik==='blood_revenant'&&s.hp/s.maxHp<.3)damage*=1.55;
+  if(ik==='arc_architect'&&hit%15===0){damage*=2.2;chargeUltimate(10);identityCue('OVERCHARGE')}
+  if(ik==='burning_colossus'&&hit%5===0)s.fight.burn=(s.fight.burn||0)+damage*.45;
+  if(ik==='event_horizon_identity'&&manual){damage*=1.35;s.fight.break=Math.min(100,s.fight.break+24)}
+  if(ik==='the_blur')damage*=1+Math.min(.5,(s.fight.combo||0)*.006);
+  if(ik==='the_inferno'&&s.fight.burn>0)damage*=1+Math.min(.4,(s.fight.combo||0)*.005);
+  if(ik==='the_whiteout'&&s.fight.freeze>0)damage*=1.5;
   return damage;
 }
 function identityCue(text){
@@ -1512,7 +1574,7 @@ function playerAttack(manual=false,echo=false){
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
   if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}
   damage=identityDamage(damage,manual);
-  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties()}
+  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6}
   else chargeUltimate(manual?3:1.5);
   s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
@@ -1547,10 +1609,10 @@ function enemyAttack(){
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
   if(enemyPassive('origin'))dmg*=1.25;
   dmg=clamp(dmg,0,1e150);
-  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);identityCue('ABSORBED');renderHUD();return}
+  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);if(s.reactorBody)chargeUltimate(18);if(s.overchargeSkin){s.fight.overchargeUntil=Date.now()+3500;s.damageMult*=1.08}identityCue('ABSORBED');renderHUD();return}
   s.fight.hits=0;s.fight.combo=0;
   if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
-  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*4,s.fight.kinetic+dmg*.6);
+  if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*(s.impactEngine?7:4),s.fight.kinetic+dmg*(s.impactEngine?1:.6));
   if(s.adaptiveArmour||mirrored('adaptive'))s.fight.adapt=Math.min(.36,s.fight.adapt+.06);
   s.hp-=dmg;
   if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.playerFreeze=1.4;identityCue('TIME LOCKED')}
@@ -1566,8 +1628,8 @@ function enemyAttack(){
 }
 function enemyDefeated(){
   const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;
-  s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);
-  if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,1.3);toast('EVOLUTION: '+key.toUpperCase()+' +30%')}
+  s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);if(s.combatDarwinism&&s.kills%30===0){s.damageMult*=1.03;toast('COMBAT DARWINISM +3% DAMAGE')}
+  if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,s.apexGenome?1.45:1.3);toast('EVOLUTION: '+key.toUpperCase()+(s.apexGenome?' +45%':' +30%'))}
   let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*(1+meta.soulTree.fortune*.20)*s.storyCoinBonus*modifierCoinMult();
   if(s.enemy.elite)reward*=3.2;if(s.nextEliteDouble&&s.enemy.elite){reward*=2;s.nextEliteDouble=0}if(s.fight.finisher)reward*=1.25;if(wasWall)reward*=10;
   const paid=Math.floor(reward);s.coins=clamp(s.coins+paid,0,1e150);showCoinBurst(paid);
@@ -1914,7 +1976,7 @@ function currentResonance(){
   const tags=new Set();s.powers.forEach(id=>{const p=byId(id);if(p)p.tags.forEach(t=>tags.add(t))});
   let best=null,bestScore=0; for(const c of PF_COMBOS){const score=c.needs.filter(n=>tags.has(n)).length/c.needs.length;if(score>bestScore){bestScore=score;best=c}}
   if(best&&bestScore>=.5)return {name:'Emerging '+best.name,nod:`Your powers are ${Math.round(bestScore*100)}% aligned with ${best.name}.`,bonus:'Not fully awakened yet.'};
-  return {name:identityTitle(),nod:s.powers.length>=5?'Your build has awakened a distinct combat identity.':'Your power set is still forming into a distinct identity.',bonus:s.identityAwakened?'Awakened identity passive active.':'Keep combining powers.'};
+  return {name:identityTitle(),nod:s.powers.length>=5?'Your build has awakened a distinct combat identity.':'Your power set is still forming into a distinct identity.',bonus:s.identityAwakened?identityPassive():'Keep combining powers.'};
 }
 
 function maybeStory(stage,force){
@@ -2047,6 +2109,8 @@ function renderHUD(force=false){
   field.classList.remove('world-city','world-global','world-planetary','world-cosmic');
   field.classList.add(worldFor(s.stage).className);
 
+  const hero=$('heroFighter');for(const cls of ['identity-storm','identity-fire','identity-titan','identity-void','identity-blood','identity-tech','identity-phase','identity-gravity'])hero.classList.remove(cls);
+  const ik=s.identityKey||'';if(ik.includes('storm'))hero.classList.add('identity-storm');if(ik.includes('solar')||ik.includes('burning')||ik==='the_inferno')hero.classList.add('identity-fire');if(ik.includes('colossus')||ik==='the_titan')hero.classList.add('identity-titan');if(ik.includes('void')||ik==='the_ascendant')hero.classList.add('identity-void');if(ik.includes('blood')||ik==='the_undying')hero.classList.add('identity-blood');if(ik.includes('arc')||ik==='the_machine')hero.classList.add('identity-tech');if(ik.includes('ghost')||ik==='the_phantom')hero.classList.add('identity-phase');if(ik.includes('horizon')||ik==='the_singularity')hero.classList.add('identity-gravity');
   const enemy=$('enemyFighter');
   enemy.className='fighter enemy info-tap idle';
   if(s.enemy?.elite)enemy.classList.add('elite');
@@ -2140,8 +2204,8 @@ function powerPreview(power){
 }
 
 function renderProfile(){
-  const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.9</strong></div>`;
+  const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.0</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
