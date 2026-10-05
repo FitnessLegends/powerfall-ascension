@@ -943,12 +943,12 @@ window.PF_CONFIG = {
     p('iron_skin','Iron Skin','ARM','common','Health ×2.2; +35% damage resistance',s=>{s.maxHp*=2.2;s.hp*=2.2;s.armor+=.35;attribute(s,'agility',.75);s.attackMs*=1.25},['durability','metal'],'Agility ×0.75; slower attacks'),
     p('hyper_speed','Hyper Speed','SPD','rare','Attack rate ×1.7; Agility ×1.8; dodge +12%',s=>{s.attackMs/=1.7;attribute(s,'agility',1.8);s.dodge+=.12},['speed'],''),
     p('regeneration','Regeneration','DNA','common','REGEN +6% max HP/sec. Does not increase Max HP.',s=>{s.regen+=.06;s.visual.add('regen')},['regen'],''),
-    p('laser_vision','Laser Vision','EYE','rare','Damage ×1.8; Perception ×1.5',s=>{s.damageMult*=1.8;attribute(s,'perception',1.5);s.visual.add('vision')},['vision','energy'],''),
-    p('flight','Flight','FLY','rare','Damage ×1.5; dodge +20%',s=>{s.damageMult*=1.5;s.dodge+=.2;s.visual.add('flight')},['flight'],''),
+    p('laser_vision','Laser Vision','EYE','rare','Perception ×1.5. Critical hits heavily charge Heat Vision burn.',s=>{attribute(s,'perception',1.5);s.visual.add('vision')},['vision','energy'],'Needs critical hits'),
+    p('flight','Flight','FLY','rare','Dodge +22%. Dodging charges your next attack up to ×3.',s=>{s.dodge+=.22;s.flightMomentum=true;s.visual.add('flight')},['flight','speed'],'Needs incoming attacks'),
     p('chain_lightning','Chain Lightning','ELC','rare','65% chance for a second 72% strike',s=>{s.doubleHit+=.65;s.visual.add('lightning')},['lightning','energy'],''),
-    p('pyrokinesis','Pyrokinesis','FIR','rare','Damage ×2.1; fiery attacks',s=>{s.damageMult*=2.1;s.visual.add('fire')},['fire','energy'],''),
+    p('pyrokinesis','Pyrokinesis','FIR','rare','Every hit adds stacking burn damage.',s=>{s.pyroBurnBonus=true;s.visual.add('fire')},['fire','energy'],'Damage arrives over time'),
     p('cryokinesis','Cryokinesis','ICE','rare','Enemy attack interval ×1.65',s=>{s.enemySlow*=1.65},['ice'],''),
-    p('telekinesis','Telekinesis','PSI','rare','Damage ×1.8; Perception ×1.8',s=>{s.damageMult*=1.8;attribute(s,'perception',1.8);s.visual.add('psychic')},['psychic'],''),
+    p('telekinesis','Telekinesis','PSI','rare','Perception ×1.8. Hits rapidly build enemy Break.',s=>{attribute(s,'perception',1.8);s.visual.add('psychic')},['psychic'],'Rewards sustained accuracy'),
     p('phase_shift','Phase Shift','PHS','rare','Dodge +40%',s=>{s.dodge+=.4;s.visual.add('phase')},['phase'],''),
     p('vampirism','Vampirism','VMP','epic','Heal for 14% of damage dealt',s=>{s.lifesteal+=.14;s.visual.add('dark')},['dark','regen']),
     p('berserker','Berserker','RGE','rare','Below 40% HP, deal ×3 damage',s=>{s.berserk=true},['rage','strength']),
@@ -960,10 +960,10 @@ window.PF_CONFIG = {
     p('spider_reflexes','Spider Reflexes','REF','rare','Dodge +18%, crit +10%',s=>{s.dodge+=.18;s.crit+=.10},['agility','reflex']),
     p('precognition','Precognition','PRE','epic','Dodge +15%, crit +18%',s=>{s.dodge+=.15;s.crit+=.18;s.visual.add('psychic')},['reflex','psychic']),
     p('sonic_boom','Sonic Boom','SON','rare','Attack rate ×1.5; damage ×1.6',s=>{s.attackMs/=1.5;s.damageMult*=1.6},['sound','speed'],''),
-    p('magnetism','Magnetism','MAG','rare','Damage ×1.7; crit +20%',s=>{s.damageMult*=1.7;s.crit+=.2},['metal','psychic'],''),
+    p('magnetism','Magnetism','MAG','rare','Crit +15%. Critical hits add extra Break.',s=>{s.crit+=.15;s.magneticBreak=true},['metal','psychic'],'Best against armoured enemies'),
     p('technopathy','Technopathy','TEC','rare','Attack rate ×1.5; Perception ×2',s=>{s.attackMs/=1.5;attribute(s,'perception',2)},['tech'],''),
     p('nanite_swarm','Nanite Swarm','NAN','epic','Regenerate 8% max HP/sec',s=>{s.regen+=.08;s.visual.add('regen')},['tech','regen'],''),
-    p('cosmic_force','Cosmic Force','COS','legendary','Damage ×3.2',s=>{s.damageMult*=3.2;s.visual.add('cosmic')},['cosmic','energy'],''),
+    p('cosmic_force','Cosmic Force','COS','legendary','Every different power adds +5% damage. Every 10th hit triggers a Cosmic Surge.',s=>{s.cosmicForce=true;s.visual.add('cosmic')},['cosmic','energy'],'Scales with deep builds'),
     p('cosmic_awareness','Cosmic Awareness','COS','legendary','Crit +25%, dodge +10%',s=>{s.crit+=.25;s.dodge+=.10;s.visual.add('cosmic')},['cosmic','psychic']),
     p('reality_flicker','Reality Flicker','VAR','legendary','Dodge +30%',s=>{s.dodge+=.30;s.visual.add('cosmic')},['reality']),
     p('probability_manip','Probability Manipulation','RNG','legendary','Crit +22%, dodge +14%',s=>{s.crit+=.22;s.dodge+=.14},['reality','psychic']),
@@ -971,7 +971,7 @@ window.PF_CONFIG = {
     p('time_dilation','Time Dilation','TIM','legendary','Attack rate ×1.8; dodge +20%',s=>{s.attackMs/=1.8;s.dodge+=.2},['time','speed'],''),
     p('adaptive_evolution','Adaptive Evolution','MUT','epic','Each kill adds +1% run damage',s=>{s.adaptive=true},['mutation']),
     p('clone_strike','Clone Strike','CLN','epic','75% chance for a second 72% strike',s=>{s.doubleHit+=.75},['clone'],''),
-    p('power_mimicry','Power Mimicry','DNA','legendary','Damage ×2; crit +20%; dodge +15%',s=>{s.damageMult*=2;s.crit+=.2;s.dodge+=.15},['mutation','cosmic'],''),
+    p('power_mimicry','Power Mimicry','DNA','legendary','Enemy power stacks increase your damage by 3.5% per enemy power.',s=>{s.powerMimicry=true},['mutation','cosmic'],'Weak against powerless enemies'),
     p('black_hole_core','Black Hole Core','BLK','cosmic','Damage ×5',s=>{s.damageMult*=5;s.regen*=.5;s.attackMs*=1.25;s.visual.add('cosmic')},['cosmic','gravity'],'Regen ×0.5; attack rate ×0.8'),
     p('unstable_mutation','Unstable Mutation','MUT','epic','Damage ×2.0 and crit +15%',s=>{s.damageMult*=2;s.crit+=.15;s.maxHp*=.70;s.hp=Math.min(s.hp,s.maxHp)},['mutation'],'Max HP ×0.70'),
     p('kinetic_adaptation','Kinetic Adaptation','VAR','epic','Attack rate ×1.6; damage ×1.5',s=>{s.attackMs/=1.6;s.damageMult*=1.5},['speed','mutation'],''),
@@ -1519,7 +1519,7 @@ function identityDamage(damage,manual){
   if(hasPower('hyper_speed')&&hit%(evolution('hyper_speed')==='temporal_runner'?5:8)===0){damage*=evolution('hyper_speed')==='infinite_momentum'?3.1:2.1;s.fight.combo+=2;identityCue('SPEED FLURRY')}
   if(hasPower('chain_lightning')&&hit%3===0){damage*=evolution('chain_lightning')==='living_lightning'?2.4:1.65;identityCue('ARC')}
   if(hasPower('laser_vision')&&hit%4===0){damage*=1.65;s.fight.burn=(s.fight.burn||0)+damage*(evolution('laser_vision')==='solar_beam'?.22:.10);identityCue('HEAT VISION')}
-  if(hasPower('pyrokinesis'))s.fight.burn=(s.fight.burn||0)+damage*(evolution('pyrokinesis')==='inferno_core'?.16:.07);
+  if(hasPower('pyrokinesis'))s.fight.burn=(s.fight.burn||0)+damage*(evolution('pyrokinesis')==='inferno_core'?.20:(s.pyroBurnBonus?.12:.07));
   if(hasPower('cryokinesis')){s.fight.chill=(s.fight.chill||0)+1;if(s.fight.chill>=6){s.fight.chill=0;s.fight.freeze=Math.max(s.fight.freeze,1.8);identityCue('FROZEN')}}
   if(hasPower('telekinesis'))s.fight.break=Math.min(100,s.fight.break+(evolution('telekinesis')==='gravity_well'?16:7));
   if(hasPower('gravity_crush')&&manual){damage*=2.2;s.fight.break=Math.min(100,s.fight.break+30)}
@@ -1754,7 +1754,7 @@ function freshRun(){
 }
 function dynamicAgility(target=s){return target.attributes.agility+(target.hpAgility||0)*target.hp+(target.missingHpAgility||0)*Math.max(0,target.maxHp-target.hp)}
 function totalDamage(){
-  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
+  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(s.cosmicForce)d*=1+s.powers.length*.05;if(s.powerMimicry&&s.enemy?.powers?.length)d*=1+Math.min(.7,s.enemy.powers.length*.035);if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
   if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
@@ -1785,12 +1785,12 @@ function playerAttack(manual=false,echo=false){
   if(manual&&!echo){const field=$('battlefield');field.classList.remove('burst-flash');void field.offsetWidth;field.classList.add('burst-flash');setTimeout(()=>field.classList.remove('burst-flash'),300)}
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,effectivePlayerAttackMs()*.65)))return;if(!echo)lastAttackMs=now;
   if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;if(now-lastCombatFx>150)floatText('MISS',false);renderHUD();return}
-  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);if(s.hemomancy){damage*=3;s.hp=Math.max(1,s.hp-s.hp*.0035)}
+  let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);if(s.flightMomentum&&s.fight.flightCharge){damage*=1+Math.min(2,s.fight.flightCharge);s.fight.flightCharge=0}if(s.hemomancy){damage*=3;s.hp=Math.max(1,s.hp-s.hp*.0035)}
   if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
   if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}if(s.fight.blockCharge){damage+=s.fight.blockCharge;s.fight.blockCharge=0;identityCue('CAPACITOR RELEASE')}
   damage=identityDamage(damage,manual);
-  const cc=critChance(),crit=Math.random()<cc;if(crit){damage*=critEffect()*(s.probabilityCollapse?1+Math.max(0,(s.crit||0)-.9)*4:1);s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6;if(s.critVelocity)s.fight.critHasteUntil=Date.now()+1800}
+  const cc=critChance(),crit=Math.random()<cc;if(crit){damage*=critEffect()*(s.probabilityCollapse?1+Math.max(0,(s.crit||0)-.9)*4:1);if(s.magneticBreak)s.fight.break=Math.min(100,s.fight.break+8);s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6;if(s.critVelocity)s.fight.critHasteUntil=Date.now()+1800}
   else chargeUltimate(manual?3:1.5);
   s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
@@ -1817,7 +1817,7 @@ function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
-  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(s.negativeMass)s.attackMs=Math.max(120,s.attackMs*.985);if(now-lastCombatFx>160)floatText('MISS',true);return}
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(s.negativeMass)s.attackMs=Math.max(120,s.attackMs*.985);if(s.flightMomentum)s.fight.flightCharge=Math.min(2,(s.fight.flightCharge||0)+.35);if(now-lastCombatFx>160)floatText('MISS',true);return}
   let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;if(enemyHasPower('super_strength'))rawDmg*=2;if(enemyHasPower('hyper_speed'))rawDmg*=1.25;if(enemyHasPower('berserker')&&s.enemyHp/s.enemyMaxHp<.4)rawDmg*=2.5;
   const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
   let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85);if(s.conservationViolence)s.fight.blockCharge=Math.min(totalDamage()*12,(s.fight.blockCharge||0)+prevented)}
