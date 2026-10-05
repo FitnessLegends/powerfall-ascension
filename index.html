@@ -617,7 +617,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
  .archive-power .power-symbol{width:40px;height:40px}.archive-power .power-symbol .glyph{font-size:18px}
  .archive-power strong{font-size:11px!important}.archive-power small{font-size:8.5px!important}
 }
-</style>
+/* v1.7.3 progression gates */.archive-power.locked{position:relative;opacity:.58!important}.archive-power.locked::before{content:"LOCKED";position:absolute;right:7px;top:6px;font-size:7px;font-weight:1000;letter-spacing:.13em;color:#ffcb7c;z-index:3}.archive-power.secret::before{content:"???"}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -2051,7 +2051,28 @@ function queuePower(item){
   toast('POWER AWAKENING READY');
 }
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
-function powerUnlocked(p){if(p.id==='power_constant')return (meta.challengeWins||[]).includes('constant_protocol');if(p.id==='power_theft')return (meta.challengeWins||[]).includes('thief_protocol')||meta.bestStage>=1200;return true}
+const PF_UNLOCKS={
+power_constant:{label:'Complete PACIFIST PROTOCOL',check:()=> (meta.challengeWins||[]).includes('constant_protocol')},
+power_theft:{label:'SECRET',check:()=> (meta.challengeWins||[]).includes('thief_protocol')},
+immortal_paradox:{label:'Reach Stage 500',check:()=>meta.bestStage>=500},
+event_horizon:{label:'Reach Stage 750',check:()=>meta.bestStage>=750},
+probability_collapse:{label:'Discover 30 powers',check:()=> (meta.powerUnlocks||[]).length>=30},
+conservation_violence:{label:'Ascend 4 times',check:()=>meta.ascensions>=4},
+negative_mass:{label:'Ascend 6 times',check:()=>meta.ascensions>=6},
+hemomancy:{label:'Complete GLASS PROTOCOL',check:()=> (meta.challengeWins||[]).includes('glass_protocol')},
+black_hole_core:{label:'Reach Stage 600',check:()=>meta.bestStage>=600},
+reality_flicker:{label:'Ascend 3 times',check:()=>meta.ascensions>=3},
+power_mimicry:{label:'Defeat 25 bosses',check:()=>meta.bossesBeaten>=25},
+worldbreaker:{label:'Reach Stage 400',check:()=>meta.bestStage>=400},
+cellular_rebirth:{label:'Discover 20 powers',check:()=> (meta.powerUnlocks||[]).length>=20},
+temporal_speed:{label:'Ascend twice',check:()=>meta.ascensions>=2},
+apex_metabolism:{label:'Discover 25 powers',check:()=> (meta.powerUnlocks||[]).length>=25},
+kinetic_release:{label:'Reach Stage 300',check:()=>meta.bestStage>=300}
+};
+function unlockRule(p){return PF_UNLOCKS[p.id]||null}
+function powerUnlocked(p){const r=unlockRule(p);return !r||r.check()}
+function unlockSummary(p){const r=unlockRule(p);return r?r.label:'Available from the start'}
+function unlockedPowerCount(){return PF_POWERS.filter(powerUnlocked).length}
 function rollPowerChoices(item){
   const min=rarityValue(item.minRarity||'common');
   const owned=new Set(s.powers);
@@ -2466,17 +2487,17 @@ function renderProfile(){
   $('discoveryList').querySelectorAll('[data-combo-id]').forEach(btn=>btn.addEventListener('click',()=>showComboInfo(btn.dataset.comboId)));
 }
 function setPermanentPower(slot,id){const slots=permanentSlotCount();if(slot>=slots)return;meta.permanentPowers=Array.isArray(meta.permanentPowers)?meta.permanentPowers:[];if(!id){meta.permanentPowers.splice(slot,1)}else{meta.permanentPowers=meta.permanentPowers.filter(x=>x!==id);meta.permanentPowers.splice(slot,0,id);meta.permanentPowers=meta.permanentPowers.slice(0,slots)}saveNow();renderAscension()}
-function renderPowerArchive(){const slots=permanentSlotCount(),known=new Set([...(meta.powerUnlocks||[]),...s.powers,...(meta.permanentPowers||[])]),slotBox=$('permanentPowerSlots'),grid=$('powerArchiveGrid');slotBox.innerHTML='';if(!slots)slotBox.innerHTML='<div class="archive-empty">No permanent slots yet. Power Memory begins in Ascension.</div>';for(let i=0;i<slots;i++){const id=(meta.permanentPowers||[])[i],p=byId(id),b=document.createElement('button');b.type='button';b.className='permanent-slot';b.innerHTML=(p?powerSymbol(p,'archive-symbol'):'')+'<span><strong>'+(p?escapeHtml(p.name):'EMPTY SLOT '+(i+1))+'</strong><small>'+(p?'Tap to clear':'Choose an unlocked power below')+'</small></span>';b.classList.toggle('has-power',!!p);if(p)b.addEventListener('click',()=>setPermanentPower(i,''));slotBox.appendChild(b)}const secretIds=new Set(['power_constant','power_theft']);grid.innerHTML=PF_POWERS.map(p=>{const unlocked=powerUnlocked(p),secret=secretIds.has(p.id)&&!unlocked;return '<button type="button" class="archive-power '+powerTone(p)+' '+p.rarity+' '+(!unlocked?'locked ':'')+(secret?'secret ':'')+((meta.permanentPowers||[]).includes(p.id)?'permanent':'')+'" data-archive-power="'+p.id+'" '+(!unlocked?'disabled':'')+'>'+powerSymbol(p,'archive-symbol')+'<span class="archive-copy"><strong>'+escapeHtml(secret?'SECRET POWER':p.name)+'</strong><small>'+escapeHtml(secret?'Complete a hidden challenge to reveal it.':p.rarity.toUpperCase()+' · '+p.desc)+'</small></span></button>'}).join('');grid.querySelectorAll('[data-archive-power]').forEach(b=>b.addEventListener('click',()=>{const p=byId(b.dataset.archivePower);if(!p)return;if(slots>0&&!(meta.permanentPowers||[]).includes(p.id)&&(meta.permanentPowers||[]).length<slots){setPermanentPower((meta.permanentPowers||[]).length,p.id);toast('PERMANENT POWER: '+p.name.toUpperCase())}else showPowerInfo(p.id)}));$('powerArchiveHint').textContent=slots?slots+' / '+PF_POWERS.length+' permanent slots · protected from Power Theft':'Unlock Power Memory through Ascension. The final slots are intended to take an absurd amount of progression.'}
+function renderPowerArchive(){const slots=permanentSlotCount(),known=new Set([...(meta.powerUnlocks||[]),...s.powers,...(meta.permanentPowers||[])]),slotBox=$('permanentPowerSlots'),grid=$('powerArchiveGrid');slotBox.innerHTML='';if(!slots)slotBox.innerHTML='<div class="archive-empty">No permanent slots yet. Power Memory begins in Ascension.</div>';for(let i=0;i<slots;i++){const id=(meta.permanentPowers||[])[i],p=byId(id),b=document.createElement('button');b.type='button';b.className='permanent-slot';b.innerHTML=(p?powerSymbol(p,'archive-symbol'):'')+'<span><strong>'+(p?escapeHtml(p.name):'EMPTY SLOT '+(i+1))+'</strong><small>'+(p?'Tap to clear':'Choose an unlocked power below')+'</small></span>';b.classList.toggle('has-power',!!p);if(p)b.addEventListener('click',()=>setPermanentPower(i,''));slotBox.appendChild(b)}const secretIds=new Set(['power_theft']);grid.innerHTML=PF_POWERS.map(p=>{const unlocked=powerUnlocked(p),secret=secretIds.has(p.id)&&!unlocked;return '<button type="button" class="archive-power '+powerTone(p)+' '+p.rarity+' '+(!unlocked?'locked ':'')+(secret?'secret ':'')+((meta.permanentPowers||[]).includes(p.id)?'permanent':'')+'" data-archive-power="'+p.id+'" '+(!unlocked?'disabled':'')+'>'+powerSymbol(p,'archive-symbol')+'<span class="archive-copy"><strong>'+escapeHtml(secret?'SECRET POWER':p.name)+'</strong><small>'+escapeHtml(secret?'??? · Hidden unlock condition':(!unlocked?'LOCKED · '+unlockSummary(p):p.rarity.toUpperCase()+' · '+p.desc))+'</small></span></button>'}).join('');grid.querySelectorAll('[data-archive-power]').forEach(b=>b.addEventListener('click',()=>{const p=byId(b.dataset.archivePower);if(!p)return;if(slots>0&&!(meta.permanentPowers||[]).includes(p.id)&&(meta.permanentPowers||[]).length<slots){setPermanentPower((meta.permanentPowers||[]).length,p.id);toast('PERMANENT POWER: '+p.name.toUpperCase())}else showPowerInfo(p.id)}));$('powerArchiveHint').textContent=slots?unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · '+slots+' permanent slots · protected from Power Theft':unlockedPowerCount()+' / '+PF_POWERS.length+' powers unlocked · Power Memory begins in Ascension.'}
 
 const PF_CHALLENGES=[
 {id:'constant_protocol',name:'PACIFIST PROTOCOL',goal:75,unlock:'Power Constant',desc:'Normal attacks and Burst are disabled. Begin with Spikes. Survive until the Null Warden falls.'},
-{id:'glass_protocol',name:'GLASS PROTOCOL',goal:150,unlock:'Cosmic cache',desc:'Max HP is locked to 1. Damage is massively amplified. Reach Stage 150.'},
+{id:'glass_protocol',name:'GLASS PROTOCOL',goal:150,unlock:'Hemomancy',desc:'Max HP is locked to 1. Damage is massively amplified. Reach Stage 150.'},
 {id:'thief_protocol',name:'THIEF PROTOCOL',goal:1200,unlock:'Power Theft',desc:'Unlocked after reaching Stage 1000. No permanent powers. Defeat The Power Thief at Stage 1200.'}
 ];
 function challengeDef(id){return PF_CHALLENGES.find(x=>x.id===id)}
 function challengeAvailable(x){return x.id!=='thief_protocol'||meta.bestStage>=1000||(meta.challengeWins||[]).includes(x.id)}
 function startChallenge(id){const x=challengeDef(id);if(!x||!challengeAvailable(x)||s.challengeMode)return;if(!window.confirm('Start '+x.name+'? Your current run will be replaced. Permanent progression is kept, but this challenge starts without permanent powers.'))return;s=defaultRun();s.challengeMode=id;s.maxHp=100;s.hp=100;s.crit=.05;s.attributes={strength:10,agility:10,vitality:10,perception:10};if(id==='constant_protocol'){s.powers=['spikes'];applyEffect(s,byId('spikes').effect)}if(id==='glass_protocol'){s.maxHp=1;s.hp=1;s.damageMult*=8}powerQueue=[];spawnEnemy();startCombatTimers();showScreen('gameScreen');renderAll();saveNow();toast(x.name+' STARTED')}
-function completeChallenge(id){const x=challengeDef(id);if(!x)return;meta.challengeWins=Array.from(new Set([...(meta.challengeWins||[]),id]));if(id==='constant_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_constant']));if(id==='thief_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_theft']));s.challengeMode='';saveNow();toast('CHALLENGE COMPLETE · '+x.unlock.toUpperCase());showMajorBanner('CHALLENGE COMPLETE',x.name,x.unlock+' unlocked')}
+function completeChallenge(id){const x=challengeDef(id);if(!x)return;meta.challengeWins=Array.from(new Set([...(meta.challengeWins||[]),id]));if(id==='constant_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_constant']));if(id==='thief_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'power_theft']));if(id==='glass_protocol')meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),'hemomancy']));s.challengeMode='';saveNow();toast('CHALLENGE COMPLETE · '+x.unlock.toUpperCase());showMajorBanner('CHALLENGE COMPLETE',x.name,x.unlock+' unlocked')}
 function renderChallenges(){const grid=$('challengeGrid');grid.innerHTML=PF_CHALLENGES.map(x=>{const won=(meta.challengeWins||[]).includes(x.id),available=challengeAvailable(x);return '<button type="button" class="challenge-node '+(won?'won':'')+'" data-challenge="'+x.id+'" '+(!available||s.challengeMode?'disabled':'')+'><strong>'+escapeHtml(x.name)+(won?' ✓':'')+'</strong><small>'+escapeHtml(available?x.desc:'Reach Stage 1000 to reveal this protocol.')+'</small><em>'+(won?'COMPLETED · ': 'UNLOCK · ')+escapeHtml(x.unlock)+'</em></button>'}).join('');grid.querySelectorAll('[data-challenge]').forEach(b=>b.addEventListener('click',()=>startChallenge(b.dataset.challenge)))}
 function renderAscension(){
   $('ascensionSouls').textContent=fmt(meta.souls);$('highestStage').textContent=meta.bestStage;$('bossesBeaten').textContent=meta.bossesBeaten;$('powersFound').textContent=meta.totalPowersFound;const gain=ascensionGain();$('soulsGain').textContent=gain;$('ascendButtonSouls').textContent=gain;$('ascendNowBtn').disabled=ascensionLocked||gain<1;
