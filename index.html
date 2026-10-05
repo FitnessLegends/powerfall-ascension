@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v0.8</title>
+  <title>Powerfall: Ascension Prototype v0.9</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -489,6 +489,17 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
   .prop-neon-sign{right:6%;font-size:7px}
   .prop-crane{transform:scale(.76) skewX(-5deg);transform-origin:bottom left}
 }
+
+/* ================= POWERFALL v0.9: COMBAT FOUNDATIONS ================= */
+.mini-stats{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.resistance-stat{border-color:rgba(255,196,90,.35)!important;background:linear-gradient(180deg,rgba(77,54,24,.72),rgba(21,32,45,.94))!important}
+.fighter.hit{animation:pfHitRecoil .18s cubic-bezier(.2,.8,.2,1)!important}
+@keyframes pfHitRecoil{35%{transform:translateX(var(--hit-dir,-9px)) rotate(-3deg) scale(.96)}70%{filter:brightness(1.55)}}
+.hero.hit{--hit-dir:-10px}.enemy.hit{--hit-dir:10px}
+.battlefield.combo-surge{animation:pfComboSurge .26s ease}
+@keyframes pfComboSurge{50%{box-shadow:inset 0 0 75px rgba(88,216,255,.22),0 0 26px rgba(88,216,255,.14)}}
+.damage-number.crit{font-size:15px!important;text-shadow:0 0 12px rgba(255,215,98,.8)!important;transform:scale(1.12)}
+@media(max-width:420px){.mini-stat-btn{padding-left:3px!important;padding-right:3px!important;font-size:8px!important}.mini-stat-btn b{font-size:9px!important}}
 </style>
 </head>
 <body>
@@ -497,7 +508,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v0.8</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v0.9</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -640,6 +651,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
           <button class="mini-stat-btn info-tap" id="speedInfoBtn" type="button">SPD <b id="apsStat">1.0</b>/s</button>
           <button class="mini-stat-btn info-tap" id="regenInfoBtn" type="button">REG <b id="regenStat">0%</b></button>
           <button class="mini-stat-btn info-tap" id="critInfoBtn" type="button">CRT <b id="critStat">5%</b></button>
+          <button class="mini-stat-btn info-tap resistance-stat" id="resistInfoBtn" type="button">RES <b id="resistStat">0%</b></button>
         </div>
       </section>
       <section class="flow-strip" aria-label="Combat flow">
@@ -1110,6 +1122,9 @@ function hitChance(perception,agility,dodge=0){
 }
 function dodgeChance(target=s){return clamp(target.dodge+.18*(1-10/Math.max(10,target.attributes.agility)),0,.65)}
 function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target.attributes.strength))+(target.lastStand&&target.hp/target.maxHp<.3?.3:0)+(target.adaptiveArmour||mirrored('adaptive',target)?Math.min(.36,target.fight.adapt):0)+(mirrored('armour',target)?.15:0),0,.8)}
+function resistance(target=s){return defence(target)}
+function blockChance(target=s){return clamp(.02+.16*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.08:0)+(target.kineticStorage?.04:0),.02,.32)}
+function blockPower(target=s){return clamp(.35+.25*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.10:0),.35,.72)}
 function regenRate(target=s){const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5);return enemyPassive('void')?base*.45:base}
 function critChance(target=s){return clamp(target.crit+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
 function critEffect(target=s){return clamp(target.critMultiplier+.6*(1-10/Math.max(10,target.attributes.perception)),1,10)}
@@ -1145,10 +1160,10 @@ function enemyProfile(enemy,stage){
 }
 function statValues(target){
   const damage=clamp((target.baseDamage+target.flatDamage)*target.damageMult*target.adaptiveBonus*target.storyDamageBonus*(1+meta.soulTree.might*.15)*(target.berserk&&target.hp/target.maxHp<.4?3:1)*(target.gammaRage&&target.hp/target.maxHp<.5?1.3:1)*(target.enemy?.boss?target.tempBossBonus*(1+meta.soulTree.bossbane*.2):1),0,1e150);
-  return {Strength:fmt(target.attributes.strength),Agility:fmt(target.attributes.agility),Vitality:fmt(target.attributes.vitality),Perception:fmt(target.attributes.perception),Damage:fmt(damage),'Max HP':fmt(target.maxHp),Attack:(1000/target.attackMs).toFixed(2)+'/s',Accuracy:Math.round(playerAccuracy(target)*100)+'%',Defence:Math.round(defence(target)*100)+'%',Dodge:Math.round(dodgeChance(target)*100)+'%',Crit:Math.round(critChance(target)*100)+'%','Crit power':critEffect(target).toFixed(2)+'×',Regen:(regenRate(target)*100).toFixed(2)+'%/s'};
+  return {Strength:fmt(target.attributes.strength),Agility:fmt(target.attributes.agility),Vitality:fmt(target.attributes.vitality),Perception:fmt(target.attributes.perception),Damage:fmt(damage),'Max HP':fmt(target.maxHp),Attack:(1000/target.attackMs).toFixed(2)+'/s',Accuracy:Math.round(playerAccuracy(target)*100)+'%',Defence:Math.round(defence(target)*100)+'%',Resistance:Math.round(resistance(target)*100)+'%','Block chance':Math.round(blockChance(target)*100)+'%',Dodge:Math.round(dodgeChance(target)*100)+'%',Crit:Math.round(critChance(target)*100)+'%','Crit power':critEffect(target).toFixed(2)+'×',Regen:(regenRate(target)*100).toFixed(2)+'%/s'};
 }
 function showStatInfo(key){
-  const descriptions={Strength:'Raises base physical damage in direct proportion. Also adds up to 20 percentage points of damage resistance.',Agility:'Faster attacks and up to 18 percentage points of dodge. Enemy Perception compares against this attribute.',Vitality:'Raises maximum health in direct proportion and adds up to 2.5% max HP regeneration per second.',Perception:'Counters enemy Agility. Adds up to 22 percentage points of critical chance and 0.6× critical damage.',Accuracy:'Chance to hit this opponent. Equal Perception and Agility give 93%; final chance is clamped to 45–98%. Predator Vision helps against weakened enemies.',Dodge:'Reduces enemy accuracy after the Perception/Agility comparison. Final enemy hit chance never falls below 45%. Perfect Reflex can additionally force every fourth attack to miss.',Defence:'Reduces incoming damage, capped at 80%. Strength, armour, adaptive stacks and Last Stand contribute.',Crit:'Chance for a landed attack to critically hit, capped at 90%. Perception, powers and Probability Warp contribute.','Crit power':'Damage multiplier on critical hits. Perception improves the base 2× multiplier.',Regen:'Maximum health restored each second. Vitality, powers and low-health Last Stand contribute.',Damage:'Current normal attack damage before enemy resistance, critical hits, Momentum, Executioner and Kinetic Storage.',Attack:'Automatic attacks per second. Agility and powers modify the interval, with a 120 ms minimum.','Max HP':'Maximum health. Normal death respawns at full health without awarding Souls.'};
+  const descriptions={Strength:'Raises base physical damage in direct proportion. Strength also builds Resistance and Block, making heavy Strength builds naturally tougher.',Resistance:'Reduces incoming damage before it reaches your health. Strength, armour, adaptive effects and defensive powers contribute.','Block chance':'Chance to partially block a landed enemy hit. Strength and defensive powers improve both block frequency and strength.',Agility:'Faster attacks and up to 18 percentage points of dodge. Enemy Perception compares against this attribute.',Vitality:'Raises maximum health in direct proportion and adds up to 2.5% max HP regeneration per second.',Perception:'Counters enemy Agility. Adds up to 22 percentage points of critical chance and 0.6× critical damage.',Accuracy:'Chance to hit this opponent. Equal Perception and Agility give 93%; final chance is clamped to 45–98%. Predator Vision helps against weakened enemies.',Dodge:'Reduces enemy accuracy after the Perception/Agility comparison. Final enemy hit chance never falls below 45%. Perfect Reflex can additionally force every fourth attack to miss.',Defence:'Reduces incoming damage, capped at 80%. Strength, armour, adaptive stacks and Last Stand contribute.',Crit:'Chance for a landed attack to critically hit, capped at 90%. Perception, powers and Probability Warp contribute.','Crit power':'Damage multiplier on critical hits. Perception improves the base 2× multiplier.',Regen:'Maximum health restored each second. Vitality, powers and low-health Last Stand contribute.',Damage:'Current normal attack damage before enemy resistance, critical hits, Momentum, Executioner and Kinetic Storage.',Attack:'Automatic attacks per second. Agility and powers modify the interval, with a 120 ms minimum.','Max HP':'Maximum health. Normal death respawns at full health without awarding Souls.'};
   const facts=[['Current value',statValues(s)[key]],['Attribute ranks',Object.entries(s.upgrades).filter(([k])=>k in s.attributes).map(([k,v])=>k+' '+v).join(' / ')]];
   if(key==='Accuracy')facts.push(['Enemy Agility',fmt(s.enemy?.attributes?.agility||10)]);
   if(key==='Defence')facts.push(['Adaptive resistance',Math.round(s.fight.adapt*100)+'%'],['Incoming multiplier',s.incomingMult.toFixed(2)+'×']);
@@ -1515,6 +1530,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   animatePlayerAttack(crit,manual,echo);floatDamage(amount,crit,false);
   s.fight.break=Math.min(100,s.fight.break+(crit?18:manual?14:7)+(s.masteryBreak||0));
   if(s.fight.break>=100){s.fight.break=0;s.fight.freeze=Math.max(s.fight.freeze,2.5);identityCue('STAGGERED')}
+  if([10,25,50,75].includes(s.fight.combo)){identityCue(s.fight.combo+' HIT COMBO');chargeUltimate(s.fight.combo>=50?8:4);const field=$('battlefield');field.classList.add('combo-surge');setTimeout(()=>field.classList.remove('combo-surge'),260)}
   checkBossPhase();
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
@@ -1523,7 +1539,9 @@ function enemyAttack(){
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
   if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
-  let dmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult*(1-defence());
+  let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;
+  const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
+  let dmg=rawDmg-resisted;if(blocked)dmg*=1-blockPower();
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
@@ -1538,6 +1556,7 @@ function enemyAttack(){
   if(enemyPassive('time_lock')&&s.fight.incoming%4===0){s.fight.playerFreeze=1.4;identityCue('TIME LOCKED')}
   if(enemyPassive('devour'))s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+Math.min(s.enemyMaxHp*.04,dmg*2));
   animateEnemyAttack();floatDamage(dmg,crit,true);
+  if(blocked)floatText('BLOCK '+Math.round(blockPower()*100)+'%',true);
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
     else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
@@ -1911,7 +1930,7 @@ function reactiveStoryText(base){
 }
 
 function upgradeDefs(){return [
-  {id:'strength',icon:'STR',name:'Strength',desc:'+18% Strength: damage and defence',base:22,growth:1.48,apply:()=>PF_ATTRIBUTE(s,'strength',1.18)},
+  {id:'strength',icon:'STR',name:'Strength',desc:'+18% Strength: damage + resistance',base:22,growth:1.48,apply:()=>PF_ATTRIBUTE(s,'strength',1.18)},
   {id:'agility',icon:'AGI',name:'Agility',desc:'+18% Agility: attack speed and dodge',base:55,growth:1.55,apply:()=>PF_ATTRIBUTE(s,'agility',1.18)},
   {id:'vitality',icon:'VIT',name:'Vitality',desc:'+22% Vitality: health and regeneration',base:42,growth:1.50,apply:()=>PF_ATTRIBUTE(s,'vitality',1.22)},
   {id:'perception',icon:'PER',name:'Perception',desc:'+22% Perception: accuracy, crit chance and power',base:45,growth:1.50,apply:()=>PF_ATTRIBUTE(s,'perception',1.22)}
@@ -2022,7 +2041,7 @@ function renderHUD(force=false){
   $('factionChip').textContent=s.enemy?.faction||PF_ENEMIES.factionFor(s.stage);
   $('hpText').textContent=`${fmt(s.hp)} / ${fmt(s.maxHp)}`;$('enemyHpText').textContent=`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`;
   $('hpBar').style.width=`${clamp(s.hp/s.maxHp*100,0,100)}%`;$('enemyHpBar').style.width=`${clamp(s.enemyHp/s.enemyMaxHp*100,0,100)}%`;
-  $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(regenRate()*100).toFixed(1)+'%';$('critStat').textContent=Math.round(critChance()*100)+'%';
+  $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(regenRate()*100).toFixed(1)+'%';$('critStat').textContent=Math.round(critChance()*100)+'%';$('resistStat').textContent=Math.round(resistance()*100)+'%';
 
   const field=$('battlefield');
   field.classList.remove('world-city','world-global','world-planetary','world-cosmic');
@@ -2122,7 +2141,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=r.nod||'';
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.8</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v0.9</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2284,7 +2303,7 @@ function bind(){
   $('damageInfoBtn').addEventListener('click',()=>showStatInfo('Damage'));
   $('speedInfoBtn').addEventListener('click',()=>showStatInfo('Attack'));
   $('regenInfoBtn').addEventListener('click',()=>showStatInfo('Regen'));
-  $('critInfoBtn').addEventListener('click',()=>showStatInfo('Crit'));
+  $('critInfoBtn').addEventListener('click',()=>showStatInfo('Crit'));$('resistInfoBtn').addEventListener('click',()=>showStatInfo('Resistance'));
   $('heroFighter').addEventListener('click',openProfile);$('enemyFighter').addEventListener('click',showEnemyInfo);
   $('milestoneInfo').addEventListener('click',()=>{const m=nextMilestone(s.stage+1);const label=(m.type==='boss'?'Wall Boss':'Power')+' at stage '+m.stage;openInfo('Next Milestone','Major powers and wall bosses are spaced out so each one feels significant.',[['Current stage',s.stage],['Next milestone',label],['Stages remaining',Math.max(0,m.stage-s.stage)],['World',worldFor(s.stage).name]])});
   $('rerollPowerBtn').addEventListener('click',rerollPower);$('powerAlert').addEventListener('click',showPowerModal);$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
