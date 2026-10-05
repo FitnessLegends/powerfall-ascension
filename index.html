@@ -2037,6 +2037,7 @@ function choosePower(id,choiceId){
   // UI closes before render/save. Queue is then derived from the ledger.
   $('powerModal').classList.add('hidden');
   powerModalVisible=false;
+  powerDecisionPaused=false;
   choiceLocked=false;
   activePowerChoices=[];
   grid.classList.remove('input-locked');
