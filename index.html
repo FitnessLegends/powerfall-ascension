@@ -1340,7 +1340,7 @@ function enemyProfile(enemy,stage){
   return enemy;
 }
 function statValues(target){
-  const damage=clamp((target.baseDamage+target.flatDamage)*target.damageMult*target.adaptiveBonus*target.storyDamageBonus*(1+meta.soulTree.might*.15)*(target.berserk&&target.hp/target.maxHp<.4?3:1)*(target.gammaRage&&target.hp/target.maxHp<.5?1.3:1)*(target.enemy?.boss?target.tempBossBonus*(Math.pow(1.02,meta.soulTree.bossbane||0)):1),0,1e150);
+  const damage=clamp((target.baseDamage+target.flatDamage)*target.damageMult*target.adaptiveBonus*target.storyDamageBonus*Math.pow(1.015,meta.soulTree.might||0)*(target.berserk&&target.hp/target.maxHp<.4?3:1)*(target.gammaRage&&target.hp/target.maxHp<.5?1.3:1)*(target.enemy?.boss?target.tempBossBonus*(Math.pow(1.02,meta.soulTree.bossbane||0)):1),0,1e150);
   return {Strength:fmt(target.attributes.strength),Agility:fmt(target.attributes.agility),Vitality:fmt(target.attributes.vitality),Perception:fmt(target.attributes.perception),Damage:fmt(damage),'Max HP':fmt(target.maxHp),Attack:(1000/target.attackMs).toFixed(2)+'/s',Accuracy:Math.round(playerAccuracy(target)*100)+'%',Defence:Math.round(defence(target)*100)+'%',Resistance:Math.round(resistance(target)*100)+'%','Block chance':Math.round(blockChance(target)*100)+'%',Dodge:Math.round(dodgeChance(target)*100)+'%',Crit:Math.round(critChance(target)*100)+'%','Crit power':critEffect(target).toFixed(2)+'×',Regen:(regenRate(target)*100).toFixed(2)+'%/s'};
 }
 function showStatInfo(key){
@@ -1798,10 +1798,10 @@ function totalDamage(){
   let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;if(s.infiniteMomentumForm)d*=1+Math.min(3,(s.fight?.combo||0)*.035);if(s.bloodStar)d*=1+Math.max(0,1-s.hp/Math.max(1,s.maxHp))*2.2;if(s.livingSingularity&&s.enemy)d*=1+Math.min(3,(s.enemy.powers?.length||0)*.08+s.enemyMaxHp/Math.max(1,s.maxHp)*.015);if(s.psionicOvermind)d*=1+Math.min(1.5,(s.attributes.perception||10)/250);if(meta.soulTree.deep_build)d*=1+Math.floor(s.powers.length/5)*.005*meta.soulTree.deep_build;if(meta.soulTree.mastery_amp)d*=1+Object.values(s.powerMastery||{}).reduce((a,v)=>a+Math.max(0,v),0)*.006*meta.soulTree.mastery_amp;if(s.absoluteZero&&s.fight?.absoluteZeroStacks)d*=1+s.fight.absoluteZeroStacks*.2;if(s.cosmicForce)d*=1+s.powers.length*.05;if(s.powerMimicry&&s.enemy?.powers?.length)d*=1+Math.min(.7,s.enemy.powers.length*.035);if(s.painDividend)d*=1+Math.floor((1-s.hp/Math.max(1,s.maxHp))*10)*.12;
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
-  if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
+  if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*Math.pow(1.02,meta.soulTree.bossbane||0);
   return clamp(d,0,1e150);
 }
-function effectiveEnemyAttackMs(){let ms=(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1);if(s.eventHorizon&&s.enemyMaxHp>0)ms*=1+Math.max(0,1-s.enemyHp/s.enemyMaxHp)*1.6;return Math.max(380,ms)}
+function effectiveEnemyAttackMs(){let ms=(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1);if(s.eventHorizon&&s.enemyMaxHp>0)ms*=1+Math.max(0,1-s.enemyHp/s.enemyMaxHp)*1.6;if(s.eventHorizonBody&&s.maxHp>0)ms*=1+Math.max(0,1-s.hp/s.maxHp)*1.4;return Math.max(380,ms)}
 
 function enemyPowerCount(stage,wall=false){if(stage<100)return wall?2:0;return Math.min(20,Math.floor(stage/100)+(wall?3:0))}
 function assignEnemyPowers(){if(!s.enemy)return;const count=enemyPowerCount(s.stage,!!s.enemy.wall),eligible=PF_POWERS.filter(p=>p.id!=='power_constant'),picked=[],used=new Set();while(picked.length<count&&used.size<eligible.length){const p=eligible[Math.floor(Math.random()*eligible.length)];if(!used.has(p.id)){used.add(p.id);picked.push(p.id)}}if(s.enemy.wall&&s.stage>=1200&&!picked.includes('power_theft')){if(picked.length>=count)picked[picked.length-1]='power_theft';else picked.push('power_theft')}s.enemy.powers=picked;for(const id of picked){const p=byId(id),tags=new Set(p?.tags||[]);if(tags.has('strength')||tags.has('rage'))s.enemy.damage*=1.08;if(tags.has('durability')||tags.has('vitality'))s.enemy.maxHp*=1.09;if(tags.has('speed')||tags.has('time'))s.enemy.attackMs*=.96;if(tags.has('psychic')||tags.has('vision'))s.enemy.attributes.perception*=1.07;if(tags.has('phase')||tags.has('reflex'))s.enemy.attributes.agility*=1.07;if(tags.has('cosmic')){s.enemy.maxHp*=1.04;s.enemy.damage*=1.04}}}
@@ -2269,7 +2269,7 @@ const PF_EMERGENT_EVOLUTIONS=[
 {id:'solar_colossus',name:'SOLAR COLOSSUS',needs:['solar','strength'],mastery:4,desc:'Overhealing becomes stored solar force for heavy attacks.',apply:()=>{s.solarColossus=true;s.maxHp*=1.2;s.hp*=1.2}},
 {id:'world_engine',name:'WORLD ENGINE',needs:['tech','cosmic'],mastery:6,desc:'Every five powers strengthen all active mastery bonuses.',apply:()=>{s.worldEngine=true}}
 ];
-function evolutionMasteryScore(ev){const matching=s.powers.map(byId).filter(Boolean).filter(p=>ev.needs.some(t=>p.tags?.includes(t)));return matching.length?Math.max(...matching.map(p=>masteryTier(p.id))):0}
+function evolutionMasteryScore(ev){const powers=s.powers.map(byId).filter(Boolean);const perTag=ev.needs.map(tag=>Math.max(0,...powers.filter(p=>p.tags?.includes(tag)).map(p=>masteryTier(p.id))));return perTag.length?Math.min(...perTag):0}
 function checkEmergentEvolutions(){
   s.emergentEvolutions=Array.isArray(s.emergentEvolutions)?s.emergentEvolutions:[];
   const tags=new Set();s.powers.forEach(id=>{const p=byId(id);p?.tags?.forEach(t=>tags.add(t))});
