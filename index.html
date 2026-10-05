@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.2.1</title>
+  <title>Powerfall: Ascension Prototype v1.2</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -524,11 +524,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.2.1 mobile stability */
-#ascensionScreen .tree{flex:0 0 auto;min-height:auto;overflow:visible}
-#ascensionScreen .tree-grid{min-height:0}
-@media(max-width:520px){#ascensionScreen.active{overflow-y:auto!important;-webkit-overflow-scrolling:touch}#ascensionScreen .tree{overflow:visible!important}.power-modal{align-items:flex-start;padding-top:calc(env(safe-area-inset-top) + 18px)}.power-card{max-height:calc(100dvh - env(safe-area-inset-top) - 36px)!important}}
-</style>
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}</style>
 </head>
 <body>
   <main id="app" class="app-shell" aria-live="polite">
@@ -536,7 +532,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.2.1</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.2</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1084,7 +1080,6 @@ let powerQueue=[];
 let activePowerChoices=[];
 let powerModalVisible=false;
 let storyPaused=false;
-let decisionPaused=false;
 let buyMode='1';
 let lastAttackMs=0;
 let lastEnemyMs=0;
@@ -1653,7 +1648,7 @@ showRandomEncounter(s.stage);
 }
 
 function playerAttack(manual=false,echo=false){
-  if(storyPaused||decisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||(s.fight.playerFreeze||0)>0)return;
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||(s.fight.playerFreeze||0)>0)return;
   if(manual&&!echo){const field=$('battlefield');field.classList.remove('burst-flash');void field.offsetWidth;field.classList.add('burst-flash');setTimeout(()=>field.classList.remove('burst-flash'),300)}
   const now=performance.now();if(!echo&&now-lastAttackMs<(manual?120:Math.max(100,s.attackMs*.65)))return;if(!echo)lastAttackMs=now;
   if(Math.random()>playerAccuracy()){s.fight.hits=0;s.fight.combo=0;s.fight.misses++;if(now-lastCombatFx>150)floatText('MISS',false);renderHUD();return}
@@ -1686,7 +1681,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function enemyAttack(){
-  if(storyPaused||decisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
+  if(storyPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
   if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
@@ -1915,9 +1910,12 @@ function checkPowerMilestone(stage){
   }
 }
 function queuePower(item){
-  const reward=ensurePowerReward(item,'pending');if(reward.status==='resolved')return;
-  syncPowerQueue();updatePowerAlert();scheduleSave();decisionPaused=true;clearCombatTimers();toast('POWER AWAKENING READY');
-  setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible&&!storyPaused)showPowerModal()},120)
+  const reward=ensurePowerReward(item,'pending');
+  if(reward.status==='resolved')return;
+  syncPowerQueue();
+  updatePowerAlert();
+  scheduleSave();
+  toast('POWER AWAKENING READY');
 }
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
 function rollPowerChoices(item){
@@ -1971,7 +1969,6 @@ function showPowerModal(){
   repairPowerState('modal-open');
   const item=pendingPowerRewards()[0];
   if(!item||choiceLocked){updatePowerAlert();return}
-  decisionPaused=true;clearCombatTimers();
   powerQueue=pendingPowerRewards();
   powerModalVisible=true;
   $('powerModal').classList.remove('hidden');
@@ -1991,8 +1988,7 @@ function hidePowerModal(){
   $('rerollPowerBtn').disabled=false;
   $('gamblePowerBtn').disabled=false;
   syncPowerQueue();
-  updatePowerAlert();
-  if(!pendingPowerRewards().length){decisionPaused=false;if(!storyPaused)startCombatTimers()}
+  updatePowerAlert()
 }
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
@@ -2035,9 +2031,11 @@ function choosePower(id,choiceId){
   $('rerollPowerBtn').disabled=false;
   $('gamblePowerBtn').disabled=false;
 
-  repairPowerState('post-choice');saveNow();renderAll();updatePowerAlert();
-  toast(power.name+(s.powerMastery?.[id]?' MASTERY '+s.powerMastery[id]:' ACQUIRED'));
-  if(pendingPowerRewards().length){decisionPaused=true;setTimeout(showPowerModal,180)}else{decisionPaused=false;if(!storyPaused)startCombatTimers()}
+  repairPowerState('post-choice');
+  saveNow();
+  renderAll();
+  updatePowerAlert();
+  toast(power.name+(s.powerMastery?.[id]?' MASTERY '+s.powerMastery[id]:' ACQUIRED'))
 }
 function rerollPower(){
   repairPowerState('reroll');
@@ -2296,7 +2294,7 @@ function powerPreview(power){
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.2.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.2</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2390,7 +2388,7 @@ function updateEnemyTimer(){clearInterval(timers.enemy);timers.enemy=setInterval
 function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy)}
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
-  const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused||decisionPaused)return;
+  const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
   s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.playerFreeze=Math.max(0,(s.fight.playerFreeze||0)-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   s.hp=clamp(s.hp+s.maxHp*regenRate()*dt,0,s.maxHp);
@@ -2411,9 +2409,8 @@ function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow
 function restore(){
   const data=PF_SAVE.load();if(!data)return false;
   const savedMeta=data.meta&&typeof data.meta==='object'?data.meta:{};
-  for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber','rivalLevel','nemesisVictories','nemesisEscapes','reputation','legacyMarks'])meta[key]=clamp(savedMeta[key]??meta[key],key==='reputation'?-500:0,1e150);
+  for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber','rivalLevel'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
   meta.rivalAdaptation=typeof savedMeta.rivalAdaptation==='string'?savedMeta.rivalAdaptation:'';meta.ascensionPath=typeof savedMeta.ascensionPath==='string'?savedMeta.ascensionPath:'';
-  meta.legacyChoice=typeof savedMeta.legacyChoice==='string'?savedMeta.legacyChoice:'';meta.cityState=typeof savedMeta.cityState==='string'?savedMeta.cityState:'UNKNOWN';meta.nemesis=savedMeta.nemesis&&typeof savedMeta.nemesis==='object'?savedMeta.nemesis:null;
   for(const key of ['discoveries','storyFlags','seenStories'])meta[key]=Array.isArray(savedMeta[key])?savedMeta[key].filter(x=>typeof x==='string'):[];
   for(const node of PF_CONFIG.soulTree)meta.soulTree[node.id]=Math.floor(clamp(savedMeta.soulTree?.[node.id]||0,0,node.max));
 
@@ -2447,8 +2444,6 @@ function restore(){
     s.coins=clamp(s.coins+offline,0,1e150);
     toast('WELCOME BACK +'+fmt(offline)+' COINS')
   }
-  decisionPaused=pendingPowerRewards().length>0;
-  if(decisionPaused)setTimeout(()=>{if(!storyPaused)showPowerModal()},250);
   return true
 }
 function bind(){
