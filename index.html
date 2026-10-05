@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.4</title>
+  <title>Powerfall: Ascension Prototype v1.5</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -524,7 +524,9 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .battlefield.boss-phase-3 .scene-art{filter:saturate(1.45) contrast(1.16) brightness(.86)}
 .fighter.enemy.wall{transition:filter .25s,transform .25s}
 .battlefield.boss-phase-3 .fighter.enemy.wall{filter:drop-shadow(0 0 18px rgba(255,69,75,.9));transform:scale(1.08)}
-/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.4 Visual Identity */
+/* POWERFALL v1.2 WORLD & LEGACY */.battlefield.era-crisis::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(255,73,42,.08) 48%,transparent 70%);animation:crisisPulse 3.8s ease-in-out infinite}.battlefield.era-invasion .scene-glow{background:radial-gradient(circle at 50% 35%,rgba(112,255,197,.16),transparent 58%)!important}.battlefield.era-cosmic{box-shadow:inset 0 0 110px rgba(69,42,148,.28),0 12px 38px rgba(0,0,0,.4)!important}.battlefield.era-origin{box-shadow:inset 0 0 120px rgba(190,73,255,.22),inset 0 -40px 80px rgba(52,202,255,.10)!important}.battlefield.rep-hero .hero{filter:drop-shadow(0 0 12px rgba(91,218,255,.8)) brightness(1.08)}.battlefield.rep-feared .hero{filter:drop-shadow(0 0 14px rgba(255,59,98,.82)) contrast(1.1)}@keyframes crisisPulse{50%{opacity:.45}}/* v1.5 Combat Identity */
+.battlefield.build-rage .hero .aura{box-shadow:0 0 34px #ff3d6d99}.battlefield.build-speed .hero .aura{box-shadow:0 0 34px #58eaffaa}.battlefield.build-durability .hero .aura{box-shadow:0 0 38px #d6a85baa}.battlefield.build-regen .hero .aura{box-shadow:0 0 34px #4eea8faa}.battlefield.build-cosmic .hero .aura{box-shadow:0 0 42px #a269ffaa}.battlefield.build-fire .hero .aura{box-shadow:0 0 42px #ff6a3daa}.battlefield.build-psychic .hero .aura{box-shadow:0 0 40px #d26dffaa}.battlefield.build-tech .hero .aura{box-shadow:0 0 36px #41e6cbaa}
+/* v1.4 Visual Identity */
 .loadout-strip{width:100%;display:flex;align-items:center;gap:9px;border:1px solid #284866;background:linear-gradient(90deg,#101b2b,#17243a);border-radius:12px;padding:7px 9px;color:#eaf7ff;text-align:left}.loadout-title{min-width:74px}.loadout-title small{display:block;font-size:8px;letter-spacing:.14em;color:#7fa1ba}.loadout-title b{font-size:9px}.loadout-icons{display:flex;gap:5px;flex:1;min-width:0}.loadout-power{width:31px;height:31px;flex:0 0 31px;border-radius:9px;display:grid;place-items:center;position:relative;border:1px solid #42617b;background:#162438}.loadout-power b{font-size:9px}.loadout-power i{position:absolute;inset:auto 4px 3px;height:2px;border-radius:2px;background:#789}.loadout-power.bio i{background:#45d483}.loadout-power.fire i{background:#ff714d}.loadout-power.speed i{background:#54dfff}.loadout-power.psi i{background:#c178ff}.loadout-power.tech i{background:#52e0ca}.loadout-power.dark i{background:#e05086}.loadout-power.cosmic i{background:#9f83ff}.loadout-power.legendary{box-shadow:inset 0 0 0 1px #e6b84d}.loadout-power.cosmic{box-shadow:inset 0 0 0 1px #b388ff}.loadout-more{font-size:9px;font-weight:900;color:#80d8ff}.loadout-empty{font-size:10px;color:#71879a;font-style:normal}
 .deck-modal{align-items:flex-start;padding:calc(env(safe-area-inset-top) + 14px) 10px 14px}.deck-card{width:min(680px,100%);max-height:calc(100dvh - 30px);overflow:auto;background:#09111d;border:1px solid #34516e;border-radius:18px;padding:14px}.deck-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.deck-head small{letter-spacing:.16em;color:#72cfff}.deck-head h2{margin:3px 0}.deck-head p{margin:0;color:#91a7bb;font-size:12px}.deck-synergy{margin:12px 0;padding:10px;border-left:3px solid #ae72ff;background:#171328;color:#d9c7ff;font-size:11px;font-weight:800}.deck-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.deck-power{display:flex;gap:10px;text-align:left;padding:10px;border:1px solid #263b50;border-radius:12px;background:#101a27;color:#e9f5ff;min-width:0}.deck-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:10px;background:#192a3c;font-size:10px;font-weight:900}.deck-power span:last-child{min-width:0}.deck-power strong,.deck-power small,.deck-power em,.deck-power i{display:block}.deck-power small{font-size:8px;color:#7f9bb2;margin:2px 0 6px}.deck-power em{font-size:10px;font-style:normal;color:#bfd0dd;line-height:1.35}.deck-power i{font-size:9px;color:#ff8fa6;margin-top:6px}.deck-power.bio{border-left:3px solid #45d483}.deck-power.fire{border-left:3px solid #ff714d}.deck-power.speed{border-left:3px solid #54dfff}.deck-power.psi{border-left:3px solid #c178ff}.deck-power.tech{border-left:3px solid #52e0ca}.deck-power.dark{border-left:3px solid #e05086}.deck-power.cosmic{border-left:3px solid #9f83ff}
 .major-banner{position:fixed;z-index:90;left:50%;top:16%;transform:translateX(-50%);width:min(92vw,520px);padding:14px 18px;text-align:center;border:1px solid #d7ad4d;border-radius:14px;background:linear-gradient(135deg,#231b0b,#0c1420);box-shadow:0 12px 40px #000b;animation:majorIn .3s ease}.major-banner small,.major-banner strong,.major-banner span{display:block}.major-banner small{font-size:9px;letter-spacing:.2em;color:#f4ca63}.major-banner strong{font-size:18px;margin:4px 0}.major-banner span{font-size:11px;color:#c9d4df}.major-banner.power{border-color:#a86cff}.major-banner.operation{border-color:#ff5d5d;background:linear-gradient(135deg,#321010,#111923)}.identity-reveal{position:fixed;z-index:110;inset:18% 5% auto;text-align:center;padding:28px 16px;border:1px solid #d7b7ff;border-radius:18px;background:radial-gradient(circle at 50% 20%,#3b1f62,#080b14 68%);box-shadow:0 0 70px #9e55ff55;animation:identityIn .55s ease}.identity-reveal small,.identity-reveal strong,.identity-reveal span{display:block}.identity-reveal small{letter-spacing:.3em;color:#d3a9ff}.identity-reveal strong{font-size:clamp(25px,7vw,42px);margin:9px 0;color:#fff}.identity-reveal span{color:#d4c8df}.power-modal:not(.hidden) .power-card{animation:awakeningIn .45s cubic-bezier(.2,.8,.2,1)}.power-modal[data-rarity="epic"]{background:radial-gradient(circle,#7b3cb733,#020611dd 65%)}.power-modal[data-rarity="legendary"]{background:radial-gradient(circle,#d48b2438,#020611e8 65%)}.power-modal[data-rarity="cosmic"]{background:radial-gradient(circle,#7b4cff55,#01020aee 65%)}.evolution-event .event-card{border-color:#c467ff;background:linear-gradient(145deg,#22132d,#0c1320)}.story-modal.cinematic{background:linear-gradient(#000c,#020712f2)}.story-modal.cinematic .story-card{border-color:#65778a;background:#080d14}.story-modal.cinematic .story-portrait{transform:scale(1.08)}
@@ -538,7 +540,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.4</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.5</div>
         </div>
         <div class="resource-strip">
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -914,14 +916,14 @@ window.PF_CONFIG = {
   ];
 
   PF_POWERS.push(
-    p('titanic_physique','Titanic Physique','HP4','rare','MAX HP ×4. Regeneration rate is unchanged.',s=>{s.maxHp*=4;s.hp*=4},['durability','vitality'],'Huge health pool takes proportionally longer to refill'),
-    p('vital_engine','Vital Engine','VIT','epic','MAX HP ×2 and REGEN ×2.',s=>{s.maxHp*=2;s.hp*=2;s.regen*=2},['vitality','regen'],'Scales both sides of health'),
+    p('titanic_physique','Titanic Physique','HP4','rare','MAX HP ×4. Healing per second stays roughly where it was.',s=>{s.maxHp*=4;s.hp*=4;s.regenEfficiency=(s.regenEfficiency??1)*.25},['durability','vitality'],'Your health pool quadruples without quadrupling healing throughput'),
+    p('vital_engine','Vital Engine','VIT','epic','MAX HP ×2 while regeneration scales with the larger pool.',s=>{s.maxHp*=2;s.hp*=2},['vitality','regen'],'Health and healing throughput grow together'),
     p('adrenal_metabolism','Adrenal Metabolism','ADR','epic','Current HP becomes Agility: +0.1 AGI per HP.',s=>{s.hpAgility=.1},['vitality','speed'],'Losing health strips bonus Agility'),
     p('near_death_velocity','Near-Death Velocity','NDV','epic','Missing HP becomes Agility: +0.12 AGI per missing HP.',s=>{s.missingHpAgility=.12},['rage','speed','vitality'],'Strongest while dangerously wounded'),
     p('blood_furnace','Blood Furnace','BLD','legendary','Burn 0.6% current HP/sec to fuel damage.',s=>{s.bloodFurnace=true},['dark','regen','rage'],'Consumes your health continuously'),
     p('vital_force','Vital Force','VFX','epic','Every 100 Max HP grants +4% damage.',s=>{s.vitalDamage=.04},['strength','vitality'],'Max HP becomes offense'),
-    p('scar_tissue','Scar Tissue','SCR','rare','MAX HP ×2.8 and +12% resistance; REGEN ×0.35.',s=>{s.maxHp*=2.8;s.hp*=2.8;s.armor+=.12;s.regen*=.35},['durability','vitality'],'Regeneration ×0.35'),
-    p('metabolic_overdrive','Metabolic Overdrive','MET','legendary','REGEN contributes to attack speed and damage.',s=>{s.regenEngine=true},['regen','speed','energy'],'Weak without regeneration investment')
+    p('scar_tissue','Scar Tissue','SCR','rare','MAX HP ×2.8 and +12% resistance; healing throughput is heavily reduced.',s=>{s.maxHp*=2.8;s.hp*=2.8;s.armor+=.12;s.regenEfficiency=(s.regenEfficiency??1)*.125},['durability','vitality'],'Huge health and armour, but recovery barely scales'),
+    p('metabolic_overdrive','Metabolic Overdrive','MET','legendary','REGEN contributes to attack speed and damage.',s=>{s.regenEngine=true},['regen','speed','energy'],'Weak without regeneration investment'),p('armoured_muscle','Armoured Muscle','AMR','epic','Every 10% RES grants +12% damage.',s=>{s.resistanceDamage=.12},['strength','durability','metal'],'Needs resistance investment'),p('velocity_lens','Velocity Lens','VEL','epic','Faster attacks generate bonus critical chance.',s=>{s.speedCrit=true},['speed','vision','reflex'],'Slow builds gain little'),p('pain_engine','Pain Engine','PAIN','legendary','Missing HP becomes damage, up to +180%.',s=>{s.missingHpDamage=1.8},['rage','strength','vitality'],'Peak output requires low health'),p('block_capacitor','Block Capacitor','CAP','epic','Blocked damage charges your next strike.',s=>{s.blockCapacitor=true},['durability','energy','strength'],'Requires incoming hits'),p('critical_velocity','Critical Velocity','CVL','legendary','Critical hits briefly accelerate attack rate.',s=>{s.critVelocity=true},['speed','combat','vision'],'Needs reliable critical chance'),p('power_density','Power Density','DEN','cosmic','Each different power adds +7% damage.',s=>{s.powerDensity=.07},['cosmic','mutation','energy'],'Scales with a deep build')
   );
   PF_POWERS.push(
     p("kinetic_storage","Kinetic Storage","KIN","rare","Store 60% of damage taken for the next hit (up to 4\u00d7 damage)",s=>{s.kineticStorage=true},["energy", "durability"],""),
@@ -1117,9 +1119,9 @@ function defaultRun(){
   return {
     runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
-    fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0},
+    fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,bloodFuel:0,blockCharge:0,critHasteUntil:0},
     stage:1,patrolXP:0,patrolClears:0,coins:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,
-    attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,armor:0,dodge:0,
+    attackMs:PF_CONFIG.startingStats.attackMs,crit:PF_CONFIG.startingStats.crit+t.instinct*.02,regen:0,regenEfficiency:1,armor:0,dodge:0,
     lifesteal:0,doubleHit:0,berserk:false,revives:0,burstMult:2,enemySlow:1,adaptive:false,adaptiveBonus:1,
     gammaRage:false,storyDamageBonus:1,storyCoinBonus:1,tempBossBonus:1,
     powers:[],combos:[],visual:[],artifacts:[],eventStages:[],powerEvolutions:{},kills:0,runBosses:0,elitesBeaten:0,critsLanded:0,rivalWins:0,modifier:null,challenge:null,activeCdUntil:0,dodgeCdUntil:0,bountyClaimed:{},nextEliteDouble:0,
@@ -1171,8 +1173,8 @@ function defence(target=s){return clamp(target.armor+.2*(1-10/Math.max(10,target
 function resistance(target=s){return defence(target)}
 function blockChance(target=s){return clamp(.02+.16*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.08:0)+(target.kineticStorage?.04:0),.02,.32)}
 function blockPower(target=s){return clamp(.35+.25*(1-10/Math.max(10,target.attributes.strength))+(hasPower('iron_skin')?.10:0),.35,.72)}
-function regenRate(target=s){if(target===s&&s.fight?.regenLockUntil>Date.now())return 0;const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5);return enemyPassive('void')?base*.45:base}
-function critChance(target=s){return clamp(target.crit+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
+function regenRate(target=s){if(target===s&&s.fight?.regenLockUntil>Date.now())return 0;const base=clamp(target.regen+.025*(1-10/Math.max(10,target.attributes.vitality))+(target.lastStand&&target.hp/target.maxHp<.3?.08:0)+(mirrored('regen',target)?.025:0),0,.5)*(target.regenEfficiency??1);return enemyPassive('void')?base*.45:base}
+function critChance(target=s){const speedBonus=target===s&&target.speedCrit?Math.min(.28,Math.max(0,1000/effectivePlayerAttackMs()-1)*.035):0;return clamp(target.crit+speedBonus+.22*(1-10/Math.max(10,target.attributes.perception))+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.25:0)+(target.probabilityWarp?target.fight.misses*.12:0)+(mirrored('precision',target)?.2:0),0,.9)}
 function critEffect(target=s){return clamp(target.critMultiplier+.6*(1-10/Math.max(10,target.attributes.perception)),1,10)}
 function playerAccuracy(target=s){return clamp(hitChance(target.attributes.perception,target.enemy?.attributes?.agility||10,!target.powerNullification&&target.enemy?.passive==='evasion'?.12:0)+(target.predatorVision&&target.enemyHp/target.enemyMaxHp<.5?.08:0)-(enemyPassive('reality')?.10:0),.45,.98)}
 function mirrored(passive,target=s){return target.mirrorMutation&&target.enemy?.boss&&target.enemy.passive===passive}
@@ -1447,7 +1449,7 @@ function identityCue(text){
   const field=$('battlefield');field.classList.add('power-identity-flash');setTimeout(()=>field.classList.remove('power-identity-flash'),300)
 }
 function tickPowerIdentity(dt){
-  if(s.bloodFurnace&&s.hp>1){const burn=Math.min(s.hp-1,s.hp*.006*dt);s.hp-=burn;if(burn>0)s.damageMult*=1+Math.min(.0007,burn/Math.max(1,s.maxHp)*.012)}
+  if(s.bloodFurnace&&s.hp>1){const burn=Math.min(s.hp-1,s.hp*.006*dt);s.hp-=burn;if(burn>0)s.fight.bloodFuel=Math.min(1.5,(s.fight.bloodFuel||0)+burn/Math.max(1,s.maxHp)*2.5)}
   if(s.fight.burn>0&&s.enemyHp>0){const burn=Math.min(s.enemyHp,s.fight.burn*dt);s.enemyHp=Math.max(0,s.enemyHp-burn);s.fight.burn=Math.max(0,s.fight.burn*(1-dt*.22));if(s.enemyHp<=0)enemyDefeated()}
   if(hasPower('regeneration')&&s.hp>=s.maxHp*.98)s.fight.regenShield=Math.min(s.maxHp*.25,(s.fight.regenShield||0)+s.maxHp*.025*dt);
 }
@@ -1655,7 +1657,7 @@ function freshRun(){
 }
 function dynamicAgility(target=s){return target.attributes.agility+(target.hpAgility||0)*target.hp+(target.missingHpAgility||0)*Math.max(0,target.maxHp-target.hp)}
 function totalDamage(){
-  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);
+  let d=(s.baseDamage+s.flatDamage)*s.damageMult*s.adaptiveBonus*s.storyDamageBonus*(1+meta.soulTree.might*.15);if(s.vitalDamage)d*=1+s.vitalDamage*(s.maxHp/100);if(s.regenEngine)d*=1+Math.min(2,regenRate()*3);if(s.overchargeSkin&&s.fight?.overchargeUntil>Date.now())d*=1.45;if(s.resistanceDamage)d*=1+s.resistanceDamage*(resistance()/.10);if(s.missingHpDamage)d*=1+s.missingHpDamage*(1-s.hp/Math.max(1,s.maxHp));if(s.powerDensity)d*=1+s.powerDensity*s.powers.length;if(s.fight?.bloodFuel)d*=1+s.fight.bloodFuel;
   if(s.berserk&&s.hp/s.maxHp<.4)d*=3;
   if(s.gammaRage&&s.hp/s.maxHp<.5)d*=1.3;
   if(s.enemy&&s.enemy.wall)d*=s.tempBossBonus*(1+meta.soulTree.bossbane*.20);
@@ -1664,7 +1666,7 @@ function totalDamage(){
 function effectiveEnemyAttackMs(){return Math.max(380,(s.enemy?.attackMs||1200)*s.enemySlow*(enemyPassive('haste')?.8:1)*(mirrored('haste')?1.3:1))}
 
 function spawnEnemy(){
-  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0};
+  s.fight={hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,burn:0,chill:0,phaseCharge:0,retaliation:0,regenShield:0,bossPhase:1,playerFreeze:0,bloodFuel:0,blockCharge:0,critHasteUntil:0};
   s.enemy=enemyProfile(PF_ENEMIES.get(s.stage),s.stage); s.enemyMaxHp=s.enemy.maxHp; s.enemyHp=s.enemy.maxHp;
 if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp}setupRival();maybeSetupNemesis();maybeCounterBuild();s.enemyMaxHp=s.enemy.maxHp;s.enemyHp=s.enemy.maxHp;
   updateEnemyTimer();
@@ -1681,9 +1683,9 @@ function playerAttack(manual=false,echo=false){
   let damage=totalDamage()*(manual?s.burstMult:echo?.72:1)*(1+Math.min(evolution('hyper_speed')==='infinite_momentum'?40:25,s.fight.combo)*.025);
   if(s.momentum)damage*=1+Math.min(10,s.fight.hits)*.12;
   if(s.executioner&&s.enemyHp/s.enemyMaxHp<.3)damage*=4;
-  if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}
+  if(s.kineticStorage){damage+=s.fight.kinetic;s.fight.kinetic=0}if(s.fight.blockCharge){damage+=s.fight.blockCharge;s.fight.blockCharge=0;identityCue('CAPACITOR RELEASE')}
   damage=identityDamage(damage,manual);
-  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6}
+  const crit=Math.random()<critChance();if(crit){damage*=critEffect();s.fight.misses=0;s.critsLanded++;chargeUltimate(5);checkBounties();if(s.impossibleLuck&&Math.random()<.18)damage*=1.6;if(s.critVelocity)s.fight.critHasteUntil=Date.now()+1800}
   else chargeUltimate(manual?3:1.5);
   s.fight.hits++;s.fight.combo=Math.min(99,s.fight.combo+1);
   if(enemyPassive('armour'))damage*=.7;
@@ -1710,10 +1712,10 @@ function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
   if((s.enemy.elite||s.enemy.wall)&&s.fight.incoming%(s.enemy.wall?3:4)===0){startTelegraph();return}
-  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,s.attributes.agility,dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
+  if((s.perfectReflex&&s.fight.incoming%4===0)||Math.random()>hitChance(s.enemy.attributes.perception,dynamicAgility(s),dodgeChance()+(mirrored('evasion')?.15:0))){if(now-lastCombatFx>160)floatText('MISS',true);return}
   let rawDmg=s.enemy.damage*(.88+Math.random()*.24)*s.incomingMult;
   const resisted=rawDmg*resistance(),blocked=Math.random()<blockChance();
-  let dmg=rawDmg-resisted;if(blocked)dmg*=1-blockPower();
+  let dmg=rawDmg-resisted;if(blocked){const prevented=dmg*blockPower();dmg-=prevented;if(s.blockCapacitor)s.fight.blockCharge=Math.min(totalDamage()*8,(s.fight.blockCharge||0)+prevented*.85)}
   const crit=Math.random()<(enemyPassive('precision')?.25:.05);if(crit)dmg*=1.7;
   if(enemyPassive('rage')&&s.enemyHp/s.enemyMaxHp<.4)dmg*=1.6;
   if(s.enemy?.nemesis&&s.enemy.nemesisAdaptation===dominantFamily())dmg*=1.22;
@@ -1721,7 +1723,7 @@ function enemyAttack(){
   if(s.fight.regenShield>0){const absorbed=Math.min(s.fight.regenShield,dmg);s.fight.regenShield-=absorbed;dmg-=absorbed;if(dmg<=0){identityCue('REGEN SHIELD');return}}
   if(enemyPassive('origin'))dmg*=1.25;
   dmg=clamp(dmg,0,1e150);
-  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);if(s.reactorBody)chargeUltimate(18);if(s.overchargeSkin){s.fight.overchargeUntil=Date.now()+3500;s.damageMult*=1.08}identityCue('ABSORBED');renderHUD();return}
+  if(s.energyAbsorption&&s.enemy.damageType==='elemental'&&Math.random()<.35){s.hp=clamp(s.hp+dmg,0,s.maxHp);if(s.reactorBody)chargeUltimate(18);if(s.overchargeSkin){s.fight.overchargeUntil=Date.now()+3500}identityCue('ABSORBED');renderHUD();return}
   s.fight.hits=0;s.fight.combo=0;
   if(hasPower('iron_skin'))s.fight.retaliation=Math.min(3,(s.fight.retaliation||0)+1);
   if(s.kineticStorage)s.fight.kinetic=Math.min(totalDamage()*(s.impactEngine?7:4),s.fight.kinetic+dmg*(s.impactEngine?1:.6));
@@ -1747,7 +1749,7 @@ function enemyDefeated(){
   const paid=Math.floor(reward);s.coins=clamp(s.coins+paid,0,1e150);showCoinBurst(paid);
   if(s.enemy.elite){s.elitesBeaten++;earnReputation(s.enemy.nemesis?10:3,'elite');if(Math.random()<.18)grantArtifact();checkBounties()}
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
-  if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);reward*=2.5;grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
+  if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);const nemesisBonus=Math.floor(reward*1.5);s.coins=clamp(s.coins+nemesisBonus,0,1e150);showCoinBurst(nemesisBonus);grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
   if(wasWall&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('WALL BOSS DEFEATED - MUTATION EARNED')}
   if(wasWall){s.stage=Math.min(10000,s.stage+1);s.patrolXP=0}else{const goal=s.stage<25?2:s.stage<100?3:4;s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);
   checkPowerMilestone(s.stage);checkCombos();checkChallenge();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused)setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible)showPowerModal()},180);
@@ -2220,7 +2222,7 @@ function renderHUD(force=false){
   $('damageStat').textContent=fmt(totalDamage());$('apsStat').textContent=(1000/Math.max(120,s.attackMs)).toFixed(1);$('regenStat').textContent=(regenRate()*100).toFixed(1)+'%';$('critStat').textContent=Math.round(critChance()*100)+'%';$('resistStat').textContent=Math.round(resistance()*100)+'%';
 
   const field=$('battlefield');
-  field.classList.remove('world-city','world-global','world-planetary','world-cosmic');
+  field.classList.remove('world-city','world-global','world-planetary','world-cosmic','build-rage','build-speed','build-durability','build-regen','build-cosmic','build-fire','build-psychic','build-tech');const fam=dominantFamily();field.classList.add('build-'+(fam==='strength'?'durability':fam==='lightning'?'speed':fam==='gravity'||fam==='phase'?'psychic':fam));
   field.classList.add(worldFor(s.stage).className);
 
   const hero=$('heroFighter');for(const cls of ['identity-storm','identity-fire','identity-titan','identity-void','identity-blood','identity-tech','identity-phase','identity-gravity'])hero.classList.remove(cls);
@@ -2329,7 +2331,7 @@ function closePowerDeck(){$('powerDeckModal').classList.add('hidden')}
 
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.4</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.5</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2418,7 +2420,7 @@ function closeUpgrades(){$('upgradeSheet').classList.add('hidden')}
 function openProfile(){renderProfile();$('profileModal').classList.remove('hidden')}
 function closeProfile(){$('profileModal').classList.add('hidden')}
 
-function effectivePlayerAttackMs(){return Math.max(120,s.attackMs/(s.regenEngine?1+Math.min(1.25,regenRate()*2):1))}
+function effectivePlayerAttackMs(){let mult=s.regenEngine?1+Math.min(1.25,regenRate()*2):1;if(s.critVelocity&&s.fight?.critHasteUntil>Date.now())mult*=1.55;return Math.max(120,s.attackMs/mult)}
 function updateAttackTimer(){clearInterval(timers.attack);timers.attack=setInterval(()=>playerAttack(false),effectivePlayerAttackMs())}
 function updateEnemyTimer(){clearInterval(timers.enemy);timers.enemy=setInterval(enemyAttack,Math.max(380,effectiveEnemyAttackMs()))}
 function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy)}
