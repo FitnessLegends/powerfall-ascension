@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.11.2</title>
+  <title>Powerfall: Ascension Prototype v1.11.3</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -915,6 +915,118 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
     font-size:9px!important;
   }
 }
+
+/* v1.11.3 Mobile HUD compression */
+@media(max-width:520px){
+  #gameScreen{
+    gap:5px!important;
+    grid-template-rows:auto auto minmax(310px,1fr) 42px 54px 58px!important;
+  }
+
+  .milestone-strip{
+    min-height:48px!important;
+    padding:6px 9px!important;
+    border-radius:11px!important;
+  }
+  .milestone-strip strong{font-size:12px!important}
+  .milestone-next{font-size:9px!important}
+
+  .combat-action-strip{
+    height:42px!important;
+    margin:0!important;
+  }
+  .combat-action-strip .battle-burst{
+    height:42px!important;
+    min-height:42px!important;
+    border-radius:10px!important;
+    gap:5px!important;
+  }
+  .combat-action-strip .battle-burst span{font-size:15px!important}
+  .combat-action-strip .battle-burst strong{font-size:9px!important}
+  .combat-action-strip .battle-burst small{display:none!important}
+
+  .power-rack{
+    height:54px!important;
+    min-height:54px!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:7px!important;
+    padding:5px 7px!important;
+    border-radius:11px!important;
+    overflow:hidden!important;
+  }
+  .power-rack .loadout-strip{
+    flex:0 0 126px!important;
+    min-width:126px!important;
+    padding:3px 5px!important;
+    border:0!important;
+    background:transparent!important;
+  }
+  .power-rack .loadout-title small{display:none!important}
+  .power-rack .loadout-title b{
+    display:block!important;
+    font-size:10px!important;
+    line-height:1.05!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  .power-rack .loadout-more{
+    display:block!important;
+    margin-top:3px!important;
+    font-size:6.5px!important;
+    color:#77d7ff!important;
+    white-space:nowrap!important;
+  }
+  .power-rack .loadout-icons{
+    flex:1!important;
+    min-width:0!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:4px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:0!important;
+  }
+  .power-rack .loadout-empty{
+    font-size:7px!important;
+    white-space:nowrap!important;
+  }
+  .rack-power{
+    min-width:38px!important;
+    width:38px!important;
+    max-width:38px!important;
+    padding:0!important;
+  }
+  .rack-power .power-symbol{
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+  }
+  .rack-power .power-symbol .glyph{font-size:17px!important}
+  .rack-power .power-symbol small{font-size:5px!important}
+  .rack-power b{display:none!important}
+
+  .bottom-dock{
+    min-height:58px!important;
+    height:58px!important;
+    margin-top:0!important;
+    padding:4px!important;
+  }
+  .dock-button{
+    min-height:48px!important;
+    padding:4px 2px!important;
+  }
+  .dock-button span{font-size:15px!important}
+  .dock-button small{font-size:6.5px!important}
+
+  /* Keep useful combat information, remove duplicate labels. */
+  .faction-chip{display:none!important}
+  .combat-system-status span:nth-child(3){display:none!important}
+  .combat-system-status{gap:3px!important}
+  .combat-system-status span{padding:3px 5px!important}
+  .location-chip{font-size:6px!important}
+}
 </style>
 </head>
 <body>
@@ -923,7 +1035,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.11.2 · COMPACT AWAKENING</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.11.3 · VARIED POWERS</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1553,7 +1665,7 @@ function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*Math.pow(1.015,t.survival||0)*Math.pow(1.10,meta.cosmicLaws?.law_survival||0)*achievementSurvivalMult();
   return {
-    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},awakeningQueue:[],powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
+    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},awakeningQueue:[],recentPowerOffers:[],powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,bloodFuel:0,blockCharge:0,critHasteUntil:0},
     stage:1,patrolXP:0,patrolClears:0,operationReady:false,operationStage:0,inOperation:false,operationWins:0,coins:Math.floor((meta.bestStage||1)*(t.soul_echo||0)*2),overkillCarry:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,challengeMode:'',
@@ -1596,6 +1708,7 @@ target.artifacts=Array.isArray(target.artifacts)?target.artifacts.filter(x=>type
     target.powerEvolutions=target.powerEvolutions&&typeof target.powerEvolutions==='object'?target.powerEvolutions:{};
   target.powerRewards=target.powerRewards&&typeof target.powerRewards==='object'&&!Array.isArray(target.powerRewards)?target.powerRewards:{};
   target.awakeningQueue=Array.isArray(target.awakeningQueue)?target.awakeningQueue.filter(x=>x&&typeof x==='object'):[];
+  target.recentPowerOffers=Array.isArray(target.recentPowerOffers)?target.recentPowerOffers.filter(id=>typeof id==='string'&&byId(id)).slice(-12):[];
   target.powerMastery=target.powerMastery&&typeof target.powerMastery==='object'&&!Array.isArray(target.powerMastery)?target.powerMastery:{};
   target.runStartedAt=clamp(finite(target.runStartedAt,Date.now()),1,Date.now());
   target.masteryBreak=clamp(finite(target.masteryBreak,0),0,100);
@@ -2519,23 +2632,52 @@ function rollPowerChoices(item){
   const owned=new Set(s.powers);
   const eligiblePowers=PF_POWERS.filter(powerUnlocked);
   const unowned=eligiblePowers.filter(p=>!owned.has(p.id));
+  const recent=new Set(s.recentPowerOffers||[]);
   const stage=item.stage||s.stage;
-  const bias=Math.floor((meta.soulTree.rarity_bias||0)/25)+(meta.cosmicLaws?.law_mutation||0)+(matrixMilestoneUnlocked(PF_MATRIX_MILESTONES[1])?1:0);const weights={common:Math.max(8,(stage<80?48:25)-bias*2),rare:35+bias,epic:(stage<50?8:25)+bias*1.4,legendary:(stage<100?1:12)+bias*.7,cosmic:(stage<250?0:5)+bias*.3};
+
+  // v1.11.3: rarity bias only uses systems that actually exist.
+  // The previous PF_MATRIX_MILESTONES reference threw here and forced the
+  // emergency starter fallback on every awakening.
+  const bias=Math.floor((meta.soulTree.rarity_bias||0)/25)+(meta.cosmicLaws?.law_mutation||0);
+  const weights={
+    common:Math.max(8,(stage<80?48:25)-bias*2),
+    rare:35+bias,
+    epic:(stage<50?8:25)+bias*1.4,
+    legendary:(stage<100?1:12)+bias*.7,
+    cosmic:(stage<250?0:5)+bias*.3
+  };
+
   function weightedPick(pool,exclude){
     let available=pool.filter(p=>!exclude.has(p.id)&&rarityValue(p.rarity)>=min);
     if(!available.length)available=pool.filter(p=>!exclude.has(p.id));
     if(!available.length)return null;
+
     const weighted=[];
-    for(const x of available){let w=weights[x.rarity]??1;if(rarityValue(x.rarity)<min)w=.1;for(let i=0;i<Math.max(1,Math.ceil(w*x.weight));i++)weighted.push(x)}
+    for(const x of available){
+      let w=weights[x.rarity]??1;
+      if(rarityValue(x.rarity)<min)w=.1;
+      if(recent.has(x.id))w*=.14;
+      if(!owned.has(x.id))w*=1.35;
+      const tickets=Math.max(1,Math.ceil(w*(x.weight||1)));
+      for(let i=0;i<tickets;i++)weighted.push(x)
+    }
     return weighted[Math.floor(Math.random()*weighted.length)]||available[0]
   }
-  const count=Math.min(7,3+(meta.soulTree.choice||0)),picked=[],used=new Set();
+
+  const count=Math.min(7,3+(meta.soulTree.choice||0));
+  const picked=[],used=new Set();
   while(picked.length<count&&used.size<eligiblePowers.length){
     let pool=unowned.length?unowned:eligiblePowers;
-    // Later runs may intentionally roll one owned power as a Mastery choice.
-    if(stage>=125&&s.powers.length&&picked.length===count-1&&Math.random()<.35)pool=eligiblePowers.filter(p=>owned.has(p.id));
+    if(stage>=125&&s.powers.length&&picked.length===count-1&&Math.random()<.35){
+      pool=eligiblePowers.filter(p=>owned.has(p.id))
+    }
     const x=weightedPick(pool,used)||weightedPick(eligiblePowers,used);
-    if(!x)break;picked.push(x);used.add(x.id)
+    if(!x)break;
+    picked.push(x);used.add(x.id)
+  }
+
+  if(picked.length){
+    s.recentPowerOffers=[...(s.recentPowerOffers||[]),...picked.map(p=>p.id)].slice(-12)
   }
   return picked
 }
@@ -3069,7 +3211,7 @@ function powerPreview(power){
 function powerTone(p){const t=new Set(p?.tags||[]);if(t.has('fire'))return'fire';if(t.has('regen')||t.has('vitality'))return'bio';if(t.has('speed')||t.has('lightning'))return'speed';if(t.has('tech'))return'tech';if(t.has('psychic')||t.has('gravity')||t.has('phase'))return'psi';if(t.has('dark')||t.has('rage'))return'dark';if(t.has('cosmic'))return'cosmic';return'strength'}
 function powerGlyph(p){const t=new Set(p?.tags||[]);if(t.has('fire'))return'♨';if(t.has('lightning'))return'ϟ';if(t.has('speed'))return'»';if(t.has('regen'))return'✚';if(t.has('vitality'))return'♥';if(t.has('durability')||t.has('metal'))return'⬢';if(t.has('strength'))return'◆';if(t.has('psychic'))return'◉';if(t.has('gravity'))return'◎';if(t.has('phase'))return'◇';if(t.has('tech'))return'⌁';if(t.has('cosmic')||t.has('reality'))return'✦';if(t.has('rage')||t.has('dark'))return'▼';if(t.has('vision'))return'◈';return'●'}
 function powerSymbol(p,extra=''){return '<span class="power-symbol '+powerTone(p)+' '+p.rarity+' '+extra+'"><span class="glyph">'+powerGlyph(p)+'</span><small>'+escapeHtml(p.icon)+'</small></span>'}
-function renderLoadout(){const icons=$('loadoutIcons'),powers=s.powers.map(byId).filter(Boolean);$('loadoutIdentity').textContent=(s.identityAwakened||identityTitle()).toUpperCase();icons.innerHTML=powers.length?powers.map(p=>'<button type="button" class="rack-power" data-rack-power="'+p.id+'" aria-label="'+escapeHtml(p.name)+'">'+powerSymbol(p)+'<b>'+escapeHtml(p.name)+'</b></button>').join(''):'<i class="loadout-empty">Powers you awaken will appear here</i>';icons.querySelectorAll('[data-rack-power]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showPowerInfo(b.dataset.rackPower)}));$('loadoutMore').textContent=powers.length+' POWER'+(powers.length===1?'':'S')+' · DECK'}
+function renderLoadout(){const icons=$('loadoutIcons'),powers=s.powers.map(byId).filter(Boolean);$('loadoutIdentity').textContent=(s.identityAwakened||identityTitle()).toUpperCase();icons.innerHTML=powers.length?powers.map(p=>'<button type="button" class="rack-power" data-rack-power="'+p.id+'" aria-label="'+escapeHtml(p.name)+'">'+powerSymbol(p)+'<b>'+escapeHtml(p.name)+'</b></button>').join(''):'<i class="loadout-empty">Powers you awaken will appear here</i>';icons.querySelectorAll('[data-rack-power]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showPowerInfo(b.dataset.rackPower)}));$('loadoutMore').textContent=powers.length+' POWER'+(powers.length===1?'':'S')+' · TAP DECK'}
 function buildSynergyText(){const r=currentResonance();if(s.combos.length)return 'ACTIVE SYNERGY · '+r.name+' · '+(r.bonus||'Build interaction active');const fam=dominantFamily();return s.powers.length?'DOMINANT FAMILY · '+fam.toUpperCase()+' · '+r.name:'Choose powers to begin forming a build.'}
 function renderPowerDeck(){const r=currentResonance(),grid=$('deckGrid');$('deckIdentity').textContent=s.identityAwakened||r.name;$('deckSummary').textContent=r.nod||'Your power set is still forming.';$('deckSynergy').textContent=buildSynergyText();grid.innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id),e=s.powerEvolutions?.[id]&&Object.values(PF_EVOLUTIONS).flat().find(x=>x.id===s.powerEvolutions[id]);return p?'<button type="button" class="deck-power '+powerTone(p)+' '+p.rarity+'" data-deck-power="'+p.id+'">'+powerSymbol(p,'deck-symbol')+'<span><strong>'+escapeHtml(e?.name||p.name)+'</strong><small>'+escapeHtml(e?'EVOLVED FROM '+p.name:p.rarity.toUpperCase()+' · '+(p.tags||[]).slice(0,2).join(' / ').toUpperCase())+'</small><em>'+escapeHtml(e?.desc||p.desc)+'</em>'+(p.tradeoff?'<i>RISK · '+escapeHtml(p.tradeoff)+'</i>':'')+'</span></button>':''}).join(''):'<div class="deck-empty">Your first Power Awakening will appear here.</div>';grid.querySelectorAll('[data-deck-power]').forEach(b=>b.addEventListener('click',()=>showPowerInfo(b.dataset.deckPower)))}
 function openPowerDeck(){if(pendingPowerRewards().length){openPendingPowerAwakening();return;}renderPowerDeck();$('powerDeckModal').classList.remove('hidden')}
@@ -3089,7 +3231,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.11.2</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.11.3</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
