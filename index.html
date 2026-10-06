@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8.5</title>
+  <title>Powerfall: Ascension Prototype v1.8.6</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -685,6 +685,9 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 #powerModal.input-shielded .power-choice,
 #powerModal.input-shielded .power-actions button{pointer-events:none!important}
 #powerModal.input-shielded .power-actions{opacity:.55}
+
+/* v1.8.6 True Power Awakening combat pause */
+#powerModal:not(.hidden) .power-head::after{content:"COMBAT PAUSED";display:inline-flex;align-items:center;justify-content:center;margin-top:7px;padding:4px 7px;border:1px solid #56cfff66;border-radius:999px;font-size:7px;font-weight:900;letter-spacing:.12em;color:#9de8ff;background:#08202f}
 </style>
 </head>
 <body>
@@ -693,7 +696,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.5 · INPUT SHIELD</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.6 · TRUE PAUSE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1766,8 +1769,8 @@ function autoDodgeHeavy(){
   if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;
   return true
 }
-function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
-function resolveHeavyAttack(){if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){handlePlayerDefeat('HEAVY HIT DEFEAT');return}renderHUD()}
+function startTelegraph(){if(s.fight.telegraph||storyPaused||powerDecisionPaused||powerModalVisible||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph||powerDecisionPaused||powerModalVisible){s.fight.telegraph=0;$('telegraph').classList.add('hidden');return}s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
+function resolveHeavyAttack(){if(powerDecisionPaused||powerModalVisible){s.fight.telegraph=0;$('telegraph').classList.add('hidden');return}if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){handlePlayerDefeat('HEAVY HIT DEFEAT');return}renderHUD()}
 function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;const field=$('battlefield');field.classList.remove('finisher-flash');void field.offsetWidth;field.classList.add('finisher-flash');setTimeout(()=>field.classList.remove('finisher-flash'),520);chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(){
@@ -2047,6 +2050,11 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
 function handlePlayerDefeat(reason='DEFEATED'){
+  if(powerDecisionPaused||powerModalVisible){
+    s.hp=Math.max(1,s.hp);
+    console.warn('[Powerfall] blocked defeat during Power Awakening');
+    return
+  }
   // Death retries the exact encounter. No stage or patrol progress is lost.
   // Pending Power Awakenings remain untouched in the permanent reward ledger.
   s.hp=s.maxHp;
@@ -2379,12 +2387,29 @@ function openPendingPowerAwakening(){
   if(!pending.length){updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
   // UI flags are disposable. The reward ledger is authoritative.
   powerModalVisible=false;
-  powerDecisionPaused=false;
   choiceLocked=false;
   activePowerChoices=[];
   $('powerChoices').classList.remove('input-locked');
   $('powerModal').classList.add('hidden');
   showPowerModal()
+}
+function pauseCombatForPowerDecision(){
+  powerDecisionPaused=true;
+  clearCombatTimers();
+  clearTimeout(timers.telegraph);
+  timers.telegraph=null;
+  if(s.fight){
+    s.fight.telegraph=0;
+    s.fight.dodgeWindow=0
+  }
+  $('telegraph')?.classList.add('hidden');
+}
+function resumeCombatAfterPowerDecision(){
+  if(powerModalVisible)return;
+  powerDecisionPaused=false;
+  lastAttackMs=performance.now();
+  lastEnemyMs=performance.now();
+  startCombatTimers()
 }
 function showPowerModal(){
   repairPowerState('modal-open');
@@ -2406,7 +2431,8 @@ function showPowerModal(){
   }
 
   activePowerChoices=resolvedOptions;
-  powerDecisionPaused=true;powerModalVisible=true;
+  powerModalVisible=true;
+  pauseCombatForPowerDecision();
   clearTimeout(choiceTimer);
   powerModalArmedAt=performance.now()+900;
   $('powerModal').dataset.rarity=activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
@@ -2429,18 +2455,18 @@ function showPowerModal(){
 function hidePowerModal(){
   if(performance.now()<powerModalArmedAt)return;
   clearTimeout(choiceTimer);
-  clearTimeout(choiceTimer);
   $('powerModal').classList.remove('input-shielded');
   $('powerModal').classList.add('hidden');
   powerModalVisible=false;
-  powerDecisionPaused=false;choiceLocked=false;
+  choiceLocked=false;
   activePowerChoices=[];
   $('powerChoices').classList.remove('input-locked');
   $('hidePowerModalBtn').disabled=false;
   $('rerollPowerBtn').disabled=false;
   $('gamblePowerBtn').disabled=false;
   syncPowerQueue();
-  updatePowerAlert()
+  updatePowerAlert();
+  resumeCombatAfterPowerDecision()
 }
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
@@ -2491,8 +2517,6 @@ function choosePower(id,choiceId){
   if(!s.consumedChoices.includes(reward.key))s.consumedChoices.push(reward.key);
 
   checkCombos();checkEmergentEvolutions();checkIdentityAwakening();
-  updateAttackTimer();
-  updateEnemyTimer();
 
   // UI closes before render/save. Queue is then derived from the ledger.
   $('powerModal').classList.add('hidden');
@@ -2527,7 +2551,8 @@ function choosePower(id,choiceId){
     console.error('[Powerfall] acquired power failed visible-loadout verification',id,{powers:[...s.powers],saved});
     renderLoadout()
   }
-  toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'))
+  toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'));
+  resumeCombatAfterPowerDecision()
 }
 function rerollPower(){
   if(performance.now()<powerModalArmedAt)return;
@@ -2849,7 +2874,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.5</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.6</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2977,10 +3002,10 @@ function closeProfile(){$('profileModal').classList.add('hidden')}
 function effectivePlayerAttackMs(){let mult=Math.pow(1.04,meta.cosmicLaws?.law_time||0)*s.regenEngine?1+Math.min(1.25,regenRate()*2):1;if(s.technopathy){const n=s.powers.map(byId).filter(Boolean).filter(p=>p.tags?.includes('tech')).length;mult*=1+Math.min(1,n*.09)}if(s.timeDilationEngine)mult*=1+Math.min(1.5,(s.fight?.timeStacks||0)*.08);if(s.temporalSpeedEngine)mult*=1+Math.min(1.8,(s.fight?.timeStolen||0)*.06);if(s.battleTrance)mult*=1+Math.min(.8,(s.fight?.combo||0)*.025);if(s.critVelocity&&s.fight?.critHasteUntil>Date.now())mult*=1.55;return Math.max(120,s.attackMs/mult)}
 function updateAttackTimer(){clearInterval(timers.attack);timers.attack=setInterval(()=>playerAttack(false),effectivePlayerAttackMs())}
 function updateEnemyTimer(){clearInterval(timers.enemy);timers.enemy=setInterval(enemyAttack,Math.max(380,effectiveEnemyAttackMs()))}
-function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy)}
+function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy);clearTimeout(timers.telegraph);timers.telegraph=null}
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
-  const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused)return;
+  const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;if(storyPaused||powerDecisionPaused||powerModalVisible)return;
   s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.playerFreeze=Math.max(0,(s.fight.playerFreeze||0)-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
   const regenTick=s.maxHp*regenRate()*dt;if(s.challengeMode==='decay_protocol')s.hp=clamp(s.hp-Math.max(s.maxHp*.0025*dt,regenTick),0,s.maxHp);else s.hp=clamp(s.hp+regenTick,0,s.maxHp);
