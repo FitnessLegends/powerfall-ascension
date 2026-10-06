@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.13.0</title>
+  <title>Powerfall: Ascension Prototype v1.13.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1115,7 +1115,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.13.0 · MODULAR AWAKENING</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.13.1 · MODULAR RUNTIME</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1681,6 +1681,7 @@ window.PF_CONFIG = {
 </script>
   <script src="/src/telemetry.js"></script>
   <script src="/src/power-awakening.js"></script>
+  <script src="/src/combat-runtime.js"></script>
   <script>
 (function(){
 'use strict';
@@ -1715,6 +1716,7 @@ let lastTick=performance.now();
 let ascensionLocked=false, choiceLocked=false, choiceTimer=null;
 let powerActionGesture=null;
 let awakeningController=null;
+let combatRuntime=null;
 const awakeningUi={};
 Object.defineProperties(awakeningUi,{
   activeChoices:{get:()=>activePowerChoices,set:v=>{activePowerChoices=Array.isArray(v)?v:[]}},
@@ -1729,7 +1731,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.13.0',
+    version:'1.13.1',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -2967,7 +2969,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.13.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.13.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3105,13 +3107,10 @@ function openProfile(){if(powerModalVisible||pendingPowerRewards().length)return
 function closeProfile(){$('profileModal').classList.add('hidden')}
 
 function effectivePlayerAttackMs(){let mult=Math.pow(1.04,meta.cosmicLaws?.law_time||0)*s.regenEngine?1+Math.min(1.25,regenRate()*2):1;if(s.technopathy){const n=s.powers.map(byId).filter(Boolean).filter(p=>p.tags?.includes('tech')).length;mult*=1+Math.min(1,n*.09)}if(s.timeDilationEngine)mult*=1+Math.min(1.5,(s.fight?.timeStacks||0)*.08);if(s.temporalSpeedEngine)mult*=1+Math.min(1.8,(s.fight?.timeStolen||0)*.06);if(s.battleTrance)mult*=1+Math.min(.8,(s.fight?.combo||0)*.025);if(s.critVelocity&&s.fight?.critHasteUntil>Date.now())mult*=1.55;return Math.max(120,s.attackMs/mult)}
-function updateAttackTimer(){clearInterval(timers.attack);if(currentAwakening()||powerModalVisible)return;timers.attack=setInterval(()=>playerAttack(false),effectivePlayerAttackMs())}
-function updateEnemyTimer(){clearInterval(timers.enemy);if(currentAwakening()||powerModalVisible)return;timers.enemy=setInterval(enemyAttack,Math.max(380,effectiveEnemyAttackMs()))}
-function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.enemy);clearTimeout(timers.telegraph);timers.telegraph=null}
-function startCombatTimers(){
-  if(currentAwakening()||powerModalVisible||$('powerModal')?.classList.contains('active'))return;
-  updateAttackTimer();updateEnemyTimer()
-}
+function updateAttackTimer(){return combatRuntime.updatePlayerTimer()}
+function updateEnemyTimer(){return combatRuntime.updateEnemyTimer()}
+function clearCombatTimers(){return combatRuntime.clear()}
+function startCombatTimers(){return combatRuntime.start()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;
   if(storyPaused||powerDecisionPaused||powerModalVisible)return;
@@ -3276,6 +3275,32 @@ function init(){
     resetTransientInput:()=>{clearTimeout(choiceTimer);choiceTimer=null;powerActionGesture=null}
   });
   traceGameplay('awakening_module_ready',{module:'src/power-awakening.js'});
+
+  combatRuntime=window.PFCombatRuntime.create({
+    timers,
+    playerAttackMs:effectivePlayerAttackMs,
+    enemyAttackMs:effectiveEnemyAttackMs,
+    playerAttack,
+    enemyAttack,
+    shouldPauseCombat:()=>!!(
+      currentAwakening()||
+      powerModalVisible||
+      $('powerModal')?.classList.contains('active')||
+      storyPaused||
+      ascensionLocked
+    ),
+    pauseReason:()=>{
+      if(currentAwakening())return 'awakening_pending';
+      if(powerModalVisible||$('powerModal')?.classList.contains('active'))return 'awakening_screen';
+      if(storyPaused)return 'story';
+      if(ascensionLocked)return 'ascension';
+      return 'none'
+    },
+    trace:traceGameplay
+  });
+
+  window.PF_COMBAT_RUNTIME=()=>combatRuntime.snapshot();
+  traceGameplay('combat_runtime_ready',{module:'src/combat-runtime.js'});
   bind();
   const restored=restore();
   if(!restored)freshRun();
