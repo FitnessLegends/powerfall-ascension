@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.9.0</title>
+  <title>Powerfall: Ascension Prototype v1.9.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -706,34 +706,58 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
   box-shadow:0 0 0 2px #49d49b66,0 0 26px #49d49b55!important
 }
 
-/* v1.9.0 Floating Power Awakening recovery banner */
+/* v1.9.1 Compact Power Awakening recovery pill */
 #powerAlert{
   position:fixed!important;
-  left:12px!important;
+  left:auto!important;
   right:12px!important;
-  bottom:calc(86px + env(safe-area-inset-bottom))!important;
-  width:auto!important;
+  bottom:calc(78px + env(safe-area-inset-bottom))!important;
+  width:min(246px,calc(100vw - 24px))!important;
+  min-height:44px!important;
+  padding:6px 9px!important;
   margin:0!important;
   z-index:5000!important;
   pointer-events:auto!important;
-  min-height:64px!important;
-  box-shadow:0 12px 30px #0009,0 0 0 2px #49d49b55!important;
+  border-radius:14px!important;
+  box-shadow:0 8px 22px #0008,0 0 0 1px #49d49b55!important;
 }
 #powerAlert.hidden{display:none!important}
-#powerAlert .queue-badge{margin-left:auto}
-#powerAlert::after{
-  content:"TAP TO OPEN";
-  position:absolute;
-  right:52px;
-  bottom:7px;
-  font-size:6px;
-  letter-spacing:.12em;
-  color:#8de8be;
-  opacity:.85
+#powerAlert .power-alert-icon{
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  font-size:7px!important;
 }
-body:has(#powerAlert:not(.hidden)) #gameScreen{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
+#powerAlert>span:nth-child(2){min-width:0;text-align:left}
+#powerAlert>span:nth-child(2) strong{
+  display:block!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+  letter-spacing:.08em!important;
+}
+#powerAlert>span:nth-child(2) small{
+  display:block!important;
+  margin-top:2px!important;
+  font-size:7px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#powerAlert .queue-badge{
+  margin-left:auto!important;
+  width:26px!important;
+  height:26px!important;
+  min-width:26px!important;
+  font-size:10px!important;
+}
+#powerAlert::after{display:none!important}
 @media(max-width:520px){
-  #powerAlert{left:10px!important;right:10px!important;bottom:calc(82px + env(safe-area-inset-bottom))!important}
+  #powerAlert{
+    right:8px!important;
+    bottom:calc(76px + env(safe-area-inset-bottom))!important;
+    width:218px!important;
+  }
 }
 </style>
 </head>
@@ -743,7 +767,7 @@ body:has(#powerAlert:not(.hidden)) #gameScreen{padding-bottom:calc(84px + env(sa
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.9.0 · FLOATING AWAKENING</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.9.1 · COMPACT RECOVERY</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -2791,11 +2815,11 @@ function updatePowerAlert(){
   const pending=powerQueue.length,report=powerSystemReport(),alert=$('powerAlert');
   alert.classList.toggle('integrity-ok',report.ok);
   if(pending){
-    alert.classList.remove('hidden');
     const modalActuallyVisible=powerModalVisible&&!$('powerModal').classList.contains('hidden');
+    alert.classList.toggle('hidden',modalActuallyVisible);
     alert.classList.toggle('power-reopen-emergency',!modalActuallyVisible);
     $('powerQueueBadge').textContent=pending;
-    $('powerAlertText').textContent=modalActuallyVisible?'Power selection open':(pending>1?`${pending} awakenings waiting · tap here`:'Tap here to choose your power');
+    $('powerAlertText').textContent=pending>1?`${pending} powers waiting · tap to choose`:'Tap to choose your power';
   }else{
     alert.classList.add('hidden');
     alert.classList.remove('power-reopen-emergency');
@@ -2958,7 +2982,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.9.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.9.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
