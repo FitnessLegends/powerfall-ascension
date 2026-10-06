@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.10.1</title>
+  <title>Powerfall: Ascension Prototype v1.11.0</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -759,6 +759,41 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
     width:218px!important;
   }
 }
+
+/* v1.11.0 Power Awakening is a protected screen, not an overlay */
+#powerModal.power-awakening-screen{
+  z-index:auto!important;
+  pointer-events:auto!important;
+  background:radial-gradient(circle at 50% 0,#10263a 0,#0a111b 42%,#070b11 100%)!important;
+  padding:max(18px,env(safe-area-inset-top)) 12px max(18px,env(safe-area-inset-bottom))!important;
+  overflow:auto!important;
+}
+#powerModal.power-awakening-screen.active{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+}
+#powerModal.power-awakening-screen .power-card{
+  width:min(720px,100%)!important;
+  max-height:none!important;
+  margin-top:18px!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  border-radius:18px!important;
+}
+#powerModal.power-awakening-screen #powerChoices{
+  min-height:0!important;
+}
+#powerModal.power-awakening-screen .power-actions{
+  margin-top:8px!important;
+}
+body.power-awakening-open #gameScreen{pointer-events:none!important}
+@media(max-width:520px){
+  #powerModal.power-awakening-screen{padding-left:10px!important;padding-right:10px!important}
+  #powerModal.power-awakening-screen .power-card{margin-top:8px!important}
+}
 </style>
 </head>
 <body>
@@ -767,7 +802,7 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.10.1 · CLEAN INPUT</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.11.0 · POWER SCREEN</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -989,7 +1024,7 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
       </div>
     </div>
 
-    <div id="powerModal" class="overlay power-modal hidden" role="dialog" aria-modal="false" aria-label="Choose a power">
+    <section id="powerModal" class="screen utility-screen power-awakening-screen" aria-label="Choose a power">
       <div class="power-card">
         <div class="power-head">
           <div class="awakening-copy"><small>POWER AWAKENING</small><h2>CHOOSE YOUR NEXT POWER</h2><p>Combat is paused. Choose one power to continue.</p></div>
@@ -998,7 +1033,7 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
         <div id="powerChoices" class="power-grid"></div>
         <div class="power-actions"><button id="gamblePowerBtn" class="close-btn subtle gamble-btn" type="button">Risk Mutation</button><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle hidden" type="button" disabled>Choose a power to continue</button></div>
       </div>
-    </div>
+    </section>
 
     <div id="powerDeckModal" class="overlay deck-modal hidden" role="dialog" aria-modal="true" aria-label="Power Deck"><div class="deck-card"><div class="deck-head"><div><small>POWER DECK</small><h2 id="deckIdentity">Emerging Hero</h2><p id="deckSummary">Your build is still forming.</p></div><button id="closePowerDeckBtn" class="icon-btn" type="button">X</button></div><div id="deckSynergy" class="deck-synergy"></div><div id="deckGrid" class="deck-grid"></div></div></div>
     <div id="majorBanner" class="major-banner hidden" aria-live="assertive"><small id="majorBannerType">DISCOVERY</small><strong id="majorBannerTitle">Artifact acquired</strong><span id="majorBannerText"></span></div>
@@ -2304,8 +2339,8 @@ function runPowerSelfTest(){
   return {pass:report.ok&&modalValid&&upgradesIndependent,modalValid,upgradesIndependent,report}
 }
 window.PF_SELFTEST=runPowerSelfTest;
-window.PF_OPEN_AWAKENING=()=>{openPendingPowerAwakening();return {pending:pendingPowerRewards().length,visible:powerModalVisible&&!$('powerModal').classList.contains('hidden'),current:currentAwakening()?.key||null}};
-window.PF_AWAKENING_STATE=()=>({queue:pendingPowerRewards().map(x=>({key:x.key,stage:x.stage,source:x.source,options:x.options?.length||0})),visible:powerModalVisible,hidden:$('powerModal').classList.contains('hidden'),powers:[...s.powers]});
+window.PF_OPEN_AWAKENING=()=>{openPendingPowerAwakening();return {pending:pendingPowerRewards().length,visible:powerModalVisible&&$('powerModal').classList.contains('active'),current:currentAwakening()?.key||null}};
+window.PF_AWAKENING_STATE=()=>({queue:pendingPowerRewards().map(x=>({key:x.key,stage:x.stage,source:x.source,options:x.options?.length||0})),visible:powerModalVisible,active:$('powerModal').classList.contains('active'),powers:[...s.powers]});
 window.PF_REPAIR_POWER_STATE=()=>{const r=repairPowerState('manual');updatePowerAlert();renderAll();saveNow();return r};
 
 function checkPowerMilestone(clearedStage){
@@ -2414,7 +2449,7 @@ function closeConflictingUiForPowerAwakening(){
 }
 function openPendingPowerAwakening(){
   const item=currentAwakening();
-  if(!item){updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
+  if(!item){showScreen('gameScreen',true);updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
   closeConflictingUiForPowerAwakening();
   const banner=$('majorBanner');clearTimeout(banner._to);banner.classList.add('hidden');
   clearTimeout(choiceTimer);
@@ -2423,8 +2458,7 @@ function openPendingPowerAwakening(){
   powerDecisionPaused=false;
   document.body.classList.remove('power-awakening-open');
   $('powerChoices').classList.remove('input-locked');
-  $('powerModal').classList.remove('input-shielded');
-  $('powerModal').classList.add('hidden');
+  $('powerModal').classList.remove('input-shielded','hidden');
   showPowerModal()
 }
 function pauseCombatForPowerDecision(){
@@ -2447,7 +2481,7 @@ function resumeCombatAfterPowerDecision(){
 }
 function showPowerModal(){
   const item=currentAwakening();
-  if(!item)return;
+  if(!item){showScreen('gameScreen',true);return}
   if(!item.options.length)item.options=rollPowerChoices(item).map(p=>p.id);
   let resolved=item.options.map(byId).filter(Boolean);
   if(!resolved.length){
@@ -2458,28 +2492,19 @@ function showPowerModal(){
   powerModalVisible=true;
   document.body.classList.add('power-awakening-open');
   pauseCombatForPowerDecision();
-  powerModalArmedAt=performance.now()+600;
+  powerModalArmedAt=performance.now()+500;
   $('powerModal').dataset.rarity=resolved.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
   $('powerModal').classList.remove('hidden');
+  showScreen('powerModal',true);
   renderPowerChoices(item);
   updatePowerAlert();
   scheduleSave()
 }
 function hidePowerModal(fromGesture=false){
-  if(pendingPowerRewards().length)return;
-  if(!fromGesture||performance.now()<powerModalArmedAt)return;
-  clearTimeout(choiceTimer);
-  $('powerModal').classList.remove('input-shielded');
-  $('powerModal').classList.add('hidden');
+  if(currentAwakening())return;
   powerModalVisible=false;
-  choiceLocked=false;
-  activePowerChoices=[];
-  $('powerChoices').classList.remove('input-locked');
-  $('hidePowerModalBtn').disabled=false;
-  $('rerollPowerBtn').disabled=false;
-  $('gamblePowerBtn').disabled=false;
-  syncPowerQueue();
-  updatePowerAlert();
+  document.body.classList.remove('power-awakening-open');
+  showScreen('gameScreen',true);
   resumeCombatAfterPowerDecision()
 }
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
@@ -2522,11 +2547,11 @@ function choosePower(id,choiceId){
   s.awakeningQueue=s.awakeningQueue.filter(x=>x.key!==reward.key);
   powerQueue=s.awakeningQueue;
 
-  $('powerModal').classList.add('hidden');
   $('powerModal').classList.remove('input-shielded');
   powerModalVisible=false;
   document.body.classList.remove('power-awakening-open');
   powerDecisionPaused=false;
+  showScreen('gameScreen',true);
   choiceLocked=false;
   activePowerChoices=[];
   grid.classList.remove('input-locked');
@@ -2696,7 +2721,7 @@ function updatePowerAlert(){
   const pending=powerQueue.length,report=powerSystemReport(),alert=$('powerAlert');
   alert.classList.toggle('integrity-ok',report.ok);
   if(pending){
-    const modalActuallyVisible=powerModalVisible&&!$('powerModal').classList.contains('hidden');
+    const modalActuallyVisible=powerModalVisible&&$('powerModal').classList.contains('active');
     alert.classList.toggle('hidden',modalActuallyVisible);
     alert.classList.toggle('power-reopen-emergency',!modalActuallyVisible);
     $('powerQueueBadge').textContent=pending;
@@ -2863,7 +2888,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.10.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.11.0</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2977,7 +3002,16 @@ function showEnemyInfo(){
   const e=s.enemy;if(!e)return;
   openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType],['Archetype evolutions',e.evolutions?.length?e.evolutions.map(id=>PF_ENEMY_EVOLUTIONS.find(x=>x.id===id)?.name||id).join(', '):'None'],['Operation powers',e.operationPowers?.length?e.operationPowers.map(id=>e.operationPowerLabels?.[id]||id).join(', '):'None'],['Powers',e.powers?.length?e.powers.map(id=>byId(id)?.name||id).join(', '):'None']]);
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension();if(id==='archiveScreen')renderPowerArchive();if(id==='achievementsScreen')renderAchievements();if(id==='endgameScreen')renderEndgame()}
+function showScreen(id,force=false){
+  if(!force&&id!=='powerModal'&&currentAwakening())id='powerModal';
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  const target=$(id);if(!target)return;
+  target.classList.add('active');
+  if(id==='ascensionScreen')renderAscension();
+  if(id==='archiveScreen')renderPowerArchive();
+  if(id==='achievementsScreen')renderAchievements();
+  if(id==='endgameScreen')renderEndgame()
+}
 function openUpgrades(){
   if(powerModalVisible||pendingPowerRewards().length)return;
   repairPowerState('upgrade-open');
@@ -2996,10 +3030,6 @@ function clearCombatTimers(){clearInterval(timers.attack);clearInterval(timers.e
 function startCombatTimers(){updateAttackTimer();updateEnemyTimer()}
 function startTick(){clearInterval(timers.tick);lastTick=performance.now();timers.tick=setInterval(()=>{
   const now=performance.now(),dt=clamp((now-lastTick)/1000,0,.5);lastTick=now;
-  if(powerModalVisible&&pendingPowerRewards().length&&$('powerModal').classList.contains('hidden')){
-    console.warn('[Powerfall] prevented unintended Power Awakening dismissal');
-    $('powerModal').classList.remove('hidden')
-  }
   if(storyPaused||powerDecisionPaused||powerModalVisible)return;
   s.fight.elapsed+=dt;s.fight.freeze=Math.max(0,s.fight.freeze-dt);s.fight.playerFreeze=Math.max(0,(s.fight.playerFreeze||0)-dt);s.fight.dodgeWindow=Math.max(0,(s.fight.dodgeWindow||0)-dt);tickPowerIdentity(dt);
   if(s.timeFracture&&s.fight.elapsed>=8){s.fight.elapsed=0;s.fight.freeze=2;floatText('TIME FRACTURE',false)}
@@ -3080,7 +3110,7 @@ function bindFreshPowerAction(id,action){
 }
 function installPowerAwakeningInputShield(){
   const blockIfBehindPowerModal=ev=>{
-    if(!powerModalVisible||$('powerModal').classList.contains('hidden'))return;
+    if(!powerModalVisible||!$('powerModal').classList.contains('active'))return;
     if($('powerModal').contains(ev.target))return;
     ev.preventDefault();
     ev.stopPropagation();
@@ -3128,7 +3158,8 @@ function init(){
     repairPowerState('init');
     renderAll();
     updatePowerAlert();
-    if(!meta.seenStories.includes('awakening'))maybeStory(1,true)
+    if(currentAwakening())setTimeout(openPendingPowerAwakening,120);
+    else if(!meta.seenStories.includes('awakening'))maybeStory(1,true)
   }
   const selfTest=runPowerSelfTest();
   if(!selfTest.pass)console.error('[Powerfall v0.7] SELF TEST FAILED',selfTest);
