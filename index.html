@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.14.0</title>
+  <title>Powerfall: Ascension Prototype v1.14.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1115,7 +1115,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.14.0 · MODULAR HUD</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.14.1 · MODULAR SAVE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1683,6 +1683,7 @@ window.PF_CONFIG = {
   <script src="/src/power-awakening.js"></script>
   <script src="/src/combat-runtime.js"></script>
   <script src="/src/hud-runtime.js"></script>
+  <script src="/src/save-runtime.js"></script>
   <script>
 (function(){
 'use strict';
@@ -1719,6 +1720,7 @@ let powerActionGesture=null;
 let awakeningController=null;
 let combatRuntime=null;
 let hudRuntime=null;
+let saveRuntime=null;
 const awakeningUi={};
 Object.defineProperties(awakeningUi,{
   activeChoices:{get:()=>activePowerChoices,set:v=>{activePowerChoices=Array.isArray(v)?v:[]}},
@@ -1733,7 +1735,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.14.0',
+    version:'1.14.1',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -2807,7 +2809,7 @@ function resetGame(full){
     for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,previous.meta);s=previousRun;powerQueue=previousQueue;
     toast('RESET NOT SAVED — original progress kept. Free browser storage and retry.');return;
   }
-  clearCombatTimers();clearInterval(timers.tick);clearInterval(timers.autosave);clearTimeout(timers.save);clearTimeout(choiceTimer);clearTimeout(timers.telegraph);
+  clearCombatTimers();clearInterval(timers.tick);saveRuntime.stopAutosave();clearTimeout(timers.save);clearTimeout(choiceTimer);clearTimeout(timers.telegraph);
   pendingEchoes.forEach(clearTimeout);pendingEchoes.clear();clearTimeout($('toast')._to);$('toast').classList.add('hidden');
   choiceTimer=null;choiceLocked=false;ascensionLocked=false;powerModalVisible=false;activePowerChoices=[];storyPaused=false;
   lastAttackMs=0;lastEnemyMs=0;autoBuyElapsed=0;buyMode='1';
@@ -2817,7 +2819,7 @@ function resetGame(full){
   $('enemyFighter').classList.remove('hit');$('hidePowerModalBtn').disabled=false;$('rerollPowerBtn').disabled=false;
   showScreen('gameScreen');renderAll();renderProfile();
   if(full)maybeStory(1,true);
-  if(!currentAwakening())startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000);
+  if(!currentAwakening())startCombatTimers();startTick();saveRuntime.startAutosave(10000);
   toast(full?'NEW GAME — all previous progress erased':'RUN RESET — permanent progression kept');
 }
 
@@ -2908,7 +2910,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.14.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.14.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3064,14 +3066,11 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
   renderHUD();
 },300)}
 
-function snapshot(){
-  syncPowerQueue();
-  return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue:s.awakeningQueue,timestamp:Date.now()}))
-}
-function saveNow(){clearTimeout(timers.save);const ok=PF_SAVE.write(snapshot());if(!ok)toast('SAVE FAILED — progress is not stored');return ok}
-function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow,250)}
+function snapshot(){return saveRuntime.snapshot()}
+function saveNow(){return saveRuntime.writeNow()}
+function scheduleSave(){return saveRuntime.schedule()}
 function restore(){
-  const data=PF_SAVE.load();if(!data)return false;
+  const data=saveRuntime.load();if(!data)return false;
   const savedMeta=data.meta&&typeof data.meta==='object'?data.meta:{};
   for(const key of ['souls','bestStage','bossesBeaten','totalPowersFound','ascensions','runNumber','rivalLevel','operationWins','totalKills','cosmicShards'])meta[key]=clamp(savedMeta[key]??meta[key],0,1e150);
   meta.rivalAdaptation=typeof savedMeta.rivalAdaptation==='string'?savedMeta.rivalAdaptation:'';meta.ascensionPath=typeof savedMeta.ascensionPath==='string'?savedMeta.ascensionPath:'';meta.achievementUpgrades=savedMeta.achievementUpgrades&&typeof savedMeta.achievementUpgrades==='object'?savedMeta.achievementUpgrades:{};
@@ -3169,7 +3168,7 @@ function bind(){
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)scheduleSave()});$('operationBtn').addEventListener('click',enterOperation);
-window.addEventListener('beforeunload',()=>PF_SAVE.write(snapshot()));
+window.addEventListener('beforeunload',()=>PF_SAVE.write(saveRuntime.snapshot()));
 }
 
 function init(){
@@ -3271,6 +3270,21 @@ function init(){
 
   window.PF_HUD_RUNTIME=()=>hudRuntime.snapshot();
   traceGameplay('hud_runtime_ready',{module:'src/hud-runtime.js'});
+
+  saveRuntime=window.PFSaveRuntime.create({
+    timers,
+    saveVersion:PF_CONFIG.saveVersion,
+    getRun:()=>s,
+    getMeta:()=>meta,
+    syncPowerQueue,
+    write:data=>PF_SAVE.write(data),
+    load:()=>PF_SAVE.load(),
+    toast,
+    trace:traceGameplay
+  });
+
+  window.PF_SAVE_RUNTIME=()=>saveRuntime.status();
+  traceGameplay('save_runtime_ready',{module:'src/save-runtime.js'});
   bind();
   const restored=restore();
   if(!restored)freshRun();
@@ -3284,7 +3298,7 @@ function init(){
   const selfTest=runPowerSelfTest();
   if(!selfTest.pass)console.error('[Powerfall v0.7] SELF TEST FAILED',selfTest);
   else console.info('[Powerfall v0.7] self test PASS',selfTest);
-  startCombatTimers();startTick();timers.autosave=setInterval(scheduleSave,10000)
+  startCombatTimers();startTick();saveRuntime.startAutosave(10000)
 }
 init();
 })();
