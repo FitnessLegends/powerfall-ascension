@@ -47,22 +47,37 @@
     emit,
     session,
     dump:()=>buffer.slice(),
-    clear:()=>{buffer.length=0}
+    clear:()=>{buffer.length=0},
+    breadcrumbs:()=>breadcrumbs(12)
   };
 
+  function breadcrumbs(limit=8){
+    return buffer
+      .filter(x=>x.event!=='js_error'&&x.event!=='unhandled_rejection')
+      .slice(-limit)
+      .map(x=>({ts:x.ts,event:x.event,data:x.data}))
+  }
+
   global.addEventListener('error',e=>{
+    const err=e.error;
     emit('js_error',{
-      message:e.message||'unknown',
+      message:e.message||err?.message||'unknown',
+      name:err?.name||'Error',
       file:(e.filename||'').split('/').pop(),
       line:e.lineno||0,
-      column:e.colno||0
+      column:e.colno||0,
+      stack:String(err?.stack||'').slice(0,2400),
+      breadcrumbs:breadcrumbs()
     })
   });
 
   global.addEventListener('unhandledrejection',e=>{
     const reason=e.reason;
     emit('unhandled_rejection',{
-      message:reason?.message||String(reason||'unknown')
+      message:reason?.message||String(reason||'unknown'),
+      name:reason?.name||'UnhandledRejection',
+      stack:String(reason?.stack||'').slice(0,2400),
+      breadcrumbs:breadcrumbs()
     })
   });
 })(window);
