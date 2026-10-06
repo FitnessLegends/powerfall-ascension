@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8.7</title>
+  <title>Powerfall: Ascension Prototype v1.8.8</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -696,7 +696,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.7 · GESTURE LOCK</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.8 · REWARD SEQUENCE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -921,11 +921,11 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
     <div id="powerModal" class="overlay power-modal hidden" role="dialog" aria-modal="false" aria-label="Choose a power">
       <div class="power-card">
         <div class="power-head">
-          <div class="awakening-copy"><small>POWER AWAKENING</small><h2>CHOOSE YOUR NEXT POWER</h2><p>Combat waits. This choice can change the entire build.</p></div>
+          <div class="awakening-copy"><small>POWER AWAKENING</small><h2>CHOOSE YOUR NEXT POWER</h2><p>Combat is paused. Choose one power to continue.</p></div>
           <div class="queue-badge big" id="powerModalQueue">1</div>
         </div>
         <div id="powerChoices" class="power-grid"></div>
-        <div class="power-actions"><button id="gamblePowerBtn" class="close-btn subtle gamble-btn" type="button">Risk Mutation</button><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle" type="button">Decide later</button></div>
+        <div class="power-actions"><button id="gamblePowerBtn" class="close-btn subtle gamble-btn" type="button">Risk Mutation</button><button id="rerollPowerBtn" class="close-btn subtle hidden" type="button">Reroll</button><button id="hidePowerModalBtn" class="close-btn subtle hidden" type="button" disabled>Choose a power to continue</button></div>
       </div>
     </div>
 
@@ -2115,7 +2115,7 @@ function enemyDefeated(){
   if(wasWall&&s.inOperation&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('OPERATION COMPLETE - MUTATION EARNED');if(s.enemy.operationPowers?.length){const bonus=Math.floor(reward*(1+s.enemy.operationPowers.length*.35));s.coins=clamp(s.coins+bonus,0,1e150);showCoinBurst(bonus);if(s.enemy.operationPowers.length>=4)grantArtifact()}}
   let stageCleared=false;
   if(wasWall&&s.inOperation){s.operationWins=(s.operationWins||0)+1;meta.operationWins=(meta.operationWins||0)+1;const shardGain=cosmicShardGain(defeatedStage);if(shardGain){meta.cosmicShards=(meta.cosmicShards||0)+shardGain;showMajorBanner('REALITY FRACTURE','+'+shardGain+' REALITY SHARD'+(shardGain===1?'':'S'),'The Operation tore open something beyond Ascension.',3000)}meta.operationStages=Array.isArray(meta.operationStages)?meta.operationStages:[];if(!meta.operationStages.includes(defeatedStage))meta.operationStages.push(defeatedStage);if((s.operationDamageTaken||0)<=0)unlockAchievement('flawless_operation');if((s.enemy.powers?.length||0)>=15)unlockAchievement('overpowered_enemy');if((s.fight.incoming||0)<10)unlockAchievement('phasebreaker');s.inOperation=false;s.operationReady=false;s.operationStage=0;s.stage=Math.min(10000,s.stage+1);s.patrolXP=0;stageCleared=true;identityCue('OPERATION COMPLETE')}else if(PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation){const threatGoal=Math.max(2,5-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=threatGoal){s.patrolXP=threatGoal;s.operationReady=true;identityCue('OPERATION READY')}}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);stageCleared=true;identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
-  if(stageCleared)checkPowerMilestone(defeatedStage);checkCombos();checkEmergentEvolutions();checkChallenge();checkAchievements();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused)setTimeout(()=>{if(pendingPowerRewards().length&&!powerModalVisible)openPendingPowerAwakening()},450);
+  const milestonePowerEarned=stageCleared?checkPowerMilestone(defeatedStage):false;checkCombos();checkEmergentEvolutions();checkChallenge();checkAchievements();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused){if(stageCleared||milestonePowerEarned)presentPendingPowerAfterClear(defeatedStage);else setTimeout(()=>{if(pendingPowerRewards().length)openPendingPowerAwakening()},500)}
 }
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
 function legacyRewardKey(source,stage){return s.runId+':'+source+':'+Math.floor(stage)}
@@ -2298,8 +2298,18 @@ function checkPowerMilestone(clearedStage){
   if(PF_CONFIG.powerMilestones.includes(clearedStage)&&!s.triggeredMilestones.includes(clearedStage)){
     s.triggeredMilestones.push(clearedStage);
     queuePower({source:'milestone',stage:clearedStage,minRarity:clearedStage>=350?'epic':clearedStage>=125?'rare':'common'});
-    showMajorBanner('POWER EARNED','STAGE '+clearedStage+' CLEARED','The threat is down. Choose your mutation.',2200)
+    return true
   }
+  return false
+}
+function presentPendingPowerAfterClear(clearedStage){
+  if(!pendingPowerRewards().length)return;
+  const banner=$('majorBanner');
+  clearTimeout(banner._to);
+  showMajorBanner('POWER','STAGE '+clearedStage+' COMPLETE','POWER AWAKENING READY',950);
+  setTimeout(()=>{
+    if(pendingPowerRewards().length)openPendingPowerAwakening()
+  },1050)
 }
 function queuePower(item){if(s.challengeMode==='null_protocol')return null;
   const reward=ensurePowerReward(item,'pending');
@@ -2386,12 +2396,18 @@ function openPendingPowerAwakening(){
   repairPowerState('alert-open');
   const pending=pendingPowerRewards();
   if(!pending.length){updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
-  // UI flags are disposable. The reward ledger is authoritative.
+  // The reward ledger is authoritative. Rebuild the modal from scratch every time.
+  const banner=$('majorBanner');
+  clearTimeout(banner._to);
+  banner.classList.add('hidden');
+  clearTimeout(choiceTimer);
   powerModalVisible=false;
+  powerDecisionPaused=false;
   powerActionGesture=null;
   choiceLocked=false;
   activePowerChoices=[];
   $('powerChoices').classList.remove('input-locked');
+  $('powerModal').classList.remove('input-shielded');
   $('powerModal').classList.add('hidden');
   showPowerModal()
 }
@@ -2456,6 +2472,7 @@ function showPowerModal(){
   scheduleSave()
 }
 function hidePowerModal(fromGesture=false){
+  if(pendingPowerRewards().length)return;
   if(!fromGesture||performance.now()<powerModalArmedAt)return;
   clearTimeout(choiceTimer);
   $('powerModal').classList.remove('input-shielded');
@@ -2715,7 +2732,7 @@ function updatePowerAlert(){
   if(pending){
     alert.classList.remove('hidden');
     $('powerQueueBadge').textContent=pending;
-    $('powerAlertText').textContent=pending>1?`${pending} awakenings waiting`:'Choose a new ability';
+    $('powerAlertText').textContent=powerModalVisible?'Power selection open · tap to reopen':(pending>1?`${pending} awakenings waiting`:'Tap to choose your power');
   }else{
     alert.classList.add('hidden');
     $('powerQueueBadge').textContent='0'
@@ -2877,7 +2894,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.7</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.8</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3106,7 +3123,7 @@ function bind(){
   $('critInfoBtn').addEventListener('click',()=>showStatInfo('Crit'));$('resistInfoBtn').addEventListener('click',()=>showStatInfo('Resistance'));
   $('heroFighter').addEventListener('click',openProfile);$('enemyFighter').addEventListener('click',showEnemyInfo);
   $('milestoneInfo').addEventListener('click',()=>{const m=nextMilestone(s.stage+1);const label=(m.type==='boss'?'Wall Boss':'Power')+' at stage '+m.stage;openInfo('Next Milestone','Major powers and wall bosses are spaced out so each one feels significant.',[['Current stage',s.stage],['Next milestone',label],['Stages remaining',Math.max(0,m.stage-s.stage)],['World',worldFor(s.stage).name]])});
-  bindFreshPowerAction('rerollPowerBtn',rerollPower);bindFreshPowerAction('gamblePowerBtn',gamblePower);bindFreshPowerAction('hidePowerModalBtn',hidePowerModal);$('powerAlert').addEventListener('click',e=>{e.preventDefault();openPendingPowerAwakening()});$('powerAlert').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPendingPowerAwakening()}});$('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  bindFreshPowerAction('rerollPowerBtn',rerollPower);bindFreshPowerAction('gamblePowerBtn',gamblePower);bindFreshPowerAction('hidePowerModalBtn',hidePowerModal);let lastPowerAlertOpen=0;$('powerAlert').addEventListener('pointerup',e=>{e.preventDefault();lastPowerAlertOpen=performance.now();openPendingPowerAwakening()},{passive:false});$('powerAlert').addEventListener('click',e=>{e.preventDefault();if(performance.now()-lastPowerAlertOpen>350)openPendingPowerAwakening()});$('powerAlert').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPendingPowerAwakening()}});$('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
