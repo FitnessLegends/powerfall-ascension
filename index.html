@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.9.1</title>
+  <title>Powerfall: Ascension Prototype v1.10.0</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -767,7 +767,7 @@ body.power-awakening-open #powerModal.input-shielded .power-actions button{point
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.9.1 · COMPACT RECOVERY</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.10.0 · AWAKENING STATE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1397,7 +1397,7 @@ function defaultRun(){
   const t=meta.soulTree;
   const hp=PF_CONFIG.startingStats.maxHp*Math.pow(1.015,t.survival||0)*Math.pow(1.10,meta.cosmicLaws?.law_survival||0)*achievementSurvivalMult();
   return {
-    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
+    runId:uid(),bestStage:1,consumed:false,consumedChoices:[],resolvedPowerChoices:{},powerRewards:{},awakeningQueue:[],powerMastery:{},evolvedBosses:[],runStartedAt:Date.now(),
     attributes:{strength:10,agility:10,vitality:10,perception:10},incomingMult:1,critMultiplier:2,
     fight:{hits:0,incoming:0,adapt:0,kinetic:0,misses:0,elapsed:0,freeze:0,heartUsed:0,combo:0,break:0,telegraph:0,dodgeWindow:0,finisher:0,bloodFuel:0,blockCharge:0,critHasteUntil:0},
     stage:1,patrolXP:0,patrolClears:0,operationReady:false,operationStage:0,inOperation:false,operationWins:0,coins:Math.floor((meta.bestStage||1)*(t.soul_echo||0)*2),overkillCarry:0,maxHp:hp,hp:hp,baseDamage:PF_CONFIG.startingStats.damage,flatDamage:0,damageMult:1,challengeMode:'',
@@ -1439,6 +1439,7 @@ function sanitizeRun(target){
 target.artifacts=Array.isArray(target.artifacts)?target.artifacts.filter(x=>typeof x==='string'):[];target.eventStages=Array.isArray(target.eventStages)?target.eventStages:[];target.bountyClaimed=target.bountyClaimed&&typeof target.bountyClaimed==='object'?target.bountyClaimed:{};
     target.powerEvolutions=target.powerEvolutions&&typeof target.powerEvolutions==='object'?target.powerEvolutions:{};
   target.powerRewards=target.powerRewards&&typeof target.powerRewards==='object'&&!Array.isArray(target.powerRewards)?target.powerRewards:{};
+  target.awakeningQueue=Array.isArray(target.awakeningQueue)?target.awakeningQueue.filter(x=>x&&typeof x==='object'):[];
   target.powerMastery=target.powerMastery&&typeof target.powerMastery==='object'&&!Array.isArray(target.powerMastery)?target.powerMastery:{};
   target.runStartedAt=clamp(finite(target.runStartedAt,Date.now()),1,Date.now());
   target.masteryBreak=clamp(finite(target.masteryBreak,0),0,100);
@@ -1847,8 +1848,7 @@ function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;const field=$('battlefield');field.classList.remove('finisher-flash');void field.offsetWidth;field.classList.add('finisher-flash');setTimeout(()=>field.classList.remove('finisher-flash'),520);chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(fromGesture=false){
   if(!fromGesture||performance.now()<powerModalArmedAt)return;
-  repairPowerState('gamble');
-  const item=pendingPowerRewards()[0];
+  const item=currentAwakening();
   if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;
   item.gambled=true;
   s.maxHp=Math.max(1,s.maxHp*.85);s.hp=Math.min(s.hp,s.maxHp);
@@ -2208,159 +2208,100 @@ function normalizeReward(raw,keyHint=''){
     createdAt:finite(raw.createdAt,Date.now())
   };
 }
-function pendingPowerRewards(){
-  if(!s.powerRewards||typeof s.powerRewards!=='object')s.powerRewards={};
-  return Object.values(s.powerRewards)
-    .filter(x=>x&&x.status==='pending')
-    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||a.stage-b.stage||a.source.localeCompare(b.source));
-}
-function resolvedPowerRewardCount(){
-  return Object.values(s.powerRewards||{}).filter(x=>x?.status==='resolved').length
-}
-function syncPowerQueue(){
-  powerQueue=pendingPowerRewards();
-  return powerQueue
-}
-function ensurePowerReward(item,status='pending'){
-  const source=validRewardSource(item?.source)?item.source:'milestone';
-  const stage=Math.floor(clamp(item?.stage||s.stage,1,10000));
+function normalizeAwakening(raw){
+  if(!raw||typeof raw!=='object')return null;
+  const source=validRewardSource(raw.source)?raw.source:'milestone';
+  const stage=Math.floor(clamp(raw.stage||s.stage||1,1,10000));
   const key=rewardKey(source,stage);
-  if(!s.powerRewards||typeof s.powerRewards!=='object')s.powerRewards={};
-  const existing=s.powerRewards[key];
-  if(existing?.status==='resolved')return existing;
-  const normalized=normalizeReward({...existing,...item,source,stage,status:existing?.status||status,createdAt:existing?.createdAt||Date.now()},key);
-  s.powerRewards[key]=normalized;
-  return normalized
+  return {
+    id:key,key,source,stage,
+    status:'pending',
+    selectedPowerId:null,
+    minRarity:raw.minRarity||'common',
+    options:Array.isArray(raw.options)?[...new Set(raw.options)].filter(id=>byId(id)):[],
+    rerolled:!!raw.rerolled,
+    gambled:!!raw.gambled,
+    createdAt:finite(raw.createdAt,Date.now())
+  }
+}
+function pendingPowerRewards(){
+  if(!Array.isArray(s.awakeningQueue))s.awakeningQueue=[];
+  return s.awakeningQueue
+}
+function currentAwakening(){return pendingPowerRewards()[0]||null}
+function resolvedPowerRewardCount(){return Object.values(s.powerRewards||{}).filter(x=>x?.status==='resolved').length}
+function syncPowerQueue(){powerQueue=pendingPowerRewards();return powerQueue}
+function enqueueAwakening(item){
+  const reward=normalizeAwakening(item);
+  if(!reward)return null;
+  if(oldRewardWasResolved(reward.source,reward.stage))return null;
+  if(s.awakeningQueue.some(x=>x.key===reward.key))return s.awakeningQueue.find(x=>x.key===reward.key);
+  s.awakeningQueue.push(reward);
+  return reward
 }
 function oldRewardWasResolved(source,stage){
   const canonical=rewardKey(source,stage),legacy=legacyRewardKey(source,stage);
-  return !!(s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||s.consumedChoices?.includes(canonical)||s.consumedChoices?.includes(legacy))
+  return !!(s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||s.consumedChoices?.includes(canonical)||s.consumedChoices?.includes(legacy)||s.powerRewards?.[canonical]?.status==='resolved')
 }
 function oldSelectedPower(source,stage){
   const canonical=rewardKey(source,stage),legacy=legacyRewardKey(source,stage);
-  return s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||null
+  return s.resolvedPowerChoices?.[canonical]||s.resolvedPowerChoices?.[legacy]||s.powerRewards?.[canonical]?.selectedPowerId||null
 }
 function repairPowerState(reason='runtime',legacyQueue=null){
   powerRepairStats.runs++;powerRepairStats.lastReason=reason;
-  let removed=0,recovered=0;
+  if(!Array.isArray(s.awakeningQueue))s.awakeningQueue=[];
   if(!s.powerRewards||typeof s.powerRewards!=='object'||Array.isArray(s.powerRewards))s.powerRewards={};
   if(!s.resolvedPowerChoices||typeof s.resolvedPowerChoices!=='object')s.resolvedPowerChoices={};
   if(!Array.isArray(s.consumedChoices))s.consumedChoices=[];
-  if(!Array.isArray(s.triggeredMilestones))s.triggeredMilestones=[];
-  if(!Array.isArray(s.bossRewards))s.bossRewards=[];
 
-  const previousRewards=Object.values(s.powerRewards);
-  const rebuilt={};
-  for(const raw of previousRewards){
-    const r=normalizeReward(raw,raw?.id||raw?.key||'');
-    if(!r){removed++;continue}
-    if(r.stage>s.stage&&r.source==='milestone'){removed++;continue}
-    if(r.source==='boss'&&r.stage>=s.stage&&!s.bossRewards.includes(r.stage)){removed++;continue}
-    if(r.status==='pending'&&oldRewardWasResolved(r.source,r.stage)){
-      r.status='resolved';r.selectedPowerId=r.selectedPowerId||oldSelectedPower(r.source,r.stage);removed++
-    }
-    rebuilt[r.key]=r
-  }
-  s.powerRewards=rebuilt;
-
-  const legacyItems=Array.isArray(legacyQueue)?legacyQueue:Array.isArray(powerQueue)?powerQueue:[];
-  for(const raw of legacyItems){
-    if(!raw||typeof raw!=='object')continue;
-    const source=raw.source==='boss'?'boss':'milestone';
-    const stage=Math.floor(clamp(raw.stage,1,10000));
-    const key=rewardKey(source,stage);
-    if(s.powerRewards[key])continue;
-    if(oldRewardWasResolved(source,stage)){
-      s.powerRewards[key]=normalizeReward({...raw,source,stage,status:'resolved',selectedPowerId:oldSelectedPower(source,stage)},key);
-      recovered++;continue
-    }
-    if(stage<=s.stage||(source==='boss'&&s.bossRewards.includes(stage))){
-      s.powerRewards[key]=normalizeReward({...raw,source,stage,status:'pending'},key);
-      recovered++
+  const migrated=[];
+  const candidates=[
+    ...Object.values(s.powerRewards||{}).filter(x=>x&&x.status==='pending'),
+    ...(Array.isArray(legacyQueue)?legacyQueue:[]),
+    ...(Array.isArray(powerQueue)?powerQueue:[])
+  ];
+  for(const raw of candidates){
+    const aw=normalizeAwakening(raw);
+    if(!aw||oldRewardWasResolved(aw.source,aw.stage))continue;
+    if(!s.awakeningQueue.some(x=>x.key===aw.key)){
+      s.awakeningQueue.push(aw);
+      migrated.push(aw.key)
     }
   }
 
-  // Reconcile historical milestone records. If an old save says the milestone
-  // triggered but has no pending queue entry, treat it as already consumed.
-  for(const stageRaw of [...new Set(s.triggeredMilestones)]){
-    const stage=Math.floor(clamp(stageRaw,1,10000));
-    if(!PF_CONFIG.powerMilestones.includes(stage)||stage>s.stage)continue;
-    const key=rewardKey('milestone',stage);
-    if(!s.powerRewards[key]){
-      const pendingLegacy=legacyItems.find(x=>x&&x.source!=='boss'&&Math.floor(x.stage)===stage&&!oldRewardWasResolved('milestone',stage));
-      s.powerRewards[key]=normalizeReward({
-        source:'milestone',stage,
-        status:pendingLegacy?'pending':'resolved',
-        selectedPowerId:oldSelectedPower('milestone',stage),
-        minRarity:stage>=350?'epic':stage>=125?'rare':'common',
-        options:pendingLegacy?.options||[]
-      },key);
-      recovered++
-    }
-  }
-  for(const stageRaw of [...new Set(s.bossRewards)]){
-    const stage=Math.floor(clamp(stageRaw,1,10000)),key=rewardKey('boss',stage);
-    if(!s.powerRewards[key]){
-      const pendingLegacy=legacyItems.find(x=>x&&x.source==='boss'&&Math.floor(x.stage)===stage&&!oldRewardWasResolved('boss',stage));
-      s.powerRewards[key]=normalizeReward({
-        source:'boss',stage,
-        status:pendingLegacy?'pending':'resolved',
-        selectedPowerId:oldSelectedPower('boss',stage),
-        minRarity:stage>=100?'legendary':'epic',
-        options:pendingLegacy?.options||[]
-      },key);
-      recovered++
-    }
+  // Historical records are archive-only. Pending truth lives only in awakeningQueue.
+  for(const [key,r] of Object.entries(s.powerRewards)){
+    if(r?.status==='pending')delete s.powerRewards[key]
   }
 
-  // A resolving transaction from a crashed/closed tab is deterministically
-  // finalized if its selected power exists; otherwise it safely returns pending.
-  for(const r of Object.values(s.powerRewards)){
-    if(r.status!=='pending'&&r.status!=='resolved')r.status=r.selectedPowerId?'resolved':'pending';
-    if(r.status==='resolved'){
-      const oldKey=legacyRewardKey(r.source,r.stage);
-      const chosen=r.selectedPowerId||s.resolvedPowerChoices[r.key]||s.resolvedPowerChoices[oldKey]||null;
-      r.selectedPowerId=chosen&&byId(chosen)?chosen:null;
-      if(chosen){s.resolvedPowerChoices[r.key]=chosen;s.resolvedPowerChoices[oldKey]=chosen}
-      if(!s.consumedChoices.includes(r.key))s.consumedChoices.push(r.key)
-    }
-  }
+  s.awakeningQueue=s.awakeningQueue
+    .map(normalizeAwakening)
+    .filter(Boolean)
+    .filter((r,i,arr)=>arr.findIndex(x=>x.key===r.key)===i)
+    .filter(r=>!oldRewardWasResolved(r.source,r.stage))
+    .sort((x,y)=>(x.createdAt||0)-(y.createdAt||0)||x.stage-y.stage);
 
-  // UI state is never authoritative.
+  powerQueue=s.awakeningQueue;
   choiceLocked=false;
   activePowerChoices=[];
-  syncPowerQueue();
-  const pending=powerQueue.length;
-  if(pending===0&&document.getElementById('powerModal')){
-    $('powerModal').classList.add('hidden');powerModalVisible=false;
-    $('powerChoices').classList.remove('input-locked');
-  }
 
-  powerRepairStats.removed+=removed;
-  powerRepairStats.recovered+=recovered;
-  powerRepairStats.lastPending=pending;
+  powerRepairStats.recovered+=migrated.length;
+  powerRepairStats.lastPending=s.awakeningQueue.length;
   powerRepairStats.lastResolved=resolvedPowerRewardCount();
-  console.info('[Powerfall v0.7] power state repair',reason,{pending,resolved:powerRepairStats.lastResolved,removed,recovered});
-  return {pending,resolved:powerRepairStats.lastResolved,removed,recovered}
+  console.info('[Powerfall v1.10] awakening state',reason,{pending:s.awakeningQueue.length,migrated});
+  return {pending:s.awakeningQueue.length,resolved:powerRepairStats.lastResolved,recovered:migrated.length}
 }
 function powerSystemReport(){
-  const pending=pendingPowerRewards(),resolved=resolvedPowerRewardCount();
-  const keys=Object.keys(s.powerRewards||{});
-  const unique=new Set(keys).size===keys.length;
-  const stale=pending.filter(r=>s.resolvedPowerChoices?.[r.key]||s.consumedChoices?.includes(r.key)).length;
-  const ok=unique&&stale===0&&!choiceLocked;
-  return {ok,pending:pending.length,resolved,stale,repairs:powerRepairStats.runs,recovered:powerRepairStats.recovered,removed:powerRepairStats.removed,lastReason:powerRepairStats.lastReason}
+  const pending=pendingPowerRewards();
+  const unique=new Set(pending.map(x=>x.key)).size===pending.length;
+  const valid=pending.every(x=>x.status==='pending'&&Array.isArray(x.options));
+  return {ok:unique&&valid,pending:pending.length,resolved:resolvedPowerRewardCount(),stale:0,repairs:powerRepairStats.runs,recovered:powerRepairStats.recovered,removed:0,lastReason:powerRepairStats.lastReason}
 }
 function runPowerSelfTest(){
   const report=powerSystemReport();
-  const rewards=Object.values(s.powerRewards||{});
-  const ids=rewards.map(r=>r.key);
-  const unique=new Set(ids).size===ids.length;
-  const validStatuses=rewards.every(r=>r.status==='pending'||r.status==='resolved');
-  const resolvedNotPending=rewards.every(r=>r.status!=='resolved'||!pendingPowerRewards().some(p=>p.key===r.key));
   const modalValid=!powerModalVisible||pendingPowerRewards().length>0;
   const upgradesIndependent=typeof openUpgrades==='function';
-  return {pass:unique&&validStatuses&&resolvedNotPending&&modalValid&&upgradesIndependent,unique,validStatuses,resolvedNotPending,modalValid,upgradesIndependent,report}
+  return {pass:report.ok&&modalValid&&upgradesIndependent,modalValid,upgradesIndependent,report}
 }
 window.PF_SELFTEST=runPowerSelfTest;
 window.PF_REPAIR_POWER_STATE=()=>{const r=repairPowerState('manual');updatePowerAlert();renderAll();saveNow();return r};
@@ -2378,17 +2319,17 @@ function presentPendingPowerAfterClear(clearedStage){
   const banner=$('majorBanner');
   clearTimeout(banner._to);
   showMajorBanner('POWER','STAGE '+clearedStage+' COMPLETE','POWER AWAKENING READY',950);
-  setTimeout(()=>{
-    if(pendingPowerRewards().length)openPendingPowerAwakening()
-  },1050)
+  setTimeout(()=>{if(pendingPowerRewards().length)openPendingPowerAwakening()},1050)
 }
-function queuePower(item){if(s.challengeMode==='null_protocol')return null;
-  const reward=ensurePowerReward(item,'pending');
-  if(reward.status==='resolved')return;
+function queuePower(item){
+  if(s.challengeMode==='null_protocol')return null;
+  const reward=enqueueAwakening(item);
+  if(!reward)return null;
   syncPowerQueue();
   updatePowerAlert();
   scheduleSave();
   toast('POWER AWAKENING READY');
+  return reward
 }
 function rarityValue(r){return {common:0,rare:1,epic:2,legendary:3,cosmic:4}[r]??0}
 const PF_UNLOCKS={
@@ -2470,28 +2411,14 @@ function closeConflictingUiForPowerAwakening(){
   showScreen('gameScreen')
 }
 function openPendingPowerAwakening(){
-  repairPowerState('alert-open');
-  const pending=pendingPowerRewards();
-  if(!pending.length){updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
-  // The reward ledger is authoritative. Rebuild the modal from scratch every time.
+  const item=currentAwakening();
+  if(!item){updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
   closeConflictingUiForPowerAwakening();
-  $('powerDeckModal')?.classList.add('hidden');
-  $('infoModal')?.classList.add('hidden');
-  $('profileModal')?.classList.add('hidden');
-  $('upgradeSheet')?.classList.add('hidden');
-  showScreen('gameScreen');
-  const banner=$('majorBanner');
-  clearTimeout(banner._to);
-  banner.classList.add('hidden');
+  const banner=$('majorBanner');clearTimeout(banner._to);banner.classList.add('hidden');
   clearTimeout(choiceTimer);
-  powerModalVisible=false;
-  powerDecisionPaused=false;
-  powerActionGesture=null;
-  choiceLocked=false;
-  activePowerChoices=[];
+  powerActionGesture=null;choiceLocked=false;activePowerChoices=[];
   $('powerChoices').classList.remove('input-locked');
   $('powerModal').classList.remove('input-shielded');
-  $('powerModal').classList.add('hidden');
   showPowerModal()
 }
 function pauseCombatForPowerDecision(){
@@ -2513,46 +2440,23 @@ function resumeCombatAfterPowerDecision(){
   startCombatTimers()
 }
 function showPowerModal(){
-  repairPowerState('modal-open');
-  const item=pendingPowerRewards()[0];
-  if(!item||choiceLocked){updatePowerAlert();return}
-  powerQueue=pendingPowerRewards();
-
-  // A pending awakening must always resolve to visible, valid cards.
-  // Old saves can contain stale option ids after the power catalogue changes.
-  let resolvedOptions=Array.isArray(item.options)?item.options.map(byId).filter(Boolean):[];
-  if(!resolvedOptions.length){
-    resolvedOptions=rollPowerChoices(item);
-    item.options=resolvedOptions.map(p=>p.id)
+  const item=currentAwakening();
+  if(!item)return;
+  if(!item.options.length)item.options=rollPowerChoices(item).map(p=>p.id);
+  let resolved=item.options.map(byId).filter(Boolean);
+  if(!resolved.length){
+    resolved=PF_POWERS.filter(powerUnlocked).slice(0,3);
+    item.options=resolved.map(p=>p.id)
   }
-  if(!resolvedOptions.length){
-    const emergency=PF_POWERS.filter(powerUnlocked).slice(0,Math.min(3,PF_POWERS.length));
-    resolvedOptions=emergency;
-    item.options=emergency.map(p=>p.id)
-  }
-
-  activePowerChoices=resolvedOptions;
-  powerActionGesture=null;
+  activePowerChoices=resolved;
   powerModalVisible=true;
   document.body.classList.add('power-awakening-open');
   pauseCombatForPowerDecision();
-  clearTimeout(choiceTimer);
-  powerModalArmedAt=performance.now()+900;
-  $('powerModal').dataset.rarity=activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
+  powerModalArmedAt=performance.now()+600;
+  $('powerModal').dataset.rarity=resolved.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
   $('powerModal').classList.remove('hidden');
   renderPowerChoices(item);
-
-  // Full-modal input shield. A tap that began on Burst before this modal
-  // appeared cannot mutate, reroll, dismiss or choose a power.
-  for(const id of ['gamblePowerBtn','rerollPowerBtn','hidePowerModalBtn'])$(id).disabled=true;
-  $('powerModal').classList.add('input-shielded');
-  choiceTimer=setTimeout(()=>{
-    if(!powerModalVisible)return;
-    $('powerModal').classList.remove('input-shielded');
-    $('hidePowerModalBtn').disabled=false;
-    $('rerollPowerBtn').disabled=!!item.rerolled||!meta.soulTree.reroll;
-    $('gamblePowerBtn').disabled=!!item.gambled||choiceLocked
-  },920);
+  updatePowerAlert();
   scheduleSave()
 }
 function hidePowerModal(fromGesture=false){
@@ -2574,102 +2478,73 @@ function hidePowerModal(fromGesture=false){
 }
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
 function choosePower(id,choiceId){
-  repairPowerState('pre-choice');
-  const reward=s.powerRewards?.[choiceId]||pendingPowerRewards().find(x=>x.id===choiceId||x.key===choiceId);
+  const reward=currentAwakening();
   const power=byId(id);
-  if(ascensionLocked||choiceLocked||!powerModalVisible||performance.now()<powerModalArmedAt||!reward||reward.status!=='pending'||!reward.options?.includes(id)||!power)return;
+  if(!reward||reward.key!==choiceId||!power||choiceLocked||performance.now()<powerModalArmedAt)return;
+  if(!reward.options.includes(id))return;
 
   choiceLocked=true;
-  reward.status='resolving';
-  reward.selectedPowerId=id;
   const grid=$('powerChoices');
   grid.classList.add('input-locked');
   grid.querySelectorAll('button').forEach(b=>b.disabled=true);
 
-  // Transaction commit: exactly one reward becomes exactly one selected power/mastery.
   const alreadyOwned=s.powers.includes(id);
-  if(alreadyOwned)applyPowerMastery(power);
-  else{
+  if(alreadyOwned){
+    applyPowerMastery(power)
+  }else{
     s.powers.push(id);
     meta.totalPowersFound++;
     meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),id]));
     applyEffect(s,power.effect);
     applyPermanentMastery(power);
-
-    // Acquisition invariant: an effect/sanitization pass is never allowed to
-    // consume the identity of the power that created it.
-    if(!s.powers.includes(id)){
-      console.warn('[Powerfall] repaired dropped acquired power',id);
-      s.powers.push(id)
-    }
+    if(!s.powers.includes(id))s.powers.push(id);
     s.powers=Array.from(new Set(s.powers.filter(pid=>byId(pid))))
   }
 
   if(!alreadyOwned&&!s.powers.includes(id)){
-    reward.status='pending';
-    reward.selectedPowerId=null;
     choiceLocked=false;
     grid.classList.remove('input-locked');
     grid.querySelectorAll('button').forEach(b=>b.disabled=false);
-    toast('POWER ACQUISITION RETRY REQUIRED');
+    toast('POWER ACQUISITION FAILED · TRY AGAIN');
     return
   }
 
-  reward.status='resolved';
   s.resolvedPowerChoices[reward.key]=id;
   s.resolvedPowerChoices[legacyRewardKey(reward.source,reward.stage)]=id;
   if(!s.consumedChoices.includes(reward.key))s.consumedChoices.push(reward.key);
+  s.powerRewards[reward.key]={...reward,status:'resolved',selectedPowerId:id,options:[...reward.options]};
+  s.awakeningQueue=s.awakeningQueue.filter(x=>x.key!==reward.key);
+  powerQueue=s.awakeningQueue;
 
-  checkCombos();checkEmergentEvolutions();checkIdentityAwakening();
-
-  // UI closes before render/save. Queue is then derived from the ledger.
   $('powerModal').classList.add('hidden');
+  $('powerModal').classList.remove('input-shielded');
   powerModalVisible=false;
   document.body.classList.remove('power-awakening-open');
   powerDecisionPaused=false;
   choiceLocked=false;
   activePowerChoices=[];
   grid.classList.remove('input-locked');
-  $('hidePowerModalBtn').disabled=false;
-  $('rerollPowerBtn').disabled=false;
-  $('gamblePowerBtn').disabled=false;
 
-  repairPowerState('post-choice');
+  checkCombos();checkEmergentEvolutions();checkIdentityAwakening();
 
-  // The reward ledger and run loadout must agree before the save commits.
-  // This specifically protects mobile selection from a disappearing acquisition.
-  if(!alreadyOwned&&!s.powers.includes(id)){
-    s.powers.push(id);
-    s.powers=Array.from(new Set(s.powers.filter(pid=>byId(pid))));
-    console.warn('[Powerfall] post-choice loadout repaired',id)
-  }
-
-  const saved=saveNow();
+  saveNow();
   lastHudRender=0;
-  renderAll();
-  renderHUD(true);
-  renderLoadout();
-  updatePowerAlert();
-
-  const visibleNow=s.powers.includes(id)&&!!document.querySelector('[data-rack-power="'+id+'"]');
-  if(!alreadyOwned&&!visibleNow){
-    console.error('[Powerfall] acquired power failed visible-loadout verification',id,{powers:[...s.powers],saved});
-    renderLoadout()
-  }
+  renderAll();renderHUD(true);renderLoadout();updatePowerAlert();
   toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'));
-  resumeCombatAfterPowerDecision()
+  resumeCombatAfterPowerDecision();
+
+  if(currentAwakening())setTimeout(openPendingPowerAwakening,350)
 }
 function rerollPower(fromGesture=false){
   if(!fromGesture||performance.now()<powerModalArmedAt)return;
-  repairPowerState('reroll');
-  const item=pendingPowerRewards()[0];
+  const item=currentAwakening();
   if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;
   item.rerolled=true;item.options=rollPowerChoices(item).map(p=>p.id);
   activePowerChoices=item.options.map(byId).filter(Boolean);
   renderPowerChoices(item);updateGambleButton();saveNow()
 }
 function updateGambleButton(){
-  const item=pendingPowerRewards()[0];
+  const item=currentAwakening();
   $('gamblePowerBtn').disabled=!item||!!item.gambled||choiceLocked
 }
 
@@ -2982,7 +2857,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.9.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.10.0</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3133,7 +3008,7 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
 
 function snapshot(){
   syncPowerQueue();
-  return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue:pendingPowerRewards(),timestamp:Date.now()}))
+  return JSON.parse(JSON.stringify({saveVersion:PF_CONFIG.saveVersion,meta,run:s,powerQueue:s.awakeningQueue,timestamp:Date.now()}))
 }
 function saveNow(){clearTimeout(timers.save);const ok=PF_SAVE.write(snapshot());if(!ok)toast('SAVE FAILED — progress is not stored');return ok}
 function scheduleSave(){clearTimeout(timers.save);timers.save=setTimeout(saveNow,250)}
