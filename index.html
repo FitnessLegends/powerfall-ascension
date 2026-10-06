@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.11.3</title>
+  <title>Powerfall: Ascension Prototype v1.12.0</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1027,6 +1027,86 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
   .combat-system-status span{padding:3px 5px!important}
   .location-chip{font-size:6px!important}
 }
+
+/* v1.12.0 HUD cleanup + observable gameplay */
+#powerAlert{display:none!important}
+
+.power-dock-btn{position:relative!important}
+.dock-alert-badge{
+  position:absolute;
+  right:7px;
+  top:5px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#55dca0;
+  color:#06150f;
+  border:2px solid #0a1420;
+  font-size:8px;
+  font-style:normal;
+  font-weight:1000;
+  line-height:1;
+  box-shadow:0 0 10px #55dca066;
+}
+.power-dock-btn.awakening-waiting{
+  border-color:#4ecf96!important;
+  box-shadow:inset 0 0 0 1px #4ecf9638!important;
+}
+
+/* Rack icons should be readable, not giant rarity floodlights. */
+.rack-power .power-symbol,
+.rack-power .power-symbol.epic,
+.rack-power .power-symbol.legendary,
+.rack-power .power-symbol.cosmic{
+  box-shadow:0 0 0 2px #07101a,0 0 5px #35536d88!important;
+  animation:none!important;
+  filter:none!important;
+}
+.rack-power .power-symbol .glyph{
+  text-shadow:0 0 3px currentColor!important;
+}
+
+@media(max-width:520px){
+  #gameScreen{
+    gap:4px!important;
+    grid-template-rows:auto auto minmax(310px,1fr) 38px 46px 54px!important;
+  }
+  .combat-action-strip,
+  .combat-action-strip .battle-burst{
+    height:38px!important;
+    min-height:38px!important;
+  }
+  .power-rack{
+    height:46px!important;
+    min-height:46px!important;
+    padding:4px 6px!important;
+  }
+  .power-rack .loadout-strip{
+    flex-basis:108px!important;
+    min-width:108px!important;
+  }
+  .power-rack .loadout-title b{font-size:9px!important}
+  .power-rack .loadout-more{font-size:6px!important}
+  .rack-power{
+    min-width:32px!important;
+    width:32px!important;
+    max-width:32px!important;
+  }
+  .rack-power .power-symbol{
+    width:29px!important;
+    height:29px!important;
+    min-width:29px!important;
+  }
+  .rack-power .power-symbol .glyph{font-size:14px!important}
+  .bottom-dock{
+    height:54px!important;
+    min-height:54px!important;
+  }
+  .dock-button{min-height:45px!important}
+}
 </style>
 </head>
 <body>
@@ -1035,7 +1115,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.11.3 · VARIED POWERS</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.12.0 · OBSERVABLE CORE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1189,7 +1269,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <section class="bottom-dock">
         <button id="upgradeBtn" class="dock-button primary" type="button"><span>UP</span><small>UPGRADES</small></button>
         <button id="profileBtn" class="dock-button secondary" type="button"><span>H</span><small>HERO</small></button>
-        <button id="ascensionNavBtn" class="dock-button secondary locked-soft" type="button"><span>AS</span><small>ASCEND</small></button><button id="endgameNavBtn" class="dock-btn endgame-nav hidden"><span>∞</span><small>BEYOND</small></button><button id="archiveNavBtn" class="dock-button secondary" type="button"><span>P</span><small>POWERS</small></button>
+        <button id="ascensionNavBtn" class="dock-button secondary locked-soft" type="button"><span>AS</span><small>ASCEND</small></button><button id="endgameNavBtn" class="dock-btn endgame-nav hidden"><span>∞</span><small>BEYOND</small></button><button id="archiveNavBtn" class="dock-button secondary power-dock-btn" type="button"><span>P</span><small>POWERS</small><i id="powerDockBadge" class="dock-alert-badge hidden">0</i></button>
       </section>
     </section>
 
@@ -1599,6 +1679,7 @@ window.PF_CONFIG = {
 })();
 
 </script>
+  <script src="/src/telemetry.js"></script>
   <script>
 (function(){
 'use strict';
@@ -1635,6 +1716,17 @@ let powerActionGesture=null;
 let autoBuyElapsed=0;
 let lastHudRender=0,lastCombatFx=0,damageAggregate=0,damageAggregateTimer=null;
 let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending:0,lastResolved:0};
+
+function traceGameplay(event,data={}){
+  window.PFTelemetry?.emit(event,{
+    version:'1.12.0',
+    stage:Number(s?.stage||0),
+    screen:document.querySelector('.screen.active')?.id||'none',
+    pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
+    powers:Array.isArray(s?.powers)?s.powers.length:0,
+    ...data
+  })
+}
 
 function permanentSlotCount(){return Math.min(PF_POWERS.length,meta.soulTree.power_memory||0)}
 function masteryTier(id){return Math.floor((meta.powerMasteryPermanent?.[id]||0)/100)}
@@ -2393,6 +2485,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
 function handlePlayerDefeat(reason='DEFEATED'){
   if(powerDecisionPaused||powerModalVisible||currentAwakening()){
     s.hp=Math.max(1,s.hp);
+    traceGameplay('defeat_blocked_for_awakening',{reason});
     console.warn('[Powerfall] blocked defeat during Power Awakening');
     return
   }
@@ -2404,6 +2497,7 @@ function handlePlayerDefeat(reason='DEFEATED'){
   if(s.inOperation){
     s.operationDamageTaken=(s.operationDamageTaken||0)+1;
   }
+  traceGameplay('player_defeat',{reason,enemy:s.enemy?.name||'unknown'});
   toast(reason+' · RETRYING CURRENT BATTLE');
   spawnEnemy();
   saveNow();
@@ -2596,6 +2690,7 @@ function queuePower(item){
   if(s.challengeMode==='null_protocol')return null;
   const reward=enqueueAwakening(item);
   if(!reward)return null;
+  traceGameplay('awakening_queued',{key:reward.key,source:reward.source,rewardStage:reward.stage});
   syncPowerQueue();
   updatePowerAlert();
   scheduleSave();
@@ -2712,6 +2807,7 @@ function closeConflictingUiForPowerAwakening(){
 }
 function openPendingPowerAwakening(){
   const item=currentAwakening();
+  traceGameplay('awakening_open_request',{key:item?.key||null});
   if(!item){showScreen('gameScreen',true);updatePowerAlert();toast('NO POWER AWAKENING WAITING');return}
   closeConflictingUiForPowerAwakening();
   const banner=$('majorBanner');clearTimeout(banner._to);banner.classList.add('hidden');
@@ -2747,6 +2843,7 @@ function showPowerModal(){
   if(!item){showScreen('gameScreen',true);return}
   const resolved=guaranteedPowerChoices(item);
   activePowerChoices=resolved;
+  traceGameplay('awakening_choices_ready',{key:item.key,options:resolved.map(p=>p.id)});
   powerModalVisible=true;
   document.body.classList.add('power-awakening-open');
   pauseCombatForPowerDecision();
@@ -2769,6 +2866,7 @@ function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try
 function choosePower(id,choiceId){
   const reward=currentAwakening();
   const power=byId(id);
+  traceGameplay('awakening_choice_attempt',{choiceId,powerId:id,rewardKey:reward?.key||null});
   if(!reward||reward.key!==choiceId||!power||choiceLocked||performance.now()<powerModalArmedAt)return;
   if(!reward.options.includes(id))return;
 
@@ -2794,6 +2892,7 @@ function choosePower(id,choiceId){
     choiceLocked=false;
     grid.classList.remove('input-locked');
     grid.querySelectorAll('button').forEach(b=>b.disabled=false);
+    traceGameplay('awakening_choice_failed',{powerId:id,rewardKey:reward?.key||null});
     toast('POWER ACQUISITION FAILED · TRY AGAIN');
     return
   }
@@ -2819,6 +2918,7 @@ function choosePower(id,choiceId){
   saveNow();
   lastHudRender=0;
   renderAll();renderHUD(true);renderLoadout();updatePowerAlert();
+  traceGameplay('awakening_choice_committed',{powerId:id,alreadyOwned,remaining:s.awakeningQueue.length});
   toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'));
   resumeCombatAfterPowerDecision();
 
@@ -2976,19 +3076,19 @@ function nextMilestone(stage){
 }
 function updatePowerAlert(){
   syncPowerQueue();
-  const pending=powerQueue.length,report=powerSystemReport(),alert=$('powerAlert');
-  alert.classList.toggle('integrity-ok',report.ok);
-  if(pending){
-    const modalActuallyVisible=powerModalVisible&&$('powerModal').classList.contains('active');
-    alert.classList.toggle('hidden',modalActuallyVisible);
-    alert.classList.toggle('power-reopen-emergency',!modalActuallyVisible);
-    $('powerQueueBadge').textContent=pending;
-    $('powerAlertText').textContent=pending>1?`${pending} powers waiting · tap to choose`:'Tap to choose your power';
-  }else{
-    alert.classList.add('hidden');
-    alert.classList.remove('power-reopen-emergency');
-    $('powerQueueBadge').textContent='0'
+  const pending=powerQueue.length;
+  const alert=$('powerAlert');
+  const badge=$('powerDockBadge');
+
+  // Recovery now lives on the stable bottom dock. The old floating card is
+  // retained only as a hidden compatibility element for old save/UI code.
+  alert.classList.add('hidden');
+  $('powerQueueBadge').textContent=pending;
+  if(badge){
+    badge.textContent=pending>9?'9+':String(pending);
+    badge.classList.toggle('hidden',pending===0)
   }
+  $('archiveNavBtn')?.classList.toggle('awakening-waiting',pending>0)
 }
 function renderHUD(force=false){
   const hudNow=performance.now();if(!force&&hudNow-lastHudRender<110)return;lastHudRender=hudNow;
@@ -3231,7 +3331,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.11.3</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.12.0</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3346,7 +3446,9 @@ function showEnemyInfo(){
   openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType],['Archetype evolutions',e.evolutions?.length?e.evolutions.map(id=>PF_ENEMY_EVOLUTIONS.find(x=>x.id===id)?.name||id).join(', '):'None'],['Operation powers',e.operationPowers?.length?e.operationPowers.map(id=>e.operationPowerLabels?.[id]||id).join(', '):'None'],['Powers',e.powers?.length?e.powers.map(id=>byId(id)?.name||id).join(', '):'None']]);
 }
 function showScreen(id,force=false){
+  const requested=id;
   if(!force&&id!=='powerModal'&&currentAwakening())id='powerModal';
+  if(requested!==id||document.querySelector('.screen.active')?.id!==id)traceGameplay('screen_change',{requested,target:id,force});
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const target=$(id);if(!target)return;
   target.classList.add('active');
@@ -3488,7 +3590,7 @@ function bind(){
   bindFreshPowerAction('rerollPowerBtn',rerollPower);bindFreshPowerAction('gamblePowerBtn',gamblePower);bindFreshPowerAction('hidePowerModalBtn',hidePowerModal);
   $('powerAlert').onclick=e=>{e.preventDefault();e.stopPropagation();openPendingPowerAwakening()};
   $('powerAlert').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPendingPowerAwakening()}};
-  $('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  $('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>{if(currentAwakening())openPendingPowerAwakening();else showScreen('archiveScreen')});$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
