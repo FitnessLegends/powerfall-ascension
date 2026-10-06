@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8.4</title>
+  <title>Powerfall: Ascension Prototype v1.8.5</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -679,6 +679,12 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 #powerAlert{touch-action:manipulation!important;pointer-events:auto!important;cursor:pointer!important;position:relative!important;z-index:45!important}
 #powerAlert:not(.hidden){display:flex!important;visibility:visible!important;opacity:1!important}
 #powerAlert.integrity-ok{border-color:#49d49b!important;box-shadow:0 0 0 1px #49d49b44,0 8px 22px #0005!important}
+
+/* v1.8.5 Power choice input shield + battle retry death rule */
+#powerModal.input-shielded .power-card{box-shadow:0 12px 34px #0009,0 0 0 2px #56cfff44!important}
+#powerModal.input-shielded .power-choice,
+#powerModal.input-shielded .power-actions button{pointer-events:none!important}
+#powerModal.input-shielded .power-actions{opacity:.55}
 </style>
 </head>
 <body>
@@ -687,7 +693,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.4 · EARNED POWERS</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.5 · INPUT SHIELD</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1761,10 +1767,11 @@ function autoDodgeHeavy(){
   return true
 }
 function startTelegraph(){if(s.fight.telegraph||storyPaused||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph)return;s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
-function resolveHeavyAttack(){if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?5:2));s.coins=Math.floor(s.coins*.9);toast('HEAVY HIT - KNOCKED BACK '+(old-s.stage));spawnEnemy()}renderHUD()}
+function resolveHeavyAttack(){if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){handlePlayerDefeat('HEAVY HIT DEFEAT');return}renderHUD()}
 function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;const field=$('battlefield');field.classList.remove('finisher-flash');void field.offsetWidth;field.classList.add('finisher-flash');setTimeout(()=>field.classList.remove('finisher-flash'),520);chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(){
+  if(performance.now()<powerModalArmedAt)return;
   repairPowerState('gamble');
   const item=pendingPowerRewards()[0];
   if(!item||item.status!=='pending'||item.gambled||choiceLocked)return;
@@ -2039,6 +2046,21 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   if(s.enemy?.nemesis&&s.enemyHp>0&&s.enemyHp/s.enemyMaxHp<=.22&&nemesisEscapeCheck()){renderHUD();return}
   if(s.enemyHp<=0)enemyDefeated();renderHUD();
 }
+function handlePlayerDefeat(reason='DEFEATED'){
+  // Death retries the exact encounter. No stage or patrol progress is lost.
+  // Pending Power Awakenings remain untouched in the permanent reward ledger.
+  s.hp=s.maxHp;
+  s.overkillCarry=0;
+  s.fight={...defaultRun().fight};
+  if(s.inOperation){
+    s.operationDamageTaken=(s.operationDamageTaken||0)+1;
+  }
+  toast(reason+' · RETRYING CURRENT BATTLE');
+  spawnEnemy();
+  saveNow();
+  lastHudRender=0;
+  renderHUD(true)
+}
 function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
@@ -2067,7 +2089,7 @@ function enemyAttack(){
   if(s.hp<=0){
     if(s.secondHeart&&s.enemy.wall&&!s.fight.heartUsed){s.fight.heartUsed=1;s.hp=s.maxHp*.6;toast('SECOND HEART');saveNow()}
     else if(s.revives>0){s.revives--;s.hp=s.maxHp*.45;if(s.immortalParadox){s.damageMult*=2;toast('IMMORTAL PARADOX · DAMAGE DOUBLED')}else toast('IMMORTAL CELLS REBUILT YOU');saveNow()}
-    else{s.hp=s.maxHp;const old=s.stage;s.stage=Math.max(1,s.stage-(s.enemy.wall?7:3));s.coins=Math.floor(s.coins*.9);toast('KNOCKED BACK '+(old-s.stage)+' STAGES');spawnEnemy();saveNow()}
+    else{handlePlayerDefeat('DEFEATED')}
   }
   renderHUD();
 }
@@ -2384,14 +2406,31 @@ function showPowerModal(){
   }
 
   activePowerChoices=resolvedOptions;
-  powerDecisionPaused=true;powerModalVisible=true;powerModalArmedAt=performance.now()+450;
+  powerDecisionPaused=true;powerModalVisible=true;
+  clearTimeout(choiceTimer);
+  powerModalArmedAt=performance.now()+900;
   $('powerModal').dataset.rarity=activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
   $('powerModal').classList.remove('hidden');
   renderPowerChoices(item);
-  updateGambleButton();
+
+  // Full-modal input shield. A tap that began on Burst before this modal
+  // appeared cannot mutate, reroll, dismiss or choose a power.
+  for(const id of ['gamblePowerBtn','rerollPowerBtn','hidePowerModalBtn'])$(id).disabled=true;
+  $('powerModal').classList.add('input-shielded');
+  choiceTimer=setTimeout(()=>{
+    if(!powerModalVisible)return;
+    $('powerModal').classList.remove('input-shielded');
+    $('hidePowerModalBtn').disabled=false;
+    $('rerollPowerBtn').disabled=!!item.rerolled||!meta.soulTree.reroll;
+    $('gamblePowerBtn').disabled=!!item.gambled||choiceLocked
+  },920);
   scheduleSave()
 }
 function hidePowerModal(){
+  if(performance.now()<powerModalArmedAt)return;
+  clearTimeout(choiceTimer);
+  clearTimeout(choiceTimer);
+  $('powerModal').classList.remove('input-shielded');
   $('powerModal').classList.add('hidden');
   powerModalVisible=false;
   powerDecisionPaused=false;choiceLocked=false;
@@ -2491,6 +2530,7 @@ function choosePower(id,choiceId){
   toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'))
 }
 function rerollPower(){
+  if(performance.now()<powerModalArmedAt)return;
   repairPowerState('reroll');
   const item=pendingPowerRewards()[0];
   if(choiceLocked||!item||item.rerolled||!meta.soulTree.reroll)return;
@@ -2752,8 +2792,10 @@ function renderPowerChoices(item){
     item.options=repaired.map(p=>p.id);
     activePowerChoices=repaired
   }
-  $('powerModalQueue').textContent=pendingPowerRewards().length;$('hidePowerModalBtn').disabled=false;
-  $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=!!item.rerolled;
+  $('powerModalQueue').textContent=pendingPowerRewards().length;
+  const shielded=performance.now()<powerModalArmedAt;
+  $('hidePowerModalBtn').disabled=shielded;
+  $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=shielded||!!item.rerolled;
   const grid=$('powerChoices');grid.innerHTML='';grid.classList.remove('input-locked');grid.classList.toggle('four',activePowerChoices.length===4);
   activePowerChoices.forEach(p=>{
     const owned=s.powers.includes(p.id),b=document.createElement('button');
@@ -2807,7 +2849,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.4</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.5</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
