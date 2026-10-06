@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8</title>
+  <title>Powerfall: Ascension Prototype v1.8.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -640,6 +640,26 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 .achievement-upgrade-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.achievement-upgrade{display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;text-align:left;padding:8px;border:1px solid #4d3b25;border-radius:9px;background:linear-gradient(180deg,#1a1510,#111218)}.achievement-upgrade strong{display:block;font-size:8.5px;color:#f4deb0}.achievement-upgrade small{display:block;margin-top:2px;font-size:6.8px;line-height:1.3;color:#9f9689}.achievement-upgrade span{font-size:8px;color:#ffd66b;font-weight:900}.achievement-upgrade:disabled{opacity:.42}.achievement-upgrade.maxed{border-color:#b98a3e;background:linear-gradient(180deg,#2b2113,#17130d)}
 .achievement-row{display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center}.achievement-row .achievement-value{font-size:7px;color:#b6a27d;white-space:nowrap}.achievement-row.earned .achievement-value{color:#ffd66b}
 @media(max-width:520px){.achievement-upgrade-grid{grid-template-columns:1fr}.achievement-resonance{grid-template-columns:repeat(3,1fr)}}
+
+/* ================= POWERFALL v1.8.1: ACHIEVEMENT NAV + BURST REPOSITION ================= */
+.top-utility-btn{width:34px;height:34px;display:grid;place-items:center;border:1px solid #34506a;border-radius:10px;background:#101a27;color:#dcecff;font-weight:900;font-size:15px;line-height:1;flex:0 0 auto}
+.top-utility-btn.achievement-nav{border-color:#8f6a2e;background:linear-gradient(180deg,#2a2010,#17130d);color:#ffd66b;box-shadow:inset 0 0 15px #ffc85a10}
+.top-utility-btn:active{transform:scale(.95)}
+.resource-strip{align-items:center}
+.combat-action-strip{display:grid;grid-template-columns:1fr;gap:6px;margin-top:-2px}
+.combat-action-strip .battle-burst{position:relative!important;inset:auto!important;width:100%!important;height:42px!important;min-height:42px!important;border-radius:11px!important;display:grid!important;grid-template-columns:auto auto auto!important;justify-content:center!important;align-items:center!important;align-content:center!important;gap:7px!important;border:1px solid #5fdcff!important;background:linear-gradient(90deg,#0d324a,#155c7e 50%,#0d324a)!important;box-shadow:0 5px 16px #0005,0 0 18px #3acfff24!important;color:#eafbff!important}
+.combat-action-strip .battle-burst span{font-size:16px!important;line-height:1!important}.combat-action-strip .battle-burst strong{font-size:10px!important;letter-spacing:.14em!important}.combat-action-strip .battle-burst small{font-size:7px!important;color:#aeeaff!important;letter-spacing:.08em}
+.achievement-screen{background:radial-gradient(circle at 50% 0,#30220f 0,#0d0b10 34%,#07090d 78%)}
+.achievement-screen .page-header{position:sticky;top:0;z-index:3;padding-bottom:5px;background:linear-gradient(180deg,#120f0bdd 70%,transparent)}
+.achievement-screen-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.achievement-screen-summary>div{text-align:center;padding:9px;border:1px solid #5c4729;border-radius:10px;background:#17120d}.achievement-screen-summary small{display:block;font-size:7px;color:#ac9a7b}.achievement-screen-summary strong{display:block;margin-top:2px;font-size:14px;color:#ffe0a0}
+.achievement-screen .achievement-core{margin-top:0}.achievement-catalogue{display:grid;gap:6px}.achievement-catalogue .achievement-row{padding:8px 9px}
+@media(max-width:520px){
+ .top-utility-btn{width:31px;height:31px;font-size:13px;border-radius:9px}
+ .resource-strip{gap:4px}.resource-strip .pill{padding:6px 8px;font-size:11px}
+ .combat-action-strip .battle-burst{height:39px!important;min-height:39px!important}
+ .achievement-screen-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #gameScreen{grid-template-rows:auto auto minmax(220px,1fr) auto auto auto!important}
+}
 </style>
 </head>
 <body>
@@ -648,9 +668,9 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8 · ACHIEVEMENT CORE</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.1 · HUD REFINEMENT</div>
         </div>
-        <div class="resource-strip"><button id="settingsCornerBtn" class="corner-settings" type="button" aria-label="Settings">⚙</button>
+        <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
           <button class="pill soul info-tap" id="soulsInfoBtn" type="button">S <span id="souls">0</span></button>
         </div>
@@ -783,7 +803,10 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
         <span><small>ULT</small><b id="ultimateLabel">0%</b></span>
         <span><small>BOUNTY</small><b id="bountyLabel">0/3</b></span>
       </div>
-        <button id="burstBtn" class="battle-burst" type="button"><span>⚡</span><strong>BURST</strong><small>READY</small></button>
+      </section>
+
+      <section class="combat-action-strip" aria-label="Manual combat action">
+        <button id="burstBtn" class="battle-burst" type="button"><span>⚡</span><strong>BURST ATTACK</strong><small>MANUAL STRIKE</small></button>
       </section>
 
       <section class="power-rack" aria-label="Current superpowers"><button id="loadoutStrip" class="loadout-strip" type="button" aria-label="Open Power Deck"><span class="loadout-title"><small>ACTIVE POWERS</small><b id="loadoutIdentity">EMERGING</b></span><span id="loadoutMore" class="loadout-more">OPEN DECK</span></button><div id="loadoutIcons" class="loadout-icons"><i class="loadout-empty">Powers you awaken will appear here</i></div></section>
@@ -829,6 +852,19 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
 
     <section id="archiveScreen" class="screen utility-screen"><header class="page-header utility-hero"><button id="backFromArchiveBtn" class="icon-btn" type="button">←</button><div class="menu-title"><span class="menu-emblem">P</span><div><small>POWER DATABASE</small><h1>POWER ARCHIVE</h1><p>Discover, unlock and preserve your powers.</p></div></div></header><section class="card power-index-card"><div class="section-title"><div><h2>Power Archive</h2><p id="powerArchiveHint">Known mutations, secrets and permanent loadout.</p></div></div><div id="permanentPowerSlots" class="permanent-slots"></div><div id="powerArchiveGrid" class="power-archive-grid"></div></section></section>
     <section id="endgameScreen" class="screen utility-screen endgame-screen"><header class="page-header"><div><div class="brand-sub">BEYOND ASCENSION</div><h1>THE COSMIC LAWS</h1></div><button id="endgameBackBtn" class="back-btn">BACK</button></header><div class="endgame-orbit"><div class="endgame-core">∞</div><div><small>REALITY SHARDS</small><strong id="cosmicShardCount">0</strong></div><div><small>ENDGAME DEPTH</small><strong id="endgameDepth">0</strong></div></div><div class="endgame-copy">Ascension strengthens the hero. Cosmic Laws rewrite what strength means. Reality Shards are earned from deep Operations, Mastery and extreme Ascensions.</div><div id="cosmicLawGrid" class="cosmic-law-grid"></div></section>
+<section id="achievementsScreen" class="screen utility-screen achievement-screen">
+  <header class="page-header utility-hero">
+    <button id="backFromAchievementsBtn" class="icon-btn" type="button" aria-label="Back to game">←</button>
+    <div class="menu-title"><span class="menu-emblem">★</span><div><small>PERMANENT LEGACY</small><h1>ACHIEVEMENTS</h1><p>Milestones become permanent power.</p></div></div>
+  </header>
+  <section class="achievement-screen-summary">
+    <div><small>UNLOCKED</small><strong id="achievementScreenCount">0 / 0</strong></div>
+    <div><small>AVAILABLE AP</small><strong id="achievementScreenAP">0</strong></div>
+    <div><small>RESONANCE</small><strong id="achievementScreenResonance">+0%</strong></div>
+  </section>
+  <section id="achievementScreenCore" class="achievement-core"></section>
+  <section class="card"><div class="section-title"><div><h2>ACHIEVEMENT CATALOGUE</h2><p>Every milestone awards AP. Harder feats pay more.</p></div></div><div id="achievementScreenList" class="achievement-catalogue"></div></section>
+</section>
 <section id="settingsScreen" class="screen utility-screen"><header class="page-header utility-hero"><button id="backFromSettingsBtn" class="icon-btn" type="button">←</button><div class="menu-title"><span class="menu-emblem">⚙</span><div><small>SYSTEM</small><h1>SETTINGS</h1><p>Run management and permanent reset controls.</p></div></div></header><section class="card reset-section" aria-labelledby="resetTitle">
         <h2 id="resetTitle">Reset / New Game</h2>
         <div class="reset-options">
@@ -2660,9 +2696,21 @@ function renderPowerDeck(){const r=currentResonance(),grid=$('deckGrid');$('deck
 function openPowerDeck(){renderPowerDeck();$('powerDeckModal').classList.remove('hidden')}
 function closePowerDeck(){$('powerDeckModal').classList.add('hidden')}
 
+function renderAchievements(){
+  const earned=achievementPointsEarned(),available=achievementPointsAvailable(),resPct=((achievementResonance()-1)*100).toFixed(1);
+  $('achievementScreenCount').textContent=meta.achievements.length+' / '+PF_ACHIEVEMENTS.length;
+  $('achievementScreenAP').textContent=available+' AP';
+  $('achievementScreenResonance').textContent='+'+resPct+'%';
+  $('achievementScreenCore').innerHTML=
+    '<div class="achievement-core-top"><div class="achievement-core-title"><strong>ACHIEVEMENT CORE</strong><small>Spend AP on permanent, account-wide progression.</small></div><div class="achievement-ap"><b>'+available+' AP</b><small>'+earned+' EARNED</small></div></div>'+
+    '<div class="achievement-resonance"><div><small>DAMAGE</small><b>x'+achievementDamageMult().toFixed(2)+'</b></div><div><small>SURVIVAL</small><b>x'+achievementSurvivalMult().toFixed(2)+'</b></div><div><small>SOULS</small><b>x'+achievementSoulMult().toFixed(2)+'</b></div></div>'+
+    '<div class="achievement-upgrade-grid">'+PF_ACHIEVEMENT_UPGRADES.map(u=>{const r=achievementRank(u.id),cost=achievementUpgradeCost(u.id,r),maxed=r>=u.max,can=available>=cost&&!maxed;return '<button type="button" class="achievement-upgrade '+(maxed?'maxed':'')+'" data-ach-screen-upgrade="'+u.id+'" '+(!can?'disabled':'')+'><span><strong>'+escapeHtml(u.name)+' · '+r+(u.max<999?'/'+u.max:'')+'</strong><small>'+escapeHtml(u.desc)+'</small></span><span>'+(maxed?'MAX':cost+' AP')+'</span></button>'}).join('')+'</div>';
+  $('achievementScreenList').innerHTML=PF_ACHIEVEMENTS.map(a=>{const done=meta.achievements.includes(a.id);return '<div class="achievement-row '+(done?'earned':'')+'"><span><b>'+(done?'◆ ':'◇ ')+escapeHtml(a.name)+'</b><small>'+escapeHtml(a.desc)+'</small></span><span class="achievement-value">'+(done?'+':'')+(a.points||1)+' AP</span></div>'}).join('');
+  $('achievementScreenCore').querySelectorAll('[data-ach-screen-upgrade]').forEach(b=>b.addEventListener('click',()=>{buyAchievementUpgrade(b.dataset.achScreenUpgrade);renderAchievements()}));
+}
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -2776,7 +2824,7 @@ function showEnemyInfo(){
   const e=s.enemy;if(!e)return;
   openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType],['Archetype evolutions',e.evolutions?.length?e.evolutions.map(id=>PF_ENEMY_EVOLUTIONS.find(x=>x.id===id)?.name||id).join(', '):'None'],['Operation powers',e.operationPowers?.length?e.operationPowers.map(id=>e.operationPowerLabels?.[id]||id).join(', '):'None'],['Powers',e.powers?.length?e.powers.map(id=>byId(id)?.name||id).join(', '):'None']]);
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension();if(id==='archiveScreen')renderPowerArchive();if(id==='endgameScreen')renderEndgame()}
+function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='ascensionScreen')renderAscension();if(id==='archiveScreen')renderPowerArchive();if(id==='achievementsScreen')renderAchievements();if(id==='endgameScreen')renderEndgame()}
 function openUpgrades(){
   repairPowerState('upgrade-open');
   if(powerModalVisible)hidePowerModal();
@@ -2866,7 +2914,7 @@ function bind(){
   $('critInfoBtn').addEventListener('click',()=>showStatInfo('Crit'));$('resistInfoBtn').addEventListener('click',()=>showStatInfo('Resistance'));
   $('heroFighter').addEventListener('click',openProfile);$('enemyFighter').addEventListener('click',showEnemyInfo);
   $('milestoneInfo').addEventListener('click',()=>{const m=nextMilestone(s.stage+1);const label=(m.type==='boss'?'Wall Boss':'Power')+' at stage '+m.stage;openInfo('Next Milestone','Major powers and wall bosses are spaced out so each one feels significant.',[['Current stage',s.stage],['Next milestone',label],['Stages remaining',Math.max(0,m.stage-s.stage)],['World',worldFor(s.stage).name]])});
-  $('rerollPowerBtn').addEventListener('click',rerollPower);$('powerAlert').addEventListener('click',showPowerModal);$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  $('rerollPowerBtn').addEventListener('click',rerollPower);$('powerAlert').addEventListener('click',showPowerModal);$('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('hidePowerModalBtn').addEventListener('click',hidePowerModal);$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
