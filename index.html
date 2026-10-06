@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8.2</title>
+  <title>Powerfall: Ascension Prototype v1.8.3</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -682,7 +682,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.2 · POWER FIX</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.3 · ACQUISITION FIX</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -2398,12 +2398,32 @@ function choosePower(id,choiceId){
   grid.querySelectorAll('button').forEach(b=>b.disabled=true);
 
   // Transaction commit: exactly one reward becomes exactly one selected power/mastery.
-  if(s.powers.includes(id))applyPowerMastery(power);
+  const alreadyOwned=s.powers.includes(id);
+  if(alreadyOwned)applyPowerMastery(power);
   else{
     s.powers.push(id);
     meta.totalPowersFound++;
     meta.powerUnlocks=Array.from(new Set([...(meta.powerUnlocks||[]),id]));
-    applyEffect(s,power.effect);applyPermanentMastery(power)
+    applyEffect(s,power.effect);
+    applyPermanentMastery(power);
+
+    // Acquisition invariant: an effect/sanitization pass is never allowed to
+    // consume the identity of the power that created it.
+    if(!s.powers.includes(id)){
+      console.warn('[Powerfall] repaired dropped acquired power',id);
+      s.powers.push(id)
+    }
+    s.powers=Array.from(new Set(s.powers.filter(pid=>byId(pid))))
+  }
+
+  if(!alreadyOwned&&!s.powers.includes(id)){
+    reward.status='pending';
+    reward.selectedPowerId=null;
+    choiceLocked=false;
+    grid.classList.remove('input-locked');
+    grid.querySelectorAll('button').forEach(b=>b.disabled=false);
+    toast('POWER ACQUISITION RETRY REQUIRED');
+    return
   }
 
   reward.status='resolved';
@@ -2427,10 +2447,28 @@ function choosePower(id,choiceId){
   $('gamblePowerBtn').disabled=false;
 
   repairPowerState('post-choice');
-  saveNow();
+
+  // The reward ledger and run loadout must agree before the save commits.
+  // This specifically protects mobile selection from a disappearing acquisition.
+  if(!alreadyOwned&&!s.powers.includes(id)){
+    s.powers.push(id);
+    s.powers=Array.from(new Set(s.powers.filter(pid=>byId(pid))));
+    console.warn('[Powerfall] post-choice loadout repaired',id)
+  }
+
+  const saved=saveNow();
+  lastHudRender=0;
   renderAll();
+  renderHUD(true);
+  renderLoadout();
   updatePowerAlert();
-  toast(power.name+(s.powerMastery?.[id]?' MASTERY '+s.powerMastery[id]:' ACQUIRED'))
+
+  const visibleNow=s.powers.includes(id)&&!!document.querySelector('[data-rack-power="'+id+'"]');
+  if(!alreadyOwned&&!visibleNow){
+    console.error('[Powerfall] acquired power failed visible-loadout verification',id,{powers:[...s.powers],saved});
+    renderLoadout()
+  }
+  toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'))
 }
 function rerollPower(){
   repairPowerState('reroll');
@@ -2749,7 +2787,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.2</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.3</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
