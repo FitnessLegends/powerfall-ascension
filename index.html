@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.8.1</title>
+  <title>Powerfall: Ascension Prototype v1.8.2</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -660,6 +660,20 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
  .achievement-screen-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
  #gameScreen{grid-template-rows:auto auto minmax(220px,1fr) auto auto auto!important}
 }
+
+/* v1.8.2 Power Awakening visibility + stale-choice repair */
+#powerChoices{display:grid!important;visibility:visible!important;opacity:1!important;min-height:150px!important;align-content:start!important}
+#powerChoices .power-choice{display:block!important;visibility:visible!important;opacity:1!important;min-height:132px!important;border-width:1px!important}
+#powerChoices .choice-identity{display:flex!important;gap:10px!important;align-items:center!important}
+#powerChoices .power-tags{display:flex!important;gap:4px!important;flex-wrap:wrap!important;margin-top:7px!important}
+#powerChoices .power-tag{font-size:6.5px!important;padding:3px 5px!important;border:1px solid #33475b!important;border-radius:999px!important;color:#9fc6df!important}
+.power-choice-repair{padding:18px;border:1px dashed #ffbd55;border-radius:12px;text-align:center;color:#ffd88a;background:#241a0d}
+.power-choice-repair strong{display:block;font-size:11px}.power-choice-repair small{display:block;margin-top:5px;font-size:9px;color:#b7a98e}
+@media(max-width:520px){
+ #powerChoices{grid-template-columns:1fr!important;min-height:170px!important;gap:8px!important}
+ #powerChoices .power-choice{min-height:145px!important;padding:12px!important}
+ .power-card{min-height:min(640px,82dvh)!important}
+}
 </style>
 </head>
 <body>
@@ -668,7 +682,7 @@ clip-path:polygon(0 58%,6% 58%,6% 35%,10% 35%,10% 62%,16% 62%,16% 25%,21% 25%,21
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.1 · HUD REFINEMENT</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.8.2 · POWER FIX</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -2335,10 +2349,24 @@ function showPowerModal(){
   const item=pendingPowerRewards()[0];
   if(!item||choiceLocked){updatePowerAlert();return}
   powerQueue=pendingPowerRewards();
+
+  // A pending awakening must always resolve to visible, valid cards.
+  // Old saves can contain stale option ids after the power catalogue changes.
+  let resolvedOptions=Array.isArray(item.options)?item.options.map(byId).filter(Boolean):[];
+  if(!resolvedOptions.length){
+    resolvedOptions=rollPowerChoices(item);
+    item.options=resolvedOptions.map(p=>p.id)
+  }
+  if(!resolvedOptions.length){
+    const emergency=PF_POWERS.filter(powerUnlocked).slice(0,Math.min(3,PF_POWERS.length));
+    resolvedOptions=emergency;
+    item.options=emergency.map(p=>p.id)
+  }
+
+  activePowerChoices=resolvedOptions;
   powerDecisionPaused=true;powerModalVisible=true;powerModalArmedAt=performance.now()+450;
-  $('powerModal').dataset.rarity=(activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common'));$('powerModal').classList.remove('hidden');
-  if(!item.options?.length)item.options=rollPowerChoices(item).map(p=>p.id);
-  activePowerChoices=item.options.map(byId).filter(Boolean);
+  $('powerModal').dataset.rarity=activePowerChoices.reduce((best,p)=>rarityValue(p.rarity)>rarityValue(best)?p.rarity:best,'common');
+  $('powerModal').classList.remove('hidden');
   renderPowerChoices(item);
   updateGambleButton();
   scheduleSave()
@@ -2661,6 +2689,11 @@ function renderUpgrades(flashId=''){
   }
 }
 function renderPowerChoices(item){
+  if(!activePowerChoices.length&&item){
+    const repaired=rollPowerChoices(item);
+    item.options=repaired.map(p=>p.id);
+    activePowerChoices=repaired
+  }
   $('powerModalQueue').textContent=pendingPowerRewards().length;$('hidePowerModalBtn').disabled=false;
   $('rerollPowerBtn').classList.toggle('hidden',!meta.soulTree.reroll);$('rerollPowerBtn').disabled=!!item.rerolled;
   const grid=$('powerChoices');grid.innerHTML='';grid.classList.remove('input-locked');grid.classList.toggle('four',activePowerChoices.length===4);
@@ -2678,7 +2711,13 @@ function renderPowerChoices(item){
     b.addEventListener('pointerup',ev=>{if(ev.pointerType==='mouse'&&ev.button!==0)return;const press=powerPress;powerPress=null;if(!press||press.id!==ev.pointerId||press.moved)return;ev.preventDefault();choosePower(p.id,item.key)},{passive:false});
     b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();choosePower(p.id,item.key)}});
     grid.appendChild(b)
-  })
+  });
+  if(!grid.children.length){
+    const empty=document.createElement('div');
+    empty.className='power-choice-repair';
+    empty.innerHTML='<strong>REBUILDING POWER CHOICES</strong><small>Tap Decide later, then reopen Power Awakening.</small>';
+    grid.appendChild(empty)
+  }
 }
 function powerPreview(power){
   if(power.id==='unstable_core')return 'Random attributes are rolled once on selection';
@@ -2710,7 +2749,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.1</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.8.2</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
