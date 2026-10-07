@@ -72,3 +72,34 @@ test('core run survives milestone, awakening, death and reload',async({page})=>{
   expect(afterReload.powers).toEqual(beforeReload.powers);
   expect(pageErrors).toEqual([]);
 });
+
+
+test('hidden utility screens do not keep repainting the battlefield',async({page,context})=>{
+  await context.route('**/api/telemetry',route=>route.fulfill({status:204,body:''}));
+  await page.addInitScript(()=>{
+    if(!sessionStorage.getItem('pf_test_storage_ready')){
+      localStorage.clear();
+      sessionStorage.setItem('pf_test_storage_ready','1');
+    }
+  });
+
+  await page.goto('/?test=1');
+  await page.waitForFunction(()=>window.PF_TEST&&window.PF_HUD_RUNTIME);
+  await clearBlockingUi(page);
+
+  await page.click('#settingsCornerBtn');
+  await expect(page.locator('#settingsScreen')).toHaveClass(/active/);
+
+  const before=await page.evaluate(()=>window.PF_HUD_RUNTIME());
+  await page.waitForTimeout(1400);
+  const after=await page.evaluate(()=>window.PF_HUD_RUNTIME());
+
+  expect(after.skippedHidden).toBeGreaterThan(before.skippedHidden);
+  expect(after.renderCount-before.renderCount).toBeLessThanOrEqual(1);
+  expect(after.loadoutRebuilds-before.loadoutRebuilds).toBe(0);
+
+  await page.click('#backFromSettingsBtn');
+  await page.waitForTimeout(220);
+  const returned=await page.evaluate(()=>window.PF_HUD_RUNTIME());
+  expect(returned.renderCount).toBeGreaterThan(after.renderCount);
+});
