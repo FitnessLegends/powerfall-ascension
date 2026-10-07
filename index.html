@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.15.2</title>
+  <title>Powerfall: Ascension Prototype v1.16.0</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1107,6 +1107,13 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
   }
   .dock-button{min-height:45px!important}
 }
+
+/* v1.16.0 Stability diagnostics */
+.debug-section{margin-top:10px}
+.debug-section>p{color:var(--muted);font-size:11px;line-height:1.4}
+.debug-section .integrity-grid{margin:10px 0}
+#debugSessionId{font-size:9px;word-break:break-all}
+#debugHealth{color:var(--good)}
 </style>
 </head>
 <body>
@@ -1115,7 +1122,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.15.2 · RUN AUDIT</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.16.0 · STABILITY CORE</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1318,6 +1325,17 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
           <div><button id="resetRunBtn" type="button">Reset Current Run</button><p>Start at Stage 1 with no run coins, powers or upgrades. Keep Souls, Soul Tree upgrades, discoveries, story progress and lifetime statistics. No Souls awarded.</p></div>
           <div><button id="fullResetBtn" class="danger" type="button">Full Reset / New Game</button><p>Permanently erase all local Powerfall progress, including Souls and permanent upgrades. Requires confirmation and typing RESET.</p></div>
         </div>
+      </section>
+      <section class="card debug-section" aria-labelledby="debugTitle">
+        <h2 id="debugTitle">Runtime Health</h2>
+        <p>Live diagnostics for this play session. Use the session ID when reporting a bug.</p>
+        <div class="integrity-grid">
+          <div><small>SESSION</small><strong id="debugSessionId">—</strong></div>
+          <div><small>STATE</small><strong id="debugHealth">CHECKING</strong></div>
+          <div><small>STAGE</small><strong id="debugStage">1</strong></div>
+          <div><small>PENDING</small><strong id="debugPending">0</strong></div>
+        </div>
+        <button id="copyDebugBtn" type="button">Copy Debug Report</button>
       </section></section>
 
     <div id="upgradeSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Run upgrades">
@@ -1680,6 +1698,8 @@ window.PF_CONFIG = {
 
 </script>
   <script src="/src/telemetry.js"></script>
+  <script src="/src/invariants.js"></script>
+  <script src="/src/state-store.js"></script>
   <script src="/src/power-awakening.js"></script>
   <script src="/src/combat-runtime.js"></script>
   <script src="/src/hud-runtime.js"></script>
@@ -1703,7 +1723,7 @@ function defaultMeta(){return {
 }}
 const meta=defaultMeta();
 let s={};
-let timers={attack:null,enemy:null,tick:null,save:null,autosave:null,telegraph:null};
+let timers={attack:null,enemy:null,tick:null,save:null,autosave:null,telegraph:null,invariants:null};
 const pendingEchoes=new Set();
 let resetBusy=false;
 let powerQueue=[];
@@ -1723,6 +1743,8 @@ let combatRuntime=null;
 let hudRuntime=null;
 let saveRuntime=null;
 let progressionRuntime=null;
+let stateStore=null;
+let lastInvariantSummary={ok:true,errors:0,warnings:0,codes:[]};
 const awakeningUi={};
 Object.defineProperties(awakeningUi,{
   activeChoices:{get:()=>activePowerChoices,set:v=>{activePowerChoices=Array.isArray(v)?v:[]}},
@@ -1737,7 +1759,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.15.2',
+    version:'1.16.0',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -2517,7 +2539,7 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
     })
   }
 }
-function handlePlayerDefeat(reason='DEFEATED'){
+function handlePlayerDefeatCore(reason='DEFEATED'){
   if(powerDecisionPaused||powerModalVisible||currentAwakening()){
     s.hp=Math.max(1,s.hp);
     traceGameplay('defeat_blocked_for_awakening',{reason});
@@ -2539,6 +2561,10 @@ function handlePlayerDefeat(reason='DEFEATED'){
   lastHudRender=0;
   renderHUD(true)
 }
+function handlePlayerDefeat(reason='DEFEATED'){
+  return stateStore.transaction('player_defeat',()=>handlePlayerDefeatCore(reason))
+}
+
 function enemyAttack(){
   if(storyPaused||powerDecisionPaused||ascensionLocked||!s.enemy||s.enemyHp<=0||s.fight.freeze>0||s.fight.telegraph)return;
   const now=performance.now();if(now-lastEnemyMs<effectiveEnemyAttackMs()*.65)return;lastEnemyMs=now;s.fight.incoming++;
@@ -2571,7 +2597,7 @@ function enemyAttack(){
   }
   renderHUD();
 }
-function enemyDefeated(){
+function enemyDefeatedCore(){
   if(!s.enemy||s.fight?.resolvingDefeat)return;
   s.fight.resolvingDefeat=1;
   const defeatedStage=s.stage;
@@ -2608,6 +2634,10 @@ function enemyDefeated(){
     else setTimeout(()=>{if(pendingPowerRewards().length)openPendingPowerAwakening()},500)
   }
 }
+function enemyDefeated(){
+  return stateStore.transaction('enemy_defeated',()=>enemyDefeatedCore())
+}
+
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
 function legacyRewardKey(source,stage){return s.runId+':'+source+':'+Math.floor(stage)}
 function validRewardSource(source){return source==='milestone'||source==='boss'}
@@ -2643,6 +2673,8 @@ function runPowerSelfTest(){
   return {pass:report.ok&&modalValid&&upgradesIndependent,modalValid,upgradesIndependent,report}
 }
 window.PF_SELFTEST=runPowerSelfTest;
+window.PF_DEBUG_REPORT=debugReport;
+window.PF_INVARIANTS=()=>runInvariantAudit('manual');
 window.PF_OPEN_AWAKENING=()=>{openPendingPowerAwakening();return {pending:pendingPowerRewards().length,visible:powerModalVisible&&$('powerModal').classList.contains('active'),current:currentAwakening()?.key||null}};
 window.PF_AWAKENING_STATE=()=>({queue:pendingPowerRewards().map(x=>({key:x.key,stage:x.stage,source:x.source,options:x.options?.length||0})),visible:powerModalVisible,active:$('powerModal').classList.contains('active'),powers:[...s.powers]});
 window.PF_REPAIR_POWER_STATE=()=>{const r=repairPowerState('manual');updatePowerAlert();renderAll();saveNow();return r};
@@ -2850,7 +2882,7 @@ function resetGame(full){
     for(const key of Object.keys(meta))delete meta[key];Object.assign(meta,previous.meta);s=previousRun;powerQueue=previousQueue;
     toast('RESET NOT SAVED — original progress kept. Free browser storage and retry.');return;
   }
-  clearCombatTimers();clearInterval(timers.tick);saveRuntime.stopAutosave();clearTimeout(timers.save);clearTimeout(choiceTimer);clearTimeout(timers.telegraph);
+  clearCombatTimers();clearInterval(timers.tick);clearInterval(timers.invariants);saveRuntime.stopAutosave();clearTimeout(timers.save);clearTimeout(choiceTimer);clearTimeout(timers.telegraph);
   pendingEchoes.forEach(clearTimeout);pendingEchoes.clear();clearTimeout($('toast')._to);$('toast').classList.add('hidden');
   choiceTimer=null;choiceLocked=false;ascensionLocked=false;powerModalVisible=false;activePowerChoices=[];storyPaused=false;
   lastAttackMs=0;lastEnemyMs=0;autoBuyElapsed=0;buyMode='1';
@@ -2949,7 +2981,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.15.2</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.16.0</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3063,6 +3095,52 @@ function showEnemyInfo(){
   const e=s.enemy;if(!e)return;
   openInfo(e.name,e.trait||'Current opponent.',[['Stage',s.stage],['Health',`${fmt(s.enemyHp)} / ${fmt(s.enemyMaxHp)}`],['Damage',fmt(e.damage)],['Attack interval',(effectiveEnemyAttackMs()/1000).toFixed(2)+' s'],['Class',e.wall?'Wall Boss':e.elite?'Elite Criminal':'Criminal'],['Faction',e.faction||PF_ENEMIES.factionFor(s.stage)],['Attributes',Object.entries(e.attributes).map(([k,v])=>k+' '+fmt(v)).join(' / ')],['Accuracy vs you',Math.round(hitChance(e.attributes.perception,s.attributes.agility,dodgeChance())*100)+'%'],['Passive',s.powerNullification?'Nullified':e.passive],['Damage type',e.damageType],['Archetype evolutions',e.evolutions?.length?e.evolutions.map(id=>PF_ENEMY_EVOLUTIONS.find(x=>x.id===id)?.name||id).join(', '):'None'],['Operation powers',e.operationPowers?.length?e.operationPowers.map(id=>e.operationPowerLabels?.[id]||id).join(', '):'None'],['Powers',e.powers?.length?e.powers.map(id=>byId(id)?.name||id).join(', '):'None']]);
 }
+function invariantContext(){
+  const combat=combatRuntime?.snapshot?.()||{};
+  return {
+    powerExists:id=>!!byId(id),
+    powerScreenActive:$('powerModal')?.classList.contains('active')||false,
+    combatActive:!!(combat.attack||combat.enemy),
+    allowZeroEnemyHp:!!s.fight?.resolvingDefeat
+  }
+}
+function runInvariantAudit(label='periodic'){
+  if(!stateStore||!s||!Object.keys(s).length)return {issues:[],summary:{ok:true,errors:0,warnings:0,codes:[]}};
+  const result=stateStore.checkpoint(label);
+  lastInvariantSummary=result.summary;
+  renderDebugPanel();
+  return result
+}
+function renderDebugPanel(){
+  const session=$('debugSessionId');
+  if(!session)return;
+  session.textContent=window.PFTelemetry?.session||'LOCAL';
+  $('debugHealth').textContent=lastInvariantSummary.ok?'OK':(lastInvariantSummary.errors+' ERROR'+(lastInvariantSummary.errors===1?'':'S'));
+  $('debugStage').textContent=String(s?.stage||0);
+  $('debugPending').textContent=String(Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0)
+}
+function debugReport(){
+  const combat=combatRuntime?.snapshot?.()||{};
+  const save=saveRuntime?.status?.()||{};
+  const progression=progressionRuntime?.snapshot?.()||{};
+  const issues=window.PFInvariants?.validateRun?.(s,invariantContext())||[];
+  return {
+    version:'1.16.0',
+    session:window.PFTelemetry?.session||'LOCAL',
+    timestamp:new Date().toISOString(),
+    stage:s?.stage||0,
+    screen:document.querySelector('.screen.active')?.id||'none',
+    powers:[...(s?.powers||[])],
+    pending:(s?.awakeningQueue||[]).map(x=>({key:x.key,stage:x.stage,options:x.options?.length||0})),
+    enemy:s?.enemy?{name:s.enemy.name,hp:s.enemyHp,maxHp:s.enemyMaxHp}:null,
+    combat,
+    save,
+    progression,
+    invariants:window.PFInvariants?.summarize?.(issues)||{},
+    invariantIssues:issues,
+    breadcrumbs:window.PFTelemetry?.breadcrumbs?.()||[]
+  }
+}
 function showScreen(id,force=false){
   const requested=id;
   if(!force&&id!=='powerModal'&&currentAwakening())id='powerModal';
@@ -3073,7 +3151,8 @@ function showScreen(id,force=false){
   if(id==='ascensionScreen')renderAscension();
   if(id==='archiveScreen')renderPowerArchive();
   if(id==='achievementsScreen')renderAchievements();
-  if(id==='endgameScreen')renderEndgame()
+  if(id==='endgameScreen')renderEndgame();
+  if(id==='settingsScreen')renderDebugPanel()
 }
 function openUpgrades(){
   if(powerModalVisible||pendingPowerRewards().length)return;
@@ -3207,7 +3286,7 @@ function bind(){
   bindFreshPowerAction('rerollPowerBtn',rerollPower);bindFreshPowerAction('gamblePowerBtn',gamblePower);bindFreshPowerAction('hidePowerModalBtn',hidePowerModal);
   $('powerAlert').onclick=e=>{e.preventDefault();e.stopPropagation();openPendingPowerAwakening()};
   $('powerAlert').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPendingPowerAwakening()}};
-  $('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>{if(currentAwakening())openPendingPowerAwakening();else showScreen('archiveScreen')});$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
+  $('achievementsCornerBtn').addEventListener('click',()=>showScreen('achievementsScreen'));$('backFromAchievementsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascensionNavBtn').addEventListener('click',()=>showScreen('ascensionScreen'));$('archiveNavBtn').addEventListener('click',()=>{if(currentAwakening())openPendingPowerAwakening();else showScreen('archiveScreen')});$('endgameNavBtn').addEventListener('click',()=>showScreen('endgameScreen'));$('endgameBackBtn').addEventListener('click',()=>showScreen('gameScreen'));$('settingsCornerBtn').addEventListener('click',()=>showScreen('settingsScreen'));$('copyDebugBtn').addEventListener('click',async()=>{const text=JSON.stringify(debugReport(),null,2);try{await navigator.clipboard.writeText(text);toast('DEBUG REPORT COPIED')}catch{window.prompt('Copy this debug report:',text)}});$('backToGameBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromArchiveBtn').addEventListener('click',()=>showScreen('gameScreen'));$('backFromSettingsBtn').addEventListener('click',()=>showScreen('gameScreen'));$('ascendNowBtn').addEventListener('click',doAscend);
   document.querySelectorAll('.buy-mode-btn').forEach(b=>b.addEventListener('click',()=>{buyMode=b.dataset.buy;document.querySelectorAll('.buy-mode-btn').forEach(x=>x.classList.toggle('active',x===b))}));
   $('upgradeSheet').addEventListener('click',e=>{if(e.target===$('upgradeSheet'))closeUpgrades()});
   $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))closeProfile()});
@@ -3216,6 +3295,18 @@ window.addEventListener('beforeunload',()=>PF_SAVE.write(saveRuntime.snapshot())
 }
 
 function init(){
+  stateStore=window.PFStateStore.create({
+    getRun:()=>s,
+    setRun:v=>{s=v},
+    validate:(run,ctx)=>window.PFInvariants.validateRun(run,ctx),
+    summarize:window.PFInvariants.summarize,
+    context:invariantContext,
+    trace:traceGameplay,
+    save:()=>saveRuntime?.schedule?.(),
+    render:()=>hudRuntime?.render?.(true)
+  });
+  traceGameplay('state_store_ready',{module:'src/state-store.js'});
+
   awakeningController=window.PFAwakening.create({
     ui:awakeningUi,
     getRun:()=>s,
@@ -3358,7 +3449,10 @@ function init(){
   const selfTest=runPowerSelfTest();
   if(!selfTest.pass)console.error('[Powerfall v0.7] SELF TEST FAILED',selfTest);
   else console.info('[Powerfall v0.7] self test PASS',selfTest);
-  startCombatTimers();startTick();saveRuntime.startAutosave(10000)
+  startCombatTimers();startTick();saveRuntime.startAutosave(10000);
+  clearInterval(timers.invariants);
+  timers.invariants=setInterval(()=>runInvariantAudit('periodic'),2000);
+  runInvariantAudit('init')
 }
 init();
 })();
