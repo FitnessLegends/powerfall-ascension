@@ -438,20 +438,33 @@ function create(deps){
     deps.checkEmergentEvolutions();
     deps.checkIdentityAwakening();
 
-    deps.saveNow();
-    deps.renderAll();
-    deps.renderHUD(true);
-    deps.renderLoadout();
-    deps.updatePowerAlert();
+    // Commit state first. Rendering is presentation and must never be able
+    // to interrupt a successful acquisition or leave combat paused.
+    const saved=deps.saveNow();
 
     deps.trace('awakening_choice_committed',{
       powerId:id,
       alreadyOwned,
-      remaining:s.awakeningQueue.length
+      remaining:s.awakeningQueue.length,
+      saved
     });
 
-    deps.toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'));
-    deps.resumeCombat();
+    try{
+      deps.renderAll();
+      deps.renderHUD(true);
+      deps.renderLoadout();
+      deps.updatePowerAlert();
+    }catch(error){
+      deps.trace('awakening_post_commit_render_failed',{
+        powerId:id,
+        message:error?.message||String(error),
+        name:error?.name||'Error'
+      });
+      console.error('[Powerfall] awakening post-commit render failed',error)
+    }finally{
+      deps.toast(power.name+(alreadyOwned?' MASTERY '+(s.powerMastery?.[id]||1):' ACQUIRED · ADDED TO DECK'));
+      deps.resumeCombat()
+    }
 
     if(current())setTimeout(open,350);
   }
