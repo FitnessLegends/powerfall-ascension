@@ -94,6 +94,16 @@ const architectureRules=[
     name:'power choice must use transaction bridge',
     test:()=>html.includes("stateStore.transaction('power_choice'"),
     error:'Power choice bypasses the state transaction bridge'
+  },
+  {
+    name:'enemy spawn must not redraw the entire app',
+    test:()=>{
+      const start=html.indexOf('function spawnEnemy(){');
+      const end=html.indexOf('\nfunction playerAttack(',start);
+      const body=html.slice(start,end);
+      return start>=0&&end>start&&!body.includes('renderAll()')
+    },
+    error:'spawnEnemy() reintroduced renderAll() into the combat hot path'
   }
 ];
 
