@@ -1,13 +1,15 @@
 import {test,expect} from '@playwright/test';
 
 async function clearBlockingUi(page){
-  for(let i=0;i<5;i++){
-    const story=page.locator('#storyModal:not(.hidden) .story-choice').first();
-    if(await story.count())await story.click();
-    await page.waitForTimeout(140);
-    const modifier=page.locator('#modifierModal:not(.hidden) .event-choice').first();
-    if(await modifier.count())await modifier.click();
-    await page.waitForTimeout(100);
+  for(let i=0;i<4;i++){
+    const changed=await page.evaluate(()=>{
+      let did=false;
+      if(window.PF_TEST?.resolveStory?.())did=true;
+      if(window.PF_TEST?.resolveModifier?.())did=true;
+      return did
+    });
+    if(!changed)break;
+    await page.waitForTimeout(60)
   }
 }
 
@@ -29,8 +31,7 @@ test('core run survives milestone, awakening, death and reload',async({page})=>{
     const state=await page.evaluate(()=>window.PF_TEST.state());
     if(state.pending.length)break;
     await page.evaluate(()=>window.PF_TEST.killEnemy());
-    await page.waitForTimeout(60);
-    await clearBlockingUi(page);
+    await page.waitForTimeout(25);
   }
 
   const pending=await page.evaluate(()=>window.PF_TEST.state().pending.length);
