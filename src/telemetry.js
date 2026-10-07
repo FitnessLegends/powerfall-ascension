@@ -6,12 +6,62 @@
   sessionStorage.setItem(SESSION_KEY,session);
 
   const buffer=[];
+  const outbox=[];
+  let flushTimer=null;
   let lastSignature='';
   let lastSentAt=0;
+  let sentBatches=0;
+  let sentEvents=0;
+
+  const criticalEvents=new Set([
+    'js_error',
+    'unhandled_rejection',
+    'invariant_failed',
+    'save_write_failed',
+    'enemy_hp_zero',
+    'enemy_defeat_start',
+    'enemy_defeat_resolved',
+    'awakening_choice_failed',
+    'awakening_post_commit_render_failed',
+    'combat_render_failed',
+    'render_after_spawn_failed'
+  ]);
 
   function safe(value){
     try{return JSON.parse(JSON.stringify(value))}
     catch{return String(value)}
+  }
+
+  function scheduleFlush(delay=1400){
+    if(flushTimer)return;
+    flushTimer=setTimeout(()=>{
+      flushTimer=null;
+      flush()
+    },delay)
+  }
+
+  function flush(){
+    if(!outbox.length)return Promise.resolve(false);
+
+    const events=outbox.splice(0,Math.min(40,outbox.length));
+    sentBatches++;
+    sentEvents+=events.length;
+
+    try{
+      return fetch('/api/telemetry',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({events}),
+        keepalive:true
+      }).catch(()=>{
+        // Put the batch back once. Local breadcrumbs still remain available
+        // even if remote telemetry is unavailable.
+        if(outbox.length<80)outbox.unshift(...events.slice(-20));
+        return false
+      })
+    }catch{
+      return Promise.resolve(false)
+    }
   }
 
   function emit(event,data={}){
@@ -24,7 +74,8 @@
 
     buffer.push(payload);
     if(buffer.length>120)buffer.shift();
-    console.info('[PFTRACE]',payload);
+
+    if(global.PF_DEBUG_CONSOLE)console.info('[PFTRACE]',payload);
 
     const signature=payload.event+'|'+JSON.stringify(payload.data);
     const now=Date.now();
@@ -32,24 +83,14 @@
     lastSignature=signature;
     lastSentAt=now;
 
-    try{
-      fetch('/api/telemetry',{
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body:JSON.stringify(payload),
-        keepalive:true
-      }).catch(()=>{});
-    }catch{}
+    outbox.push(payload);
+    if(outbox.length>80)outbox.splice(0,outbox.length-80);
+
+    if(criticalEvents.has(payload.event)||outbox.length>=20)scheduleFlush(80);
+    else scheduleFlush();
+
     return payload;
   }
-
-  global.PFTelemetry={
-    emit,
-    session,
-    dump:()=>buffer.slice(),
-    clear:()=>{buffer.length=0},
-    breadcrumbs:()=>breadcrumbs(12)
-  };
 
   function breadcrumbs(limit=8){
     return buffer
@@ -57,6 +98,25 @@
       .slice(-limit)
       .map(x=>({ts:x.ts,event:x.event,data:x.data}))
   }
+
+  global.PFTelemetry={
+    emit,
+    session,
+    dump:()=>buffer.slice(),
+    clear:()=>{buffer.length=0},
+    breadcrumbs:()=>breadcrumbs(12),
+    flush,
+    status:()=>({
+      buffered:buffer.length,
+      queued:outbox.length,
+      sentBatches,
+      sentEvents
+    })
+  };
+
+  global.addEventListener('pagehide',()=>{
+    if(outbox.length)flush()
+  });
 
   global.addEventListener('error',e=>{
     const err=e.error;
@@ -68,7 +128,8 @@
       column:e.colno||0,
       stack:String(err?.stack||'').slice(0,2400),
       breadcrumbs:breadcrumbs()
-    })
+    });
+    flush()
   });
 
   global.addEventListener('unhandledrejection',e=>{
@@ -78,6 +139,7 @@
       name:reason?.name||'UnhandledRejection',
       stack:String(reason?.stack||'').slice(0,2400),
       breadcrumbs:breadcrumbs()
-    })
+    });
+    flush()
   });
 })(window);
