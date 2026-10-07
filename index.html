@@ -3452,7 +3452,56 @@ function init(){
   startCombatTimers();startTick();saveRuntime.startAutosave(10000);
   clearInterval(timers.invariants);
   timers.invariants=setInterval(()=>runInvariantAudit('periodic'),2000);
-  runInvariantAudit('init')
+  runInvariantAudit('init');
+
+  if(new URLSearchParams(location.search).has('test')){
+    window.PF_TEST={
+      state:()=>({
+        stage:s.stage,
+        hp:s.hp,
+        maxHp:s.maxHp,
+        enemy:s.enemy?.name||null,
+        enemyHp:s.enemyHp,
+        enemyMaxHp:s.enemyMaxHp,
+        powers:[...s.powers],
+        pending:(s.awakeningQueue||[]).map(x=>({key:x.key,stage:x.stage,options:[...(x.options||[])]})),
+        screen:document.querySelector('.screen.active')?.id||'none',
+        storyPaused,
+        operationReady:s.operationReady,
+        inOperation:s.inOperation
+      }),
+      killEnemy:()=>{
+        if(!s.enemy||currentAwakening())return false;
+        s.enemyHp=0;
+        enemyDefeated();
+        return true
+      },
+      defeatPlayer:()=>{
+        const stage=s.stage;
+        s.hp=0;
+        handlePlayerDefeat('TEST DEFEAT');
+        return {before:stage,after:s.stage,hp:s.hp}
+      },
+      resolveStory:()=>{
+        const btn=$('storyModal')?.querySelector('.story-choice');
+        if(btn){btn.click();return true}
+        return false
+      },
+      resolveModifier:()=>{
+        const btn=$('modifierModal')?.querySelector('.event-choice');
+        if(btn){btn.click();return true}
+        return false
+      },
+      enterOperation:()=>{
+        if(s.operationReady&&!s.inOperation){enterOperation();return true}
+        return false
+      },
+      save:()=>saveNow(),
+      invariants:()=>runInvariantAudit('test'),
+      debug:()=>debugReport()
+    };
+    traceGameplay('test_harness_ready',{});
+  }
 }
 init();
 })();
