@@ -33,7 +33,7 @@ function create(deps){
     const outer=txDepth===0;
     txDepth++;
 
-    if(outer)checkpoint(label+':before');
+    if(outer&&!options.skipBefore)checkpoint(label+':before');
 
     let result;
     try{
