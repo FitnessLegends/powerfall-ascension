@@ -1,0 +1,13 @@
+{
+  "name": "powerfall-ascension",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-syntax.mjs",
+    "test": "node --test tests/invariants.test.mjs && node tests/simulate.mjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
