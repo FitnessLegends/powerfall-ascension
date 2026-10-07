@@ -26,10 +26,15 @@ inline.forEach((source,i)=>{
 });
 
 const required=[
+  '/src/data/story.js',
+  '/src/data/enemies.js',
+  '/src/data/powers.js',
+  '/src/data/config.js',
   '/src/telemetry.js',
   '/src/invariants.js',
   '/src/state-store.js',
   '/src/power-awakening.js',
+  '/src/combat-engine.js',
   '/src/combat-runtime.js',
   '/src/hud-runtime.js',
   '/src/save-runtime.js',
