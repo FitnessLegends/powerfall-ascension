@@ -101,6 +101,23 @@ for(const rule of architectureRules){
   if(!rule.test())failures.push({file:'architecture',error:rule.error});
 }
 
+
+// Known semantic regressions that syntax parsing alone cannot catch.
+const semanticGuards=[
+  {
+    name:'Plasma Blast crit declaration order',
+    pass:()=>{
+      const start=html.indexOf('function playerAttack(');
+      const end=html.indexOf('\nfunction ',start+20);
+      const body=html.slice(start,end);
+      return body.indexOf('const crit=')>=0&&body.indexOf('const crit=')<body.indexOf('s.plasmaBlast&&crit')
+    }
+  }
+];
+for(const guard of semanticGuards){
+  if(!guard.pass())failures.push({file:'index.html',error:'Semantic guard failed: '+guard.name});
+}
+
 if(failures.length){
   console.error(JSON.stringify(failures,null,2));
   process.exit(1);
