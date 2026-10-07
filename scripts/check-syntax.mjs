@@ -44,9 +44,66 @@ for(const src of required){
   if(!html.includes(src))failures.push({file:'index.html',error:`Missing required runtime: ${src}`});
 }
 
+const architectureRules=[
+  {
+    name:'combat attack interval must stay in combat-runtime',
+    test:()=>!/timers\.attack\s*=\s*setInterval/.test(html),
+    error:'index.html creates a combat attack interval directly'
+  },
+  {
+    name:'combat enemy interval must stay in combat-runtime',
+    test:()=>!/timers\.enemy\s*=\s*setInterval/.test(html),
+    error:'index.html creates a combat enemy interval directly'
+  },
+  {
+    name:'power catalogue must stay extracted',
+    test:()=>!html.includes('window.PF_POWERS=['),
+    error:'Power catalogue was reintroduced into index.html'
+  },
+  {
+    name:'enemy catalogue must stay extracted',
+    test:()=>!html.includes('window.PF_ENEMIES={'),
+    error:'Enemy catalogue was reintroduced into index.html'
+  },
+  {
+    name:'config must stay extracted',
+    test:()=>!html.includes('window.PF_CONFIG = {'),
+    error:'PF_CONFIG was reintroduced into index.html'
+  },
+  {
+    name:'story catalogue must stay extracted',
+    test:()=>!html.includes('window.PF_STORY={'),
+    error:'Story data was reintroduced into index.html'
+  },
+  {
+    name:'unsafe multi-token environment cleanup must not return',
+    test:()=>!html.includes("classList.remove(x.cls,x.weather)"),
+    error:'Unsafe Safari classList.remove(x.cls,x.weather) pattern reintroduced'
+  },
+  {
+    name:'enemy defeat must use transaction bridge',
+    test:()=>html.includes("stateStore.transaction('enemy_defeated'"),
+    error:'Enemy defeat bypasses the state transaction bridge'
+  },
+  {
+    name:'player defeat must use transaction bridge',
+    test:()=>html.includes("stateStore.transaction('player_defeat'"),
+    error:'Player defeat bypasses the state transaction bridge'
+  },
+  {
+    name:'power choice must use transaction bridge',
+    test:()=>html.includes("stateStore.transaction('power_choice'"),
+    error:'Power choice bypasses the state transaction bridge'
+  }
+];
+
+for(const rule of architectureRules){
+  if(!rule.test())failures.push({file:'architecture',error:rule.error});
+}
+
 if(failures.length){
   console.error(JSON.stringify(failures,null,2));
   process.exit(1);
 }
 
-console.log(`Syntax gate PASS: ${inline.length} inline scripts + runtime files`);
+console.log(`Syntax + architecture gate PASS: ${inline.length} inline scripts + runtime files + ${architectureRules.length} ownership rules`);
