@@ -74,6 +74,41 @@ test('core run survives milestone, awakening, death and reload',async({page})=>{
 });
 
 
+
+test('repeated defeat retries clear stale encounter work and keep combat healthy',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+
+  await page.goto('/?test=1');
+  await page.waitForFunction(()=>window.PF_TEST&&window.PF_INVARIANTS);
+  await clearBlockingUi(page);
+
+  const primed=await page.evaluate(()=>window.PF_TEST.primeTransientCombat());
+  expect(primed.pendingCallbacks).toBeGreaterThan(0);
+  expect(primed.damageAggregatePending).toBeTruthy();
+  expect(primed.telegraphVisible).toBeTruthy();
+
+  for(let i=0;i<8;i++){
+    const defeat=await page.evaluate(()=>window.PF_TEST.defeatPlayer());
+    expect(defeat.after).toBe(defeat.before);
+    expect(defeat.hp).toBeGreaterThan(0);
+
+    await page.waitForTimeout(45);
+    const debug=await page.evaluate(()=>window.PF_TEST.debug());
+    expect(debug.combat.attack).toBeTruthy();
+    expect(debug.combat.enemy).toBeTruthy();
+    expect(debug.combat.telegraph).toBeFalsy();
+    expect(debug.transients.pendingCallbacks).toBe(0);
+    expect(debug.transients.damageAggregatePending).toBeFalsy();
+    expect(debug.transients.telegraphVisible).toBeFalsy();
+    expect(debug.transients.fxNodes).toBe(0);
+    expect(debug.transients.damageNodes).toBe(0);
+    expect(debug.invariants.ok).toBeTruthy();
+  }
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('hidden utility screens do not keep repainting the battlefield',async({page,context})=>{
   await context.route('**/api/telemetry',route=>route.fulfill({status:204,body:''}));
   await page.addInitScript(()=>{
