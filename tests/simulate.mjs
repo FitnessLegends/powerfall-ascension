@@ -18,14 +18,19 @@ vm.runInContext(progressionSource,ctx);
 const config=ctx.window.PF_CONFIG;
 const create=ctx.window.PFProgressionRuntime.create;
 
+await import('../src/combat-engine.js');
+const {PFCombatEngine}=globalThis;
+
 for(const compression of [0,1,2,3]){
   const run={
     stage:1,
     triggeredMilestones:[],
     awakeningQueue:[],
     patrolXP:0,
+    patrolClears:0,
     inOperation:false,
-    operationReady:false
+    operationReady:false,
+    operationStage:0
   };
   const queued=[];
   const runtime=create({
@@ -48,22 +53,47 @@ for(const compression of [0,1,2,3]){
     trace:()=>{}
   });
 
-  // Simulate every cleared stage to 650. Rewards are consumed immediately
-  // after validation so later milestones can continue.
-  for(let stage=1;stage<=650;stage++){
-    run.stage=stage;
-    const earned=runtime.checkPowerMilestone(stage);
-    if(config.powerMilestones.includes(stage)){
-      assert.equal(earned,true,`milestone ${stage} must award at compression ${compression}`);
-      const reward=run.awakeningQueue.shift();
-      assert.equal(reward.stage,stage);
-      assert.equal(reward.source,'milestone');
-      assert.ok(['common','rare','epic'].includes(reward.minRarity));
-    }else{
-      assert.equal(earned,false);
+  const wallSet=new Set(Array.from(config.wallBosses).map(Number));
+  let victories=0;
+
+  while(run.stage<=650){
+    if(++victories>10000)throw new Error('progression simulation failed to converge');
+
+    // Once patrols expose an Operation, the next simulated victory is the
+    // Operation boss itself.
+    if(run.operationReady&&!run.inOperation){
+      run.inOperation=true;
+      run.operationStage=run.stage;
     }
-    // Calling twice must never duplicate a milestone reward.
-    assert.equal(runtime.checkPowerMilestone(stage),false);
+
+    const defeatedStage=run.stage;
+    const wasWall=wallSet.has(run.stage)&&run.inOperation;
+    const progress=PFCombatEngine.advanceAfterVictory(run,{
+      wasWall,
+      isWallBoss:stage=>wallSet.has(stage),
+      compression,
+      maxStage:10000
+    });
+
+    if(progress.stageCleared){
+      runtime.checkPowerMilestone(defeatedStage);
+    }
+
+    // A pending awakening is validated then immediately consumed so the
+    // simulation can continue to later milestones.
+    while(run.awakeningQueue.length){
+      const reward=run.awakeningQueue.shift();
+      assert.equal(reward.status,'pending');
+      assert.equal(reward.source,'milestone');
+      assert.equal(reward.stage,defeatedStage);
+      assert.ok(['common','rare','epic'].includes(reward.minRarity));
+    }
+
+    const issues=[];
+    if(run.stage<1||run.stage>10000)issues.push('stage');
+    if(run.patrolXP<0)issues.push('patrolXP');
+    if(run.inOperation&&run.operationStage!==run.stage)issues.push('operationStage');
+    assert.deepEqual(issues,[],`progression invariant failed at stage ${run.stage}`);
   }
 
   const expected=Array.from(config.powerMilestones).filter(x=>x<=650).map(Number);
@@ -73,6 +103,7 @@ for(const compression of [0,1,2,3]){
   assert.equal(runtime.worldFor(101).name,'Global Crisis');
   assert.equal(runtime.worldFor(251).name,'Planetary');
   assert.equal(runtime.worldFor(501).name,'Cosmic');
+  assert.ok(victories>650,'simulation must include multi-enemy patrols');
 }
 
 // Deterministic stress pass for state shape and save round-trips.
@@ -115,4 +146,4 @@ for(let i=0;i<10000;i++){
   assert.equal(decoded.maxHp,state.maxHp);
 }
 
-console.log('Simulation PASS: milestones + 10,000 deterministic state/save transitions');
+console.log('Simulation PASS: live patrol/Operation rules through Stage 650 + 10,000 deterministic state/save transitions');
