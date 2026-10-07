@@ -2,10 +2,6 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
-const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const configMatch=html.match(/<script>\s*window\.PF_CONFIG\s*=\s*([\s\S]*?);\s*<\/script>/);
-assert.ok(configMatch,'PF_CONFIG script must exist');
-
 const ctx={
   window:{},
   console,
@@ -13,7 +9,8 @@ const ctx={
   clearTimeout:()=>{}
 };
 vm.createContext(ctx);
-vm.runInContext(`window.PF_CONFIG = ${configMatch[1]};`,ctx);
+const configSource=fs.readFileSync(new URL('../src/data/config.js',import.meta.url),'utf8');
+vm.runInContext(configSource,ctx);
 
 const progressionSource=fs.readFileSync(new URL('../src/progression-runtime.js',import.meta.url),'utf8');
 vm.runInContext(progressionSource,ctx);
