@@ -2381,7 +2381,7 @@ function enemyDefeatedCore(){
   }
 }
 function enemyDefeated(){
-  return stateStore.transaction('enemy_defeated',()=>enemyDefeatedCore())
+  return stateStore.transaction('enemy_defeated',()=>enemyDefeatedCore(),{skipBefore:true})
 }
 
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
@@ -2861,7 +2861,7 @@ function renderDebugPanel(){
   const session=$('debugSessionId');
   if(!session)return;
   session.textContent=window.PFTelemetry?.session||'LOCAL';
-  $('debugHealth').textContent=lastInvariantSummary.ok?'OK':(lastInvariantSummary.errors+' ERROR'+(lastInvariantSummary.errors===1?'':'S'));
+  $('debugHealth').textContent=lastInvariantSummary.ok?'OK':lastInvariantSummary.errors?(lastInvariantSummary.errors+' ERROR'+(lastInvariantSummary.errors===1?'':'S')):(lastInvariantSummary.warnings+' WARN');
   $('debugStage').textContent=String(s?.stage||0);
   $('debugPending').textContent=String(Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0)
 }
