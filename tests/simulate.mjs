@@ -66,7 +66,7 @@ for(const compression of [0,1,2,3]){
     assert.equal(runtime.checkPowerMilestone(stage),false);
   }
 
-  const expected=config.powerMilestones.filter(x=>x<=650);
+  const expected=Array.from(config.powerMilestones).filter(x=>x<=650).map(Number);
   assert.deepEqual([...run.triggeredMilestones],expected);
   assert.deepEqual(queued.map(x=>x.stage),expected);
   assert.equal(runtime.worldFor(1).name,'City');
