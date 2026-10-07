@@ -2228,7 +2228,12 @@ if(!s.inOperation&&((s.patrolXP||0)===0||s.enemy?.wall))showRandomEncounter(s.st
     enemyMaxHp:s.enemyMaxHp,
     patrolXP:s.patrolXP||0
   });
-  try{renderAll()}
+  try{
+    renderHUD(true);
+    if(!$('upgradeSheet').classList.contains('hidden'))renderUpgrades();
+    if($('ascensionScreen').classList.contains('active'))renderAscension();
+    if($('endgameScreen').classList.contains('active'))renderEndgame();
+  }
   catch(error){
     traceGameplay('render_after_spawn_failed',{
       message:error?.message||String(error),
