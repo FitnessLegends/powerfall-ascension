@@ -6,16 +6,23 @@ export default function handler(req,res){
 
   try{
     const raw=typeof req.body==='string'?JSON.parse(req.body||'{}'):(req.body||{});
-    const event=String(raw.event||'unknown').slice(0,80);
-    const session=String(raw.session||'unknown').slice(0,80);
-    const data=raw.data&&typeof raw.data==='object'?raw.data:{value:String(raw.data||'')};
+    const source=Array.isArray(raw.events)?raw.events:[raw];
+    const events=source.slice(0,50);
 
-    console.log('[PFTELEMETRY]',JSON.stringify({
-      ts:Number(raw.ts)||Date.now(),
-      session,
-      event,
-      data
-    }));
+    for(const item of events){
+      const event=String(item?.event||'unknown').slice(0,80);
+      const session=String(item?.session||'unknown').slice(0,80);
+      const data=item?.data&&typeof item.data==='object'
+        ?item.data
+        :{value:String(item?.data||'')};
+
+      console.log('[PFTELEMETRY]',JSON.stringify({
+        ts:Number(item?.ts)||Date.now(),
+        session,
+        event,
+        data
+      }));
+    }
 
     return res.status(204).end();
   }catch(error){
