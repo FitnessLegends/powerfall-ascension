@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.15.0</title>
+  <title>Powerfall: Ascension Prototype v1.15.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1115,7 +1115,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.15.0 · MODULAR CORE</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.15.1 · COMBAT RECOVERY</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1737,7 +1737,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.15.0',
+    version:'1.15.1',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -2064,7 +2064,10 @@ function heroTransformationState(){
 function renderCombatants(){const field=$('battlefield'),hero=$('heroFighter'),enemy=$('enemyFighter');const tags=powerTags(),tx=heroTransformationState();hero.classList.toggle('form-fire',tags.has('fire'));hero.classList.toggle('form-lightning',tags.has('lightning'));hero.classList.toggle('form-regen',tags.has('regen')||tags.has('vitality'));hero.classList.toggle('form-metal',tags.has('metal')||tags.has('durability'));hero.classList.toggle('form-psychic',tags.has('psychic'));hero.classList.toggle('form-cosmic',tags.has('cosmic'));hero.classList.toggle('form-phase',tags.has('phase'));hero.classList.toggle('form-speed',tags.has('speed'));hero.classList.toggle('form-blood',tags.has('rage')||tags.has('dark')||s.bloodFurnace);hero.classList.toggle('form-flight',hasPower('flight'));for(const x of ['phoenix','momentum','singularity','colossus','apex','storm','oracle','blood'])hero.classList.toggle('tx-'+x,tx.forms.includes(x));for(let i=1;i<=4;i++)hero.classList.toggle('mastery-aura-'+i,tx.tier===i);hero.dataset.transformations=tx.forms.length;field.classList.toggle('hero-transcendent',tx.forms.length>=2);field.classList.toggle('hero-apotheosis',tx.forms.length>=4);enemy.classList.toggle('enemy-elite',!!s.enemy?.elite);enemy.classList.toggle('enemy-boss',!!s.enemy?.wall);enemy.classList.toggle('enemy-nemesis',!!s.enemy?.nemesis);enemy.classList.toggle('enemy-mech',s.enemy?.faction==='SYNTHETIC ORDER'||s.enemy?.damageType==='elemental');enemy.classList.toggle('enemy-void',enemyPassive('void')||enemyPassive('suppression'));field.classList.toggle('fight-boss',!!s.enemy?.wall)}
 function renderEnvironment(){
   const field=$('battlefield'),loc=locationFor(s.stage);
-  for(const x of PF_LOCATIONS)field.classList.remove(x.cls,x.weather);
+  for(const x of PF_LOCATIONS){
+    if(x.cls)field.classList.remove(x.cls);
+    if(x.weather)field.classList.remove(x.weather);
+  }
   field.classList.remove('weather-rain','weather-embers','weather-storm','power-fire-world','power-lightning-world','power-regen-world','power-psychic-world','power-cosmic-world','power-blood-world','boss-phase-2','boss-phase-3','era-city','era-global','era-crisis','era-invasion','era-cosmic','era-origin','rep-hero','rep-feared');
   field.classList.add(loc.cls,'era-'+worldEra());if(loc.weather)field.classList.add(loc.weather);const rt=reputationTier();if(['protector','guardian','legend'].includes(rt.id))field.classList.add('rep-hero');if(['vigilante','dread'].includes(rt.id))field.classList.add('rep-feared');
   const tags=powerTags();
@@ -2450,7 +2453,20 @@ if(s.modifier==='bounty_hunter'&&s.enemy.elite){s.enemy.maxHp*=1.2;s.enemyMaxHp=
   if(s.firstStrike)setTimeout(()=>{if(s.enemy&&s.enemyHp>0&&!storyPaused&&!powerDecisionPaused)playerAttack(false)},80);
   if(s.inOperation&&PF_ENEMIES.isWallBoss(s.stage)) maybeStory(s.stage,false);
 if(!s.inOperation&&((s.patrolXP||0)===0||s.enemy?.wall))showRandomEncounter(s.stage);
-  renderAll();
+  traceGameplay('enemy_spawned',{
+    enemy:s.enemy?.name||'unknown',
+    enemyHp:s.enemyHp,
+    enemyMaxHp:s.enemyMaxHp,
+    patrolXP:s.patrolXP||0
+  });
+  try{renderAll()}
+  catch(error){
+    traceGameplay('render_after_spawn_failed',{
+      message:error?.message||String(error),
+      name:error?.name||'Error'
+    });
+    console.error('[Powerfall] render after spawn failed',error)
+  }
 }
 
 function playerAttack(manual=false,echo=false){
@@ -2485,7 +2501,21 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
   if([10,25,50,75].includes(s.fight.combo)){identityCue(s.fight.combo+' HIT COMBO');chargeUltimate(s.fight.combo>=50?8:4);const field=$('battlefield');field.classList.add('combo-surge');setTimeout(()=>field.classList.remove('combo-surge'),260)}
   checkBossPhase();
   if(s.enemy?.nemesis&&s.enemyHp>0&&s.enemyHp/s.enemyMaxHp<=.22&&nemesisEscapeCheck()){renderHUD();return}
-  if(s.enemyHp<=0)enemyDefeated();renderHUD();
+  if(s.enemyHp<=0){
+    traceGameplay('enemy_hp_zero',{
+      enemy:s.enemy?.name||'unknown',
+      stage:s.stage,
+      amount
+    });
+    enemyDefeated()
+  }
+  try{renderHUD()}
+  catch(error){
+    traceGameplay('combat_render_failed',{
+      message:error?.message||String(error),
+      name:error?.name||'Error'
+    })
+  }
 }
 function handlePlayerDefeat(reason='DEFEATED'){
   if(powerDecisionPaused||powerModalVisible||currentAwakening()){
@@ -2542,7 +2572,14 @@ function enemyAttack(){
   renderHUD();
 }
 function enemyDefeated(){
-  const defeatedStage=s.stage;const wasWall=!!s.enemy.wall;maybePlayerStealPower();const challenge=s.challengeMode&&challengeDef(s.challengeMode);if(challenge&&wasWall&&defeatedStage>=challenge.goal)setTimeout(()=>completeChallenge(challenge.id),50);
+  if(!s.enemy||s.fight?.resolvingDefeat)return;
+  s.fight.resolvingDefeat=1;
+  const defeatedStage=s.stage;
+  traceGameplay('enemy_defeat_start',{
+    enemy:s.enemy?.name||'unknown',
+    enemyHp:s.enemyHp,
+    patrolXP:s.patrolXP||0
+  });const wasWall=!!s.enemy.wall;maybePlayerStealPower();const challenge=s.challengeMode&&challengeDef(s.challengeMode);if(challenge&&wasWall&&defeatedStage>=challenge.goal)setTimeout(()=>completeChallenge(challenge.id),50);
   s.kills++;if(s.adaptive)s.adaptiveBonus=clamp(s.adaptiveBonus*1.008,1,1e50);if(s.combatDarwinism&&s.kills%30===0){s.damageMult*=1.03;toast('COMBAT DARWINISM +3% DAMAGE')}
   if(wasWall&&s.reactiveEvolution&&!s.evolvedBosses.includes(defeatedStage)){s.evolvedBosses.push(defeatedStage);const key=Object.keys(s.attributes)[Math.floor(Math.random()*4)];PF_ATTRIBUTE(s,key,s.apexGenome?1.45:1.3);toast('EVOLUTION: '+key.toUpperCase()+(s.apexGenome?' +45%':' +30%'))}
   let reward=(22+defeatedStage*4.2)*Math.pow(1.034,Math.min(defeatedStage,1200))*Math.pow(1.02,meta.soulTree.fortune||0)*s.storyCoinBonus*modifierCoinMult()*cityRewardMult();
@@ -2554,7 +2591,22 @@ function enemyDefeated(){
   if(wasWall&&s.inOperation&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('OPERATION COMPLETE - MUTATION EARNED');if(s.enemy.operationPowers?.length){const bonus=Math.floor(reward*(1+s.enemy.operationPowers.length*.35));s.coins=clamp(s.coins+bonus,0,1e150);showCoinBurst(bonus);if(s.enemy.operationPowers.length>=4)grantArtifact()}}
   let stageCleared=false;
   if(wasWall&&s.inOperation){s.operationWins=(s.operationWins||0)+1;meta.operationWins=(meta.operationWins||0)+1;const shardGain=cosmicShardGain(defeatedStage);if(shardGain){meta.cosmicShards=(meta.cosmicShards||0)+shardGain;showMajorBanner('REALITY FRACTURE','+'+shardGain+' REALITY SHARD'+(shardGain===1?'':'S'),'The Operation tore open something beyond Ascension.',3000)}meta.operationStages=Array.isArray(meta.operationStages)?meta.operationStages:[];if(!meta.operationStages.includes(defeatedStage))meta.operationStages.push(defeatedStage);if((s.operationDamageTaken||0)<=0)unlockAchievement('flawless_operation');if((s.enemy.powers?.length||0)>=15)unlockAchievement('overpowered_enemy');if((s.fight.incoming||0)<10)unlockAchievement('phasebreaker');s.inOperation=false;s.operationReady=false;s.operationStage=0;s.stage=Math.min(10000,s.stage+1);s.patrolXP=0;stageCleared=true;identityCue('OPERATION COMPLETE')}else if(PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation){const threatGoal=Math.max(2,5-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=threatGoal){s.patrolXP=threatGoal;s.operationReady=true;identityCue('OPERATION READY')}}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);stageCleared=true;identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
-  const milestonePowerEarned=stageCleared?checkPowerMilestone(defeatedStage):false;checkCombos();checkEmergentEvolutions();checkChallenge();checkAchievements();maybePowerEvolution();spawnEnemy();scheduleSave();if(pendingPowerRewards().length&&!storyPaused){if(stageCleared||milestonePowerEarned)presentPendingPowerAfterClear(defeatedStage);else setTimeout(()=>{if(pendingPowerRewards().length)openPendingPowerAwakening()},500)}
+  const milestonePowerEarned=stageCleared?checkPowerMilestone(defeatedStage):false;
+  checkCombos();checkEmergentEvolutions();checkChallenge();checkAchievements();maybePowerEvolution();
+  spawnEnemy();
+  traceGameplay('enemy_defeat_resolved',{
+    defeatedStage,
+    currentStage:s.stage,
+    stageCleared,
+    nextEnemy:s.enemy?.name||'unknown',
+    nextEnemyHp:s.enemyHp,
+    patrolXP:s.patrolXP||0
+  });
+  scheduleSave();
+  if(pendingPowerRewards().length&&!storyPaused){
+    if(stageCleared||milestonePowerEarned)presentPendingPowerAfterClear(defeatedStage);
+    else setTimeout(()=>{if(pendingPowerRewards().length)openPendingPowerAwakening()},500)
+  }
 }
 function rewardKey(source,stage){return String(source)+':'+Math.floor(stage)}
 function legacyRewardKey(source,stage){return s.runId+':'+source+':'+Math.floor(stage)}
@@ -2897,7 +2949,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.15.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.15.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
@@ -3047,6 +3099,11 @@ function startTick(){clearInterval(timers.tick);lastTick=performance.now();timer
   const regenTick=s.maxHp*regenRate()*dt;if(s.challengeMode==='decay_protocol')s.hp=clamp(s.hp-Math.max(s.maxHp*.0025*dt,regenTick),0,s.maxHp);else s.hp=clamp(s.hp+regenTick,0,s.maxHp);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('regen')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.012*dt);
   if(s.enemy&&s.enemyHp>0&&enemyPassive('origin')&&s.fight.freeze===0)s.enemyHp=Math.min(s.enemyMaxHp,s.enemyHp+s.enemyMaxHp*.008*dt);
+  if(s.enemy&&s.enemyHp<=0&&!s.fight?.resolvingDefeat){
+    traceGameplay('zero_hp_recovery',{enemy:s.enemy?.name||'unknown'});
+    enemyDefeated();
+    return;
+  }
   if(s.powers.length&&Date.now()>=s.activeCdUntil&&s.enemy&&s.enemyHp>0)useActivePower(true);
   if(shouldAutoUltimate())useUltimate();
   autoBuyElapsed+=dt;if(meta.soulTree.autobuy&&autoBuyElapsed>=1){autoBuyElapsed=0;const def=upgradeDefs().sort((a,b)=>upgradeCost(a,s.upgrades[a.id])-upgradeCost(b,s.upgrades[b.id]))[0];buyUpgrade(def.id)}
