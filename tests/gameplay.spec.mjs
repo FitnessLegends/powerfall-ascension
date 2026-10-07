@@ -13,9 +13,14 @@ async function clearBlockingUi(page){
   }
 }
 
-test.beforeEach(async({page})=>{
-  await page.route('**/api/telemetry',route=>route.fulfill({status:204,body:''}));
-  await page.addInitScript(()=>localStorage.clear());
+test.beforeEach(async({page,context})=>{
+  await context.route('**/api/telemetry',route=>route.fulfill({status:204,body:''}));
+  await page.addInitScript(()=>{
+    if(!sessionStorage.getItem('pf_test_storage_ready')){
+      localStorage.clear();
+      sessionStorage.setItem('pf_test_storage_ready','1');
+    }
+  });
 });
 
 test('core run survives milestone, awakening, death and reload',async({page})=>{
