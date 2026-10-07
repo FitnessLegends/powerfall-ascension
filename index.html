@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1117" />
-  <title>Powerfall: Ascension Prototype v1.16.0</title>
+  <title>Powerfall: Ascension Prototype v1.16.1</title>
   <style>
 :root{
   --bg:#090d13;--panel:#111824;--panel2:#171f2c;--line:#273244;--text:#f5f7fb;--muted:#8d9ab0;
@@ -1122,7 +1122,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
       <header class="topbar">
         <div class="brand">
           <div class="brand-title">POWERFALL</div>
-          <div class="brand-sub">ASCENSION PROTOTYPE v1.16.0 · STABILITY CORE</div>
+          <div class="brand-sub">ASCENSION PROTOTYPE v1.16.1 · TESTABLE COMBAT</div>
         </div>
         <div class="resource-strip"><button id="achievementsCornerBtn" class="top-utility-btn achievement-nav" type="button" aria-label="Achievements" title="Achievements">★</button><button id="settingsCornerBtn" class="top-utility-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
           <button class="pill info-tap" id="coinsInfoBtn" type="button">C <span id="coins">0</span></button>
@@ -1447,6 +1447,7 @@ body.power-awakening-open #gameScreen{pointer-events:none!important}
   <script src="/src/invariants.js"></script>
   <script src="/src/state-store.js"></script>
   <script src="/src/power-awakening.js"></script>
+  <script src="/src/combat-engine.js"></script>
   <script src="/src/combat-runtime.js"></script>
   <script src="/src/hud-runtime.js"></script>
   <script src="/src/save-runtime.js"></script>
@@ -1505,7 +1506,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.16.0',
+    version:'1.16.1',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -2292,14 +2293,9 @@ function handlePlayerDefeatCore(reason='DEFEATED'){
     console.warn('[Powerfall] blocked defeat during Power Awakening');
     return
   }
-  // Death retries the exact encounter. No stage or patrol progress is lost.
-  // Pending Power Awakenings remain untouched in the permanent reward ledger.
-  s.hp=s.maxHp;
-  s.overkillCarry=0;
-  s.fight={...defaultRun().fight};
-  if(s.inOperation){
-    s.operationDamageTaken=(s.operationDamageTaken||0)+1;
-  }
+  // Pure combat engine owns retry-state mutation.
+  const retry=window.PFCombatEngine.retryCurrentEncounter(s,defaultRun().fight);
+  traceGameplay('encounter_retry_state',retry);
   traceGameplay('player_defeat',{reason,enemy:s.enemy?.name||'unknown'});
   toast(reason+' · RETRYING CURRENT BATTLE');
   spawnEnemy();
@@ -2361,8 +2357,35 @@ function enemyDefeatedCore(){
   if(s.enemy.rival){s.rivalWins++;meta.rivalLevel++;meta.rivalAdaptation=dominantFamily();grantArtifact();toast('VANTA LEARNED YOUR '+meta.rivalAdaptation.toUpperCase()+' BUILD')}
   if(s.enemy.nemesis){const n=ensureNemesis();n.defeats++;meta.nemesisVictories++;n.level++;n.grudge=dominantFamily();n.nextStage=Math.min(10000,defeatedStage+140+n.level*25);const nemesisBonus=Math.floor(reward*1.5);s.coins=clamp(s.coins+nemesisBonus,0,1e150);showCoinBurst(nemesisBonus);grantArtifact();toast('NEMESIS DEFEATED: '+n.name.toUpperCase())}
   if(wasWall&&s.inOperation&&!s.bossRewards.includes(defeatedStage)){s.runBosses++;meta.bossesBeaten++;earnReputation(12,'boss');s.bossRewards.push(defeatedStage);queuePower({source:'boss',stage:defeatedStage,minRarity:defeatedStage>=100?'legendary':'epic'});toast('OPERATION COMPLETE - MUTATION EARNED');if(s.enemy.operationPowers?.length){const bonus=Math.floor(reward*(1+s.enemy.operationPowers.length*.35));s.coins=clamp(s.coins+bonus,0,1e150);showCoinBurst(bonus);if(s.enemy.operationPowers.length>=4)grantArtifact()}}
-  let stageCleared=false;
-  if(wasWall&&s.inOperation){s.operationWins=(s.operationWins||0)+1;meta.operationWins=(meta.operationWins||0)+1;const shardGain=cosmicShardGain(defeatedStage);if(shardGain){meta.cosmicShards=(meta.cosmicShards||0)+shardGain;showMajorBanner('REALITY FRACTURE','+'+shardGain+' REALITY SHARD'+(shardGain===1?'':'S'),'The Operation tore open something beyond Ascension.',3000)}meta.operationStages=Array.isArray(meta.operationStages)?meta.operationStages:[];if(!meta.operationStages.includes(defeatedStage))meta.operationStages.push(defeatedStage);if((s.operationDamageTaken||0)<=0)unlockAchievement('flawless_operation');if((s.enemy.powers?.length||0)>=15)unlockAchievement('overpowered_enemy');if((s.fight.incoming||0)<10)unlockAchievement('phasebreaker');s.inOperation=false;s.operationReady=false;s.operationStage=0;s.stage=Math.min(10000,s.stage+1);s.patrolXP=0;stageCleared=true;identityCue('OPERATION COMPLETE')}else if(PF_ENEMIES.isWallBoss(s.stage)&&!s.inOperation){const threatGoal=Math.max(2,5-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=threatGoal){s.patrolXP=threatGoal;s.operationReady=true;identityCue('OPERATION READY')}}else{const baseGoal=s.stage<25?2:s.stage<100?3:4;const goal=Math.max(1,baseGoal-(meta.soulTree.patrol_compression||0));s.patrolXP=(s.patrolXP||0)+1;s.patrolClears=(s.patrolClears||0)+1;if(s.patrolXP>=goal){s.patrolXP=0;s.stage=Math.min(10000,s.stage+1);stageCleared=true;identityCue('THREAT ADVANCED')}}s.bestStage=Math.max(s.bestStage,s.stage);meta.bestStage=Math.max(meta.bestStage,s.stage);updatePermanentMastery(defeatedStage);
+  if(wasWall&&s.inOperation){
+    s.operationWins=(s.operationWins||0)+1;
+    meta.operationWins=(meta.operationWins||0)+1;
+    const shardGain=cosmicShardGain(defeatedStage);
+    if(shardGain){
+      meta.cosmicShards=(meta.cosmicShards||0)+shardGain;
+      showMajorBanner('REALITY FRACTURE','+'+shardGain+' REALITY SHARD'+(shardGain===1?'':'S'),'The Operation tore open something beyond Ascension.',3000)
+    }
+    meta.operationStages=Array.isArray(meta.operationStages)?meta.operationStages:[];
+    if(!meta.operationStages.includes(defeatedStage))meta.operationStages.push(defeatedStage);
+    if((s.operationDamageTaken||0)<=0)unlockAchievement('flawless_operation');
+    if((s.enemy.powers?.length||0)>=15)unlockAchievement('overpowered_enemy');
+    if((s.fight.incoming||0)<10)unlockAchievement('phasebreaker')
+  }
+
+  const progress=window.PFCombatEngine.advanceAfterVictory(s,{
+    wasWall,
+    isWallBoss:stage=>PF_ENEMIES.isWallBoss(stage),
+    compression:meta.soulTree.patrol_compression||0,
+    maxStage:10000
+  });
+  const stageCleared=progress.stageCleared;
+  if(progress.operationCompleted)identityCue('OPERATION COMPLETE');
+  else if(progress.operationReady)identityCue('OPERATION READY');
+  else if(progress.stageAdvanced)identityCue('THREAT ADVANCED');
+  traceGameplay('combat_progression_resolved',progress);
+  s.bestStage=Math.max(s.bestStage,s.stage);
+  meta.bestStage=Math.max(meta.bestStage,s.stage);
+  updatePermanentMastery(defeatedStage);
   const milestonePowerEarned=stageCleared?checkPowerMilestone(defeatedStage):false;
   checkCombos();checkEmergentEvolutions();checkChallenge();checkAchievements();maybePowerEvolution();
   spawnEnemy();
@@ -2505,7 +2528,7 @@ function resumeCombatAfterPowerDecision(){
 function showPowerModal(){return awakeningController.show()}
 function hidePowerModal(){return awakeningController.hide()}
 function applyEffect(target,effect){target.visual=new Set(target.visual||[]);try{effect(target)}finally{target.visual=[...target.visual]}sanitizeRun(target)}
-function choosePower(id,choiceId){return awakeningController.choose(id,choiceId)}
+function choosePower(id,choiceId){return stateStore.transaction('power_choice',()=>awakeningController.choose(id,choiceId))}
 function rerollPower(fromGesture=false){return awakeningController.reroll(fromGesture)}
 function updateGambleButton(){return awakeningController.updateGambleButton()}
 
@@ -2727,7 +2750,7 @@ function renderAchievements(){
 }
 function renderProfile(){
   const r=currentResonance();$('resonanceName').textContent=r.name;$('resonanceText').textContent=(r.nod||'')+(s.identityAwakened?' Signature: '+identityPassive():'');
-  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.16.0</strong></div>`;
+  $('profileStats').innerHTML=Object.entries(statValues(s)).map(([a,b])=>`<button type="button" class="profile-stat" data-stat="${a}"><small>${a}</small><strong>${b}</strong></button>`).join('')+`<div class="profile-stat"><small>Build</small><strong>v1.16.1</strong></div>`;
   $('profileStats').querySelectorAll('[data-stat]').forEach(b=>b.addEventListener('click',()=>showStatInfo(b.dataset.stat)));
   $('powerCountLabel').textContent=`${s.powers.length} power${s.powers.length===1?'':'s'}`;
   $('profilePowers').innerHTML=s.powers.length?s.powers.map(id=>{const p=byId(id);return p?`<button type="button" class="power-row-btn" data-power-id="${p.id}"><span><b>${p.icon}</b> ${escapeHtml(p.name)}</span><em>${p.rarity}</em></button>`:''}).join(''):'<div class="power-row">No powers yet.</div>';
