@@ -1506,7 +1506,7 @@ let powerRepairStats={runs:0,removed:0,recovered:0,lastReason:'boot',lastPending
 
 function traceGameplay(event,data={}){
   window.PFTelemetry?.emit(event,{
-    version:'1.17.0',
+    version:'1.17.1',
     stage:Number(s?.stage||0),
     screen:document.querySelector('.screen.active')?.id||'none',
     pending:Array.isArray(s?.awakeningQueue)?s.awakeningQueue.length:0,
@@ -1993,8 +1993,38 @@ function autoDodgeHeavy(){
   if(hasPower('telekinesis')&&evolution('telekinesis')==='psionic_dominion')s.fight.freeze=1.5;
   return true
 }
-function startTelegraph(){if(s.fight.telegraph||storyPaused||powerDecisionPaused||powerModalVisible||!s.enemy||s.enemyHp<=0)return;s.fight.telegraph=1;$('telegraph').classList.remove('hidden');clearTimeout(timers.telegraph);const run=s.runId,enemy=s.enemy;timers.telegraph=setTimeout(()=>{if(s.runId!==run||s.enemy!==enemy||!s.fight.telegraph||powerDecisionPaused||powerModalVisible){s.fight.telegraph=0;$('telegraph').classList.add('hidden');return}s.fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()},900)}
-function resolveHeavyAttack(){if(powerDecisionPaused||powerModalVisible){s.fight.telegraph=0;$('telegraph').classList.add('hidden');return}if(autoDodgeHeavy()){setTimeout(()=>playerAttack(true),70);return}if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());s.hp-=dmg;s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);if(s.hp<=0){handlePlayerDefeat('HEAVY HIT DEFEAT');return}renderHUD()}
+function startTelegraph(){
+  if(s.fight.telegraph||storyPaused||powerDecisionPaused||powerModalVisible||!s.enemy||s.enemyHp<=0)return;
+  s.fight.telegraph=1;$('telegraph').classList.remove('hidden');
+  clearTimeout(timers.telegraph);
+  const run=s.runId,enemy=s.enemy,fight=s.fight;
+  timers.telegraph=setTimeout(()=>{
+    timers.telegraph=null;
+    if(s.runId!==run||s.enemy!==enemy||s.fight!==fight||!fight.telegraph||powerDecisionPaused||powerModalVisible){
+      if(s.fight===fight)fight.telegraph=0;
+      $('telegraph').classList.add('hidden');
+      return
+    }
+    fight.telegraph=0;$('telegraph').classList.add('hidden');resolveHeavyAttack()
+  },900)
+}
+function resolveHeavyAttack(){
+  if(powerDecisionPaused||powerModalVisible){s.fight.telegraph=0;$('telegraph').classList.add('hidden');return}
+  const fight=s.fight,enemy=s.enemy,run=s.runId;
+  if(autoDodgeHeavy()){
+    const dodgeTimer=setTimeout(()=>{
+      pendingEchoes.delete(dodgeTimer);
+      if(s.runId===run&&s.enemy===enemy&&s.fight===fight)playerAttack(true)
+    },70);
+    pendingEchoes.add(dodgeTimer);
+    return
+  }
+  if(s.fight.dodgeWindow>0){floatText('PERFECT DODGE',true);s.fight.combo+=2;return}
+  let dmg=s.enemy.damage*2.35*s.incomingMult*(1-defence());
+  s.hp=Math.max(0,s.hp-dmg);s.fight.combo=0;animateEnemyAttack();floatDamage(dmg,true,true);
+  if(s.hp<=0){handlePlayerDefeat('HEAVY HIT DEFEAT');return}
+  renderHUD()
+}
 function dodgeAction(){return false}
 function useFinisher(){if(!s.enemy||s.enemyHp<=0||s.fight.finisher||!(s.enemy.elite||s.enemy.wall)||s.enemyHp/s.enemyMaxHp>.15)return;s.fight.finisher=1;const field=$('battlefield');field.classList.remove('finisher-flash');void field.offsetWidth;field.classList.add('finisher-flash');setTimeout(()=>field.classList.remove('finisher-flash'),520);chargeUltimate(20);floatText((dominantFamily()||'POWER').toUpperCase()+' FINISHER',false);dealDamageToEnemy(s.enemyHp+1,true,true)}
 function gamblePower(fromGesture=false){return awakeningController.gamble(fromGesture)}
@@ -2293,6 +2323,19 @@ function dealDamageToEnemy(amount,crit,manual,echo=false){
     })
   }
 }
+function clearEncounterTransients(reason='encounter-reset'){
+  const pendingCallbacks=pendingEchoes.size;
+  pendingEchoes.forEach(clearTimeout);pendingEchoes.clear();
+  clearTimeout(timers.telegraph);timers.telegraph=null;
+  clearTimeout(damageAggregateTimer);damageAggregateTimer=null;damageAggregate=0;
+  $('telegraph')?.classList.add('hidden');
+  $('fxLayer')?.replaceChildren();$('damageLayer')?.replaceChildren();
+  $('heroFighter')?.classList.remove('attack','hit');
+  $('enemyFighter')?.classList.remove('hit','enemy-attack');
+  $('battlefield')?.classList.remove('shake','combo-surge','power-active-flash','finisher-flash','burst-flash');
+  lastAttackMs=0;lastEnemyMs=0;lastCombatFx=0;
+  traceGameplay('encounter_transients_cleared',{reason,pendingCallbacks})
+}
 function handlePlayerDefeatCore(reason='DEFEATED'){
   if(powerDecisionPaused||powerModalVisible||currentAwakening()){
     s.hp=Math.max(1,s.hp);
@@ -2300,6 +2343,7 @@ function handlePlayerDefeatCore(reason='DEFEATED'){
     console.warn('[Powerfall] blocked defeat during Power Awakening');
     return
   }
+  clearEncounterTransients('player_defeat');
   // Pure combat engine owns retry-state mutation.
   const retry=window.PFCombatEngine.retryCurrentEncounter(s,defaultRun().fight);
   traceGameplay('encounter_retry_state',retry);
@@ -2905,7 +2949,7 @@ function debugReport(){
   const progression=progressionRuntime?.snapshot?.()||{};
   const issues=window.PFInvariants?.validateRun?.(s,invariantContext())||[];
   return {
-    version:'1.17.0',
+    version:'1.17.1',
     session:window.PFTelemetry?.session||'LOCAL',
     timestamp:new Date().toISOString(),
     stage:s?.stage||0,
@@ -2918,6 +2962,13 @@ function debugReport(){
     progression,
     hud:hudRuntime?.snapshot?.()||{},
     telemetry:window.PFTelemetry?.status?.()||{},
+    transients:{
+      pendingCallbacks:pendingEchoes.size,
+      fxNodes:$('fxLayer')?.childElementCount||0,
+      damageNodes:$('damageLayer')?.childElementCount||0,
+      damageAggregatePending:!!damageAggregateTimer,
+      telegraphVisible:!$('telegraph')?.classList.contains('hidden')
+    },
     invariants:window.PFInvariants?.summarize?.(issues)||{},
     invariantIssues:issues,
     breadcrumbs:window.PFTelemetry?.breadcrumbs?.()||[]
@@ -3268,6 +3319,14 @@ function init(){
         s.hp=0;
         handlePlayerDefeat('TEST DEFEAT');
         return {before:stage,after:s.stage,hp:s.hp}
+      },
+      primeTransientCombat:()=>{
+        const fx=document.createElement('div');fx.className='beam';$('fxLayer').appendChild(fx);
+        const dmg=document.createElement('div');dmg.className='damage-number';$('damageLayer').appendChild(dmg);
+        damageAggregate=12;clearTimeout(damageAggregateTimer);damageAggregateTimer=setTimeout(()=>{},5000);
+        const callback=setTimeout(()=>{},5000);pendingEchoes.add(callback);
+        clearTimeout(timers.telegraph);s.fight.telegraph=1;$('telegraph').classList.remove('hidden');timers.telegraph=setTimeout(()=>{},5000);
+        return debugReport().transients
       },
       resolveStory:()=>{
         const btn=$('storyModal')?.querySelector('.story-choice');
