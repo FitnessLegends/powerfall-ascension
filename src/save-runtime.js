@@ -3,6 +3,10 @@
 
 function create(deps){
   const timers=deps.timers;
+  let lastWriteAt=0;
+  let writeCount=0;
+  let scheduledCount=0;
+  const minScheduledInterval=3000;
 
   function snapshot(){
     const s=deps.getRun();
@@ -22,6 +26,8 @@ function create(deps){
     timers.save=null;
     const snap=snapshot();
     const ok=deps.write(snap);
+    lastWriteAt=Date.now();
+    writeCount++;
 
     deps.trace(ok?'save_write_ok':'save_write_failed',{
       stage:snap.run?.stage||0,
@@ -33,9 +39,13 @@ function create(deps){
     return ok;
   }
 
-  function schedule(delay=250){
-    clearTimeout(timers.save);
-    timers.save=setTimeout(writeNow,delay);
+  function schedule(delay=500){
+    if(timers.save)return false;
+    const sinceLast=Date.now()-lastWriteAt;
+    const wait=Math.max(delay,minScheduledInterval-sinceLast,0);
+    scheduledCount++;
+    timers.save=setTimeout(writeNow,wait);
+    return true;
   }
 
   function load(){
@@ -66,7 +76,11 @@ function create(deps){
     return {
       saveScheduled:!!timers.save,
       autosaveActive:!!timers.autosave,
-      saveVersion:deps.saveVersion
+      saveVersion:deps.saveVersion,
+      writeCount,
+      scheduledCount,
+      msSinceWrite:lastWriteAt?Date.now()-lastWriteAt:null,
+      minScheduledInterval
     };
   }
 
