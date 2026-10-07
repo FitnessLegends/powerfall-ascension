@@ -1,4 +1,8 @@
-(function(global){
+(function(root,factory){
+  const api=factory();
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  if(root)root.PFSaveRuntime=api;
+})(typeof window!=='undefined'?window:globalThis,function(){
 'use strict';
 
 function create(deps){
@@ -95,5 +99,5 @@ function create(deps){
   };
 }
 
-global.PFSaveRuntime={create};
-})(window);
+return {create};
+});
